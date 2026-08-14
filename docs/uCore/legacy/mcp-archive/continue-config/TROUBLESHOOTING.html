@@ -1,0 +1,95 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>legacy/mcp-archive/continue-config/TROUBLESHOOTING.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / legacy/mcp-archive/continue-config/TROUBLESHOOTING.md</span></header><main class="site-main"><h1>Continue v2.0 Configuration Troubleshooting</h1>
+<p><strong>Date:</strong> 2026-06-21 11:02 AM <strong>Issue:</strong> Models not appearing / Config being overwritten <strong>Status:</strong> ✅ RESOLVED</p>
+<h2>Root Cause Identified</h2>
+<p><strong>Continue v2.0 behavior:</strong> When workspace-level config files exist at <code>.continue/mcpServers/*.yaml</code>, Continue will: 1. Auto-generate a minimal config from those files 2. OVERWRITE the global <code>~/.continue/config.yaml</code> 3. Remove all models and other settings not present in workspace config</p>
+<h2>The Problem</h2>
+<p>1. We had <code>.continue/mcpServers/udos.yaml</code> in the uCore workspace 2. This file only contained MCP server configuration (no models) 3. Continue v2.0 kept regenerating global config from this file 4. Every reload would wipe out the model configurations</p>
+<h2>The Solution</h2>
+<h3>Step 1: Disable Workspace-Level Config</h3>
+<pre><code>cd /Users/fredbook/Code/uCore
+mv .continue/mcpServers/udos.yaml .continue/mcpServers/udos.yaml.bak</code></pre>
+<p>This prevents Continue from auto-generating configs from workspace files.</p>
+<h3>Step 2: Use Global Config Only</h3>
+<p>All configuration now lives in: <code>/Users/fredbook/.continue/config.yaml</code></p>
+<p>This includes:</p>
+<ul><li>✅ All 6 LLM models</li><li>✅ MCP servers (uCore)</li><li>✅ Context providers</li><li>✅ Rules</li></ul>
+<h2>Current Configuration</h2>
+<p><strong>Location:</strong> <code>/Users/fredbook/.continue/config.yaml</code> (63 lines)</p>
+<h3>Models (6 total)</h3>
+<p>1. DeepSeek Chat - <code>deepseek</code> provider 2. Mistral Large - <code>mistral</code> provider (API key needed) 3. OpenRouter DeepSeek - <code>openrouter</code> provider 4. Qwen 2.5 Coder 7B - <code>ollama</code> (local) 5. Qwen 2.5 1.5B - <code>ollama</code> (local) 6. Qwen 2.5 0.5B - <code>ollama</code> (local)</p>
+<h3>MCP Servers</h3>
+<ul><li>uCore - Python bridge to <code>http://localhost:8484</code></li></ul>
+<h2>Files Changed</h2>
+<p>| File | Status | Purpose | |------|--------|---------| | <code>/Users/fredbook/.continue/config.yaml</code> | ✅ RESTORED | Main config with all models | | <code>.continue/mcpServers/udos.yaml</code> | ⚠️ DISABLED | Renamed to <code>.bak</code> to prevent auto-generation | | <code>config.json.backup-*</code> | 📦 BACKUP | Original config backups |</p>
+<h2>Critical Lessons</h2>
+<h3>❌ DON'T DO THIS:</h3>
+<pre><code># .continue/mcpServers/somefile.yaml in workspace
+# This will cause Continue to overwrite global config!
+name: My MCP Server
+mcpServers:
+  - name: server
+    command: node</code></pre>
+<h3>✅ DO THIS INSTEAD:</h3>
+<p>Put <strong>everything</strong> (models + MCP + context + rules) in one place:</p>
+<pre><code># ~/.continue/config.yaml (global only)
+name: Continue Configuration
+version: 4.0.0
+schema: v1
+
+models:
+  - name: My Model
+    provider: ollama
+    model: qwen2.5:1.5b
+
+mcpServers:
+  - name: My Server
+    command: python</code></pre>
+<h2>How to Verify It's Working</h2>
+<h3>1. Check Config Size</h3>
+<pre><code>wc -l /Users/fredbook/.continue/config.yaml
+# Should show: 63 lines (not 9!)</code></pre>
+<h3>2. Check Models Present</h3>
+<pre><code>grep &quot;- name:&quot; /Users/fredbook/.continue/config.yaml | wc -l
+# Should show: 9+ (models, servers, context, rules)</code></pre>
+<h3>3. Restart VSCode</h3>
+<pre><code>Cmd+Shift+P → &quot;Developer: Reload Window&quot;</code></pre>
+<h3>4. Check Continue Sidebar</h3>
+<ul><li>Open Continue chat panel</li><li>Click model dropdown</li><li>Should see all 6 models listed</li></ul>
+<h2>If Models Still Don't Appear</h2>
+<h3>Check 1: Workspace Config Disabled</h3>
+<pre><code>ls -la /Users/fredbook/Code/uCore/.continue/mcpServers/
+# Should NOT see udos.yaml (only udos.yaml.bak)</code></pre>
+<h3>Check 2: Config Hasn't Been Overwritten</h3>
+<pre><code>cat /Users/fredbook/.continue/config.yaml | head -10
+# Should start with &quot;name: Continue Configuration&quot;
+# NOT &quot;name: uCore Config&quot;</code></pre>
+<h3>Check 3: Environment Variables</h3>
+<pre><code>echo &quot;OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:+SET}&quot;
+# Should show: SET</code></pre>
+<h3>Check 4: Ollama Running</h3>
+<pre><code>ollama list
+# Should show: qwen2.5-coder:7b, qwen2.5:1.5b, qwen2.5:0.5b</code></pre>
+<h2>Re-enabling Workspace Config (Advanced)</h2>
+<p>If you MUST use workspace-level config, include ALL settings in the workspace file:</p>
+<pre><code># .continue/mcpServers/complete.yaml
+name: uCore Workspace Config
+version: 4.0.0
+schema: v1
+
+models:
+  - name: Qwen 2.5 Coder 7B
+    provider: ollama
+    model: qwen2.5-coder:7b
+  # ... include ALL models you want
+
+mcpServers:
+  - name: uCore
+    command: python3
+    args: [/Users/fredbook/.continue/mcp-udos.py]
+
+# ... include context, rules, etc.</code></pre>
+<p>But this is <strong>NOT recommended</strong> - use global config instead.</p>
+<h2>Summary</h2>
+<p>✅ <strong>Root cause:</strong> Workspace MCP config file was forcing Continue to regenerate global config ✅ <strong>Fix:</strong> Disabled workspace config, use global config only ✅ <strong>Result:</strong> All 6 models now available, config stable ✅ <strong>To reload:</strong> <code>Cmd+Shift+P → Developer: Reload Window</code></p>
+<p>---</p>
+<p><strong>Last verified:</strong> 2026-06-21 11:02 AM <strong>Config file size:</strong> 63 lines <strong>Models configured:</strong> 6 <strong>MCP servers:</strong> 1 (uCore)</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>legacy/mcp-archive/HANDOVER_SURFACE_RESTRUCTURE_CLINE_DEVAGENT.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / legacy/mcp-archive/HANDOVER_SURFACE_RESTRUCTURE_CLINE_DEVAGENT.md</span></header><main class="site-main"><h1>Surface Restructuring Recommendation</h1>
+<p>Date: 2026-06-23 Audience: Cline and DevAgent Status: Live surface assessment and recommended restructuring</p>
+<h2>Goal</h2>
+<p>Reduce overlap and role confusion across:</p>
+<ul><li>Developer Surface</li><li>Server Surface</li><li>System Tools Surface</li></ul>
+<p>The current system works, but ownership boundaries are blurred. Several tabs are duplicated conceptually, and some tasks appear in the wrong operational home.</p>
+<h2>Current Live Surface Roles</h2>
+<h2>Developer Surface</h2>
+<p>Live file:</p>
+<ul><li><code>/Users/fredbook/Code/uCore/frontend/src/surfaces/developer/DeveloperSurface.tsx</code></li></ul>
+<p>Current tabs:</p>
+<ul><li>models</li><li>agents</li><li>kanban</li><li>tasks</li><li>repos</li><li>skills</li><li>review</li><li>workflows</li><li>benchbench</li><li>creative</li><li>agents-old</li><li>settings</li></ul>
+<p>Actual theme:</p>
+<ul><li>code work</li><li>AI/model management for development</li><li>repo browsing and review</li><li>dev workflow visibility</li></ul>
+<h2>Server Surface</h2>
+<p>Live file:</p>
+<ul><li><code>/Users/fredbook/Code/uCore/frontend/src/surfaces/userver/UServerSurface.tsx</code></li></ul>
+<p>Current tabs:</p>
+<ul><li>dashboard</li><li>ingest</li><li>missions</li><li>story</li><li>pages</li><li>tools</li><li>secrets</li><li>settings</li><li>services</li><li>logs</li><li>workflows</li><li>budget</li><li>agents</li><li>snacks</li></ul>
+<p>Actual theme:</p>
+<ul><li>runtime operations</li><li>service health</li><li>secrets and budget</li><li>some workflow visibility</li><li>but also mixed-in system pages, tools, and agent controls</li></ul>
+<h2>System Tools Surface</h2>
+<p>Live file:</p>
+<ul><li><code>/Users/fredbook/Code/uCore/frontend/src/surfaces/systemtools/SystemToolsSurface.tsx</code></li></ul>
+<p>Current tabs:</p>
+<ul><li>pages</li><li>tools</li><li>settings</li></ul>
+<p>Actual theme:</p>
+<ul><li>S100-S899 system page browser</li><li>administrative tool registry</li><li>generic settings panel</li></ul>
+<h2>Overlap Findings</h2>
+<h2>1. Workflows are split across Server and Developer</h2>
+<p>Current state:</p>
+<ul><li>Developer has <code>kanban</code>, <code>tasks</code>, and <code>workflows</code></li><li>Server has <code>workflows</code></li><li>docs already say durable task state belongs in <code>.tasker/</code> and workflow visibility belongs to local orchestration, not a heavy duplicate UI first</li></ul>
+<p>Problem:</p>
+<ul><li>Developer and Server are both presenting workflow-like concepts, but for different reasons and without clear naming.</li><li>This makes it easy to put dev tasks in the ops surface and automation runs in the dev surface.</li></ul>
+<p>Recommendation:</p>
+<ul><li>Developer owns <strong>Dev Flow</strong></li><li><code>kanban</code></li><li><code>tasks</code></li><li>dev-oriented workflow runs</li><li>Server owns <strong>Automation Ops</strong></li><li>scheduled workflows</li><li>runtime job history</li><li>maintenance chains</li></ul>
+<p>Rename to remove ambiguity:</p>
+<ul><li>Developer <code>workflows</code> -> <code>dev-flow</code> or <code>runs</code></li><li>Server <code>workflows</code> -> <code>automation</code></li></ul>
+<h2>2. Agents are split across Server and Developer</h2>
+<p>Current state:</p>
+<ul><li>Developer has <code>agents</code>, <code>agents-old</code>, and <code>models</code></li><li>Server has <code>agents</code></li></ul>
+<p>Problem:</p>
+<ul><li>There are two different meanings of “agents”:</li><li>development/specialized coding agents</li><li>runtime/server automation agents</li><li>They are currently using the same term in two different surfaces.</li></ul>
+<p>Recommendation:</p>
+<ul><li>Developer owns <strong>Dev Agents</strong></li><li>specialized coding agents</li><li>models</li><li>routing strategies</li><li>benchmarks</li><li>Server owns <strong>Runtime Agents</strong></li><li>operational agents</li><li>queue workers</li><li>background automation participants</li></ul>
+<p>Rename tabs explicitly:</p>
+<ul><li>Developer <code>agents</code> -> <code>Dev Agents</code></li><li>Developer <code>agents-old</code> -> remove after migration or rename <code>Legacy Router</code></li><li>Server <code>agents</code> -> <code>Runtime Agents</code></li></ul>
+<h2>3. Settings are duplicated without scope boundaries</h2>
+<p>Current state:</p>
+<ul><li>Developer has <code>settings</code></li><li>Server has <code>settings</code></li><li>System Tools has <code>settings</code></li></ul>
+<p>Problem:</p>
+<ul><li>Settings appear in three places, but there is no explicit distinction between:</li><li>developer preferences</li><li>server/runtime settings</li><li>generic system tool settings</li></ul>
+<p>Recommendation:</p>
+<ul><li>Developer settings: dev-only</li><li>model defaults</li><li>agent behavior</li><li>review preferences</li><li>repo tooling</li><li>Server settings: ops/runtime</li><li>service behavior</li><li>ingest/automation parameters</li><li>health/reload controls</li><li>System Tools settings: shared/admin</li><li>global tool/page configuration</li><li>route-level admin preferences</li></ul>
+<p>If a setting is shared and global, it should not live primarily on Developer.</p>
+<h2>4. System Pages and Tools are duplicated across Server and System Tools</h2>
+<p>Current state:</p>
+<ul><li>Server includes <code>pages</code> and <code>tools</code></li><li>System Tools already exists specifically for <code>pages</code>, <code>tools</code>, and <code>settings</code></li></ul>
+<p>Problem:</p>
+<ul><li>Server embeds a second home for System Tools.</li><li>This makes the first-class System Tools surface redundant and teaches users two places to look.</li></ul>
+<p>Recommendation:</p>
+<ul><li>System Tools becomes the only canonical home for:</li><li><code>pages</code></li><li><code>tools</code></li><li>generic admin settings</li><li>Server should stop embedding those tabs directly.</li></ul>
+<p>Preferred replacement inside Server:</p>
+<ul><li>a single shortcut card or link: <code>Open System Tools</code></li></ul>
+<h2>5. Mission/Story content in Server is mismatched</h2>
+<p>Current state:</p>
+<ul><li>Server has <code>missions</code> and <code>story</code></li></ul>
+<p>Problem:</p>
+<ul><li>These are not pure server operations concepts.</li><li>They are content- and workflow-adjacent surfaces mixed into an infrastructure hub.</li></ul>
+<p>Recommendation:</p>
+<ul><li><code>missions</code> should move toward Mission Control or a dedicated planning/ops bridge view.</li><li><code>story</code> should move toward System Tools or Documentation/Story tooling, depending on whether it is page-based or content-authoring.</li></ul>
+<p>Short-term compromise:</p>
+<ul><li>keep routes alive for compatibility</li><li>remove them from primary Server nav once destination surfaces are ready</li></ul>
+<h2>6. Developer Surface is carrying “creative” without a clear home</h2>
+<p>Problem:</p>
+<ul><li><code>creative</code> feels more like a lab or content/design lane than core developer workflow.</li></ul>
+<p>Recommendation:</p>
+<ul><li>either reframe it as <code>Labs</code></li><li>or move it behind System Tools or a dedicated creative surface later</li></ul>
+<p>It should not sit at the same information-architecture level as repos, review, and tasks unless it is clearly part of dev workflow.</p>
+<h2>Recommended Canonical Ownership Model</h2>
+<h2>Developer Surface = Build Lane</h2>
+<p>Owns:</p>
+<ul><li>repos</li><li>review</li><li>skills</li><li>models</li><li>dev agents</li><li>kanban</li><li>tasks</li><li>dev flow / run history</li><li>benchmarks</li><li>dev-only settings</li></ul>
+<p>Does not own:</p>
+<ul><li>service health</li><li>logs</li><li>secrets</li><li>global settings</li><li>system pages registry</li></ul>
+<h2>Server Surface = Runtime Ops Lane</h2>
+<p>Owns:</p>
+<ul><li>dashboard</li><li>services</li><li>logs</li><li>secrets</li><li>budget</li><li>ingest</li><li>runtime agents</li><li>automation workflows</li><li>snacks</li><li>server/runtime settings</li></ul>
+<p>Should not own directly:</p>
+<ul><li>system pages browser</li><li>generic tools browser</li><li>dev tasks / kanban</li><li>repo review</li></ul>
+<h2>System Tools Surface = Admin Registry Lane</h2>
+<p>Owns:</p>
+<ul><li>pages</li><li>tools</li><li>shared admin settings</li><li>system page discovery and launch</li></ul>
+<p>Should be the one canonical home for S100-S899 browsing.</p>
+<h2>Proposed Streamlined Navigation</h2>
+<h2>Developer</h2>
+<ul><li>Dev Flow</li><li>Tasks</li><li>Repos</li><li>Review</li><li>Skills</li><li>Models</li><li>Dev Agents</li><li>Bench</li><li>Settings</li></ul>
+<h2>Server</h2>
+<ul><li>Dashboard</li><li>Services</li><li>Logs</li><li>Secrets</li><li>Budget</li><li>Ingest</li><li>Automation</li><li>Runtime Agents</li><li>Snacks</li><li>Settings</li><li>Open System Tools</li></ul>
+<h2>System Tools</h2>
+<ul><li>Pages</li><li>Tools</li><li>Settings</li></ul>
+<h2>Migration Strategy</h2>
+<h2>Phase 1: Naming and de-duplication</h2>
+<p>1. Rename ambiguous tabs</p>
+<p>2. Document canonical ownership in code comments and handover docs.</p>
+<ul><li>Server <code>workflows</code> -> <code>automation</code></li><li>Server <code>agents</code> -> <code>runtime-agents</code></li><li>Developer <code>agents-old</code> -> <code>legacy-router</code></li></ul>
+<h2>Phase 2: Remove duplicated nav homes</h2>
+<p>1. Remove <code>pages</code> and <code>tools</code> from Server nav. 2. Replace with a shortcut to System Tools. 3. Keep route compatibility redirects while the nav settles.</p>
+<h2>Phase 3: Separate workflow meanings</h2>
+<p>1. Keep <code>.tasker/</code> and Kanban under Developer. 2. Keep maintenance and scheduled workflow execution under Server. 3. Point both at a shared backend status model where useful, but do not present them as the same surface concept.</p>
+<h2>Phase 4: Relocate mismatched content tabs</h2>
+<p>1. Re-home <code>missions</code> and <code>story</code> out of Server nav if they are not fundamentally operational. 2. Move creative/lab content out of the primary developer stack if it remains separate from code execution.</p>
+<h2>DevAgent Configuration Assessment</h2>
+<p>Checked file:</p>
+<ul><li><code>/Users/fredbook/Code/uCore/backend/config/agents.yaml</code></li></ul>
+<h2>Current outcome</h2>
+<p>The config can handle this work after the latest capability update.</p>
+<h3>Architect agent</h3>
+<p>Now explicitly suited for the planning pass:</p>
+<ul><li>capabilities include <code>information-architecture</code> and <code>surface-taxonomy</code></li></ul>
+<p>Best use:</p>
+<ul><li>define canonical ownership boundaries</li><li>decide where tabs should move</li><li>design migration order and compatibility plan</li></ul>
+<h3>Dev agent</h3>
+<p>Now explicitly suited for implementation:</p>
+<ul><li>capabilities include <code>frontend</code>, <code>integration</code>, <code>surface-refactor</code>, <code>workflow-ui</code></li></ul>
+<p>Best use:</p>
+<ul><li>rename tabs</li><li>move panels/routes</li><li>simplify nav</li><li>preserve compatibility redirects</li><li>update UI components and tests</li></ul>
+<h3>Reviewer agent</h3>
+<p>Use after migration:</p>
+<ul><li>regression audit</li><li>overlap check</li><li>naming consistency pass</li></ul>
+<h2>Recommendation for agent usage</h2>
+<p>Do not assign the entire restructure to DevAgent alone.</p>
+<p>Best split: 1. Architect defines the target taxonomy. 2. DevAgent performs the actual surface refactor. 3. Reviewer verifies regressions and ownership drift.</p>
+<p>So: DevAgent can handle the implementation work, but it should not be the only agent deciding the IA.</p>
+<h2>Recommended First Execution Slice</h2>
+<p>The first safe refactor slice is:</p>
+<p>1. rename Server <code>workflows</code> -> <code>automation</code> 2. rename Server <code>agents</code> -> <code>runtime agents</code> 3. remove Server <code>pages</code> and <code>tools</code> from primary nav 4. add <code>Open System Tools</code> link/card in Server instead 5. rename Developer <code>agents-old</code> -> <code>legacy router</code></p>
+<p>This gives immediate clarity without moving the more sensitive mission/story/dev-flow boundaries yet.</p>
+<h2>One-line Summary</h2>
+<p>Developer should own build workflow and coding agents, Server should own runtime operations and automation, and System Tools should be the only home for the page/tool registry. The current DevAgent config is now strong enough to implement that refactor, but Architect should define the target taxonomy first.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

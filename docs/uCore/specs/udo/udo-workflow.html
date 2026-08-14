@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/udo/udo-workflow.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / specs/udo/udo-workflow.md</span></header><main class="site-main"><p>--- title: "UDO Workflow Specification — v1.0" status: draft last_updated: 2026-05-17T22:11:35+10:00 category: specification tags: [cli, specification, ucode1, udo] description: "> <strong>Workflow kind — multi-step process definitions.</strong> Migrated from OBF v1.0 Workflow kind." ---</p>
+<h1>UDO Workflow Specification — v1.0</h1>
+<blockquote><strong>Workflow kind — multi-step process definitions.</strong> Migrated from OBF v1.0 Workflow kind.</blockquote>
+<h2>Overview</h2>
+<p>A <strong>Workflow</strong> is a multi-step process that orchestrates skills, tasks, agents, and publishing into a cohesive pipeline. Workflows can branch, loop, wait for conditions, and manage state across steps.</p>
+<h2>Schema</h2>
+<pre><code>udo: 1.0
+kind: Workflow
+id: workflow.deploy-prod
+name: Deploy to Production
+description: Full production deployment pipeline
+version: 1.0.0
+triggers:
+  - event: workflow.completed
+    source: workflow.ci-passed
+  - event: manual
+    role: deployer
+steps:
+  - id: build
+    name: Build Artifacts
+    skill: skill.build-package
+    inputs:
+      source_dir: ./src
+      output_dir: ./dist
+  - id: test
+    name: Run Tests
+    skill: skill.run-tests
+    depends_on: [build]
+  - id: security-scan
+    name: Security Scan
+    skill: skill.security-scan
+    depends_on: [build]
+  - id: approve
+    name: Approval Gate
+    type: manual
+    depends_on: [test, security-scan]
+    assignee: team-lead
+  - id: deploy
+    name: Deploy to Production
+    skill: skill.deploy
+    inputs:
+      environment: production
+      artifacts: &quot;{{steps.build.outputs.artifacts}}&quot;
+    depends_on: [approve]
+  - id: verify
+    name: Verify Deployment
+    skill: skill.health-check
+    inputs:
+      endpoint: https://app.example.com/health
+    depends_on: [deploy]
+    timeout: 5m
+    retry:
+      attempts: 3
+      delay: 10s
+on_success:
+  - notify:
+      channel: slack
+      message: &quot;✅ Deployment {{workflow.id}} completed successfully&quot;
+on_failure:
+  - notify:
+      channel: slack
+      message: &quot;❌ Deployment {{workflow.id}} failed at step {{failed_step.id}}&quot;
+  - rollback:
+      skill: skill.rollback
+      inputs:
+        deployment_id: &quot;{{steps.deploy.outputs.deployment_id}}&quot;
+tags: [deploy, production, critical]</code></pre>
+<h2>Fields</h2>
+<p>| Field | Type | Required | Description | |-------|------|----------|-------------| | <code>triggers</code> | Trigger[] | No | Events that start the workflow | | <code>steps</code> | WorkflowStep[] | Yes | Ordered execution steps | | <code>on_success</code> | Action[] | No | Actions on successful completion | | <code>on_failure</code> | Action[] | No | Actions on failure | | <code>timeout</code> | duration | No | Maximum workflow execution time | | <code>concurrency</code> | int | No | Max concurrent step executions |</p>
+<h2>Step Types</h2>
+<p>| Step Type | Description | |-----------|-------------| | <code>skill</code> | Execute a UDO Skill | | <code>manual</code> | Wait for human approval/input | | <code>subworkflow</code> | Execute another workflow | | <code>parallel</code> | Run steps in parallel | | <code>foreach</code> | Iterate over a list | | <code>switch</code> | Conditional branching | | <code>wait</code> | Pause for duration or condition |</p>
+<h2>Parallel Execution</h2>
+<pre><code>- id: parallel-checks
+  type: parallel
+  steps:
+    - id: lint
+      skill: skill.lint
+    - id: test
+      skill: skill.test
+    - id: security
+      skill: skill.security-scan</code></pre>
+<h2>Conditional Branching</h2>
+<pre><code>- id: deploy-env
+  type: switch
+  condition: &quot;{{workflow.inputs.environment}}&quot;
+  cases:
+    production:
+      skill: skill.deploy-prod
+    staging:
+      skill: skill.deploy-staging
+    development:
+      skill: skill.deploy-dev
+  default:
+    skill: skill.deploy-dev</code></pre>
+<h2>State Management</h2>
+<p>Workflows maintain state across steps:</p>
+<pre><code>- id: save-state
+  skill: skill.save-artifact
+  inputs:
+    data: &quot;{{steps.build.outputs}}&quot;
+    key: &quot;build-{{workflow.id}}&quot;</code></pre>
+<p>Available context variables:</p>
+<ul><li><code>{{workflow.id}}</code> — Workflow instance ID</li><li><code>{{workflow.inputs.*}}</code> — Workflow input parameters</li><li><code>{{steps.<id>.outputs.*}}</code> — Step output values</li><li><code>{{steps.<id>.status}}</code> — Step completion status</li><li><code>{{failed_step.id}}</code> — ID of the failed step (in on_failure)</li></ul>
+<h2>See Also</h2>
+<ul><li><a href="udo-core.md">udo-core.md</a> — Core format</li><li><a href="udo-skill.md">udo-skill.md</a> — Skills invoked by workflow steps</li><li><a href="udo-agent.md">udo-agent.md</a> — Agents triggered by workflows</li><li><a href="udo-publish.md">udo-publish.md</a> — Publishing pipelines as workflows</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

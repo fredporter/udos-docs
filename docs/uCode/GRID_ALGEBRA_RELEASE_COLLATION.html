@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>GRID_ALGEBRA_RELEASE_COLLATION.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / GRID_ALGEBRA_RELEASE_COLLATION.md</span></header><main class="site-main"><h1>Grid Algebra Release Collation (v2.0 -> v2.1)</h1>
+<p>Date: 2026-06-22 Status: Locked architecture translated to package scaffolds</p>
+<h2>Scope</h2>
+<p>This collates the live Grid Algebra implementation points from uCore and maps them to the new uCode packages:</p>
+<ul><li>@udos/gridcore</li><li>@udos/viewport-renderer</li></ul>
+<h2>Source Index (uCore)</h2>
+<p>1. frontend/src/surfaces/gridui/grid-algebra/GridCell.ts</p>
+<ul><li>Cell shape and GridBuffer creation</li><li>Buffer dimension utilities</li></ul>
+<p>2. frontend/src/surfaces/gridui/grid-algebra/GridTransform.ts</p>
+<ul><li>Pure transforms: resize, overlay, scroll, crop, merge, fill, writeString</li></ul>
+<p>3. frontend/src/surfaces/gridui/grid-algebra/SpatialCodec.ts</p>
+<ul><li>uCode <-> lat/lon conversion (Web Mercator)</li><li>zoom-level cell size and navigation helpers</li></ul>
+<p>4. frontend/src/surfaces/gridui/grid-algebra/TeletextPage.ts</p>
+<ul><li>Teletext page store and page construction patterns</li></ul>
+<p>5. frontend/src/surfaces/gridui/panels/GridBufferRenderer.tsx</p>
+<ul><li>DOM grid rendering path and font/color application</li></ul>
+<p>6. frontend/src/surfaces/gridui/GridUIStore.ts</p>
+<ul><li>Viewport settings and border mode behavior</li></ul>
+<p>7. docs/DOCLANG_BRIDGE_EXPORT_SPEC.md</p>
+<ul><li>Spatial fields alignment: ucode, layer, zoom_level</li></ul>
+<h2>Legacy Archive Scan Status</h2>
+<p>The following requested archive roots were not found on this machine during implementation:</p>
+<ul><li>/Users/fredbook/Code/uCode1</li><li>/Users/fredbook/Code/UniversalSketchSVG</li><li>/Users/fredbook/Code/ThinUI</li></ul>
+<p>To avoid blocking the release track, collation used live uCore implementations and existing in-repo specs as source-of-truth inputs.</p>
+<h2>Package Mapping</h2>
+<h3>@udos/gridcore</h3>
+<p>Implemented in uCode/packages/gridcore:</p>
+<ul><li>src/geometry/cell.ts</li><li>src/geometry/grid.ts</li><li>src/geometry/layer.ts</li><li>src/geometry/cube.ts</li><li>src/coordinates/uCode.ts</li><li>src/coordinates/latLon.ts</li><li>src/viewport/calculator.ts</li><li>src/teletext/mosaic.ts</li><li>src/teletext/block2x3.ts</li></ul>
+<p>Current state:</p>
+<ul><li>Pure TypeScript math/data package scaffold</li><li>No rendering dependency</li><li>Includes smoke tests for grid creation, uCode conversions, and viewport sizing</li></ul>
+<h3>@udos/viewport-renderer</h3>
+<p>Implemented in uCode/packages/viewport-renderer:</p>
+<ul><li>src/core/ViewportWidget.ts</li><li>src/core/widgets.ts (TerminalWidget, TeletextWidget)</li><li>src/canvas/CanvasViewport.ts</li><li>src/dom/DOMViewport.ts</li><li>src/fonts/petme64.ts</li><li>src/fonts/teletext50.ts</li><li>src/palette/usx.ts</li><li>src/effects/crt.ts</li><li>src/animation/sprite.ts</li><li>src/animation/bob.ts</li></ul>
+<p>Current state:</p>
+<ul><li>Embeddable renderer scaffold wired to @udos/gridcore</li><li>DOM and Canvas rendering classes in place</li><li>Widget wrappers for wrapper-only GridUI migration path</li></ul>
+<h2>Locked Decisions Preserved</h2>
+<p>1. Separation of concerns</p>
+<ul><li>Algebra and coordinate logic isolated in gridcore.</li><li>Rendering concerns isolated in viewport-renderer.</li></ul>
+<p>2. Wrapper-only GridUI direction</p>
+<ul><li>Terminal and Teletext represented as widget instances.</li><li>Border modes remain surface-level controls.</li></ul>
+<p>3. Packaging</p>
+<ul><li>Both packages scaffolded for ESM + CJS via tsup.</li><li>npm workspace created at uCode/package.json with packages/*.</li></ul>
+<h2>Known Gaps Before Publish</h2>
+<p>1. gridcore parity gaps</p>
+<ul><li>Existing uCore transform helpers (resize/overlay/scroll/etc.) are not yet fully ported into the new package namespace.</li></ul>
+<p>2. renderer hardening gaps</p>
+<ul><li>Canvas code currently browser-canvas-first; node-canvas server rendering path should be finalized.</li><li>Font loading pipeline and glyph metrics calibration still pending.</li></ul>
+<p>3. compatibility/migration gaps</p>
+<ul><li>uCore GridUI is not yet switched to consume published @udos packages.</li><li>Migration guide and integration tests still required.</li></ul>
+<h2>Next Release Actions</h2>
+<p>1. Port remaining transforms from GridTransform.ts into @udos/gridcore. 2. Add viewport snapshot tests (Terminal and Teletext fixture grids). 3. Add node-canvas rendering path and PNG baseline tests. 4. Wire uCore GridUI to import package builds rather than local grid-algebra files. 5. Publish @udos/gridcore and @udos/viewport-renderer at 1.0.0.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

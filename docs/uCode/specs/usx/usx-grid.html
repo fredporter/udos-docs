@@ -1,0 +1,80 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/usx/usx-grid.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / specs/usx/usx-grid.md</span></header><main class="site-main"><p>--- title: "USX Grid Specification — v1.0" status: draft last_updated: 2026-05-17T22:11:35+10:00 category: specification tags: [grid, specification, surface, ucode1, ui, usx] description: "> <strong>Grid system, teletext cells, pixel/QR maths, and display sizes.</strong> Merged from grid-spec.md, grid-cell-cube-maths...." ---</p>
+<h1>USX Grid Specification — v1.0</h1>
+<blockquote><strong>Grid system, teletext cells, pixel/QR maths, and display sizes.</strong> Merged from grid-spec.md, grid-cell-cube-maths.md, and display-sizes.md.</blockquote>
+<h2>Overview</h2>
+<p>USX defines two complementary grid models:</p>
+<p>1. <strong>Text / Teletext cell</strong> — <strong>2×6 characters</strong> per cell for terminal rendering 2. <strong>Pixel / QR storage cell</strong> — <strong>24×24 px</strong> default for display and data storage</p>
+<h2>Text Grid (Teletext)</h2>
+<p>| Property | Value | |----------|-------| | <strong>Name</strong> | Teletext Grid | | <strong>Cell size</strong> | <strong>2×6</strong> characters (width × height) | | <strong>Default display</strong> | <strong>12×12</strong> cells | | <strong>Total cells (default)</strong> | <strong>144</strong> per screen | | <strong>Character set</strong> | ASCII + block glyphs (e.g. <code>█ ░ ▒ ▓ ■ □</code>) |</p>
+<h3>Coordinates</h3>
+<ul><li>Cells addressed <strong>(0,0)</strong> through <strong>(11,11)</strong> for a 12×12 grid</li><li><strong>uTile</strong> = one <strong>2×6</strong> cell region (e.g. for QR or storage layout)</li><li>Logical model: <code>grid[x][y]</code> with origin top-left unless a renderer specifies otherwise</li></ul>
+<h3>Display Modes</h3>
+<p>| Mode | Description | |------|-------------| | <strong>mono</strong> | Black background, green text (<code>#00FF00</code>) | | <strong>teletext</strong> | Black background, coloured blocks (Teletext palette) | | <strong>wireframe</strong> | White background, black text |</p>
+<h3>Example</h3>
+<pre><code>[0,0]█ [0,1]█ [0,2]█ [0,3]█ [0,4]█ [0,5]█
+[1,0]█ [1,1]░ [1,2]░ [1,3]░ [1,4]░ [1,5]█
+[2,0]█ [2,1]░ [2,2]▒ [2,3]▒ [2,4]░ [2,5]█
+[3,0]█ [3,1]░ [3,2]▒ [3,3]▒ [3,4]░ [3,5]█
+[4,0]█ [4,1]░ [4,2]░ [4,3]░ [4,4]░ [4,5]█
+[5,0]█ [5,1]█ [5,2]█ [5,3]█ [5,4]█ [5,5]█</code></pre>
+<h2>Pixel/QR Grid</h2>
+<h3>Standard 24 (Default Cell)</h3>
+<p>| Quantity | Value | |----------|-------| | <strong>Cell size</strong> | <strong>24×24 pixels</strong> | | <strong>QR module</strong> | <strong>8×8 pixels</strong> | | <strong>QR grid per cell</strong> | <strong>3×3</strong> QR (nine positions) | | <strong>QR per cell</strong> | <strong>9</strong> | | <strong>Storage per cell</strong> | 9 × 5,000 = <strong>45,000 characters (45KB)</strong> |</p>
+<p>Layout: <strong>3 QR across × 3 QR down</strong> inside one 24×24 pixel cell.</p>
+<h3>Cube (Logical Stack)</h3>
+<p>| Quantity | Value | |----------|-------| | <strong>Cells stacked (depth)</strong> | <strong>6</strong> | | <strong>Total QR</strong> | 6 × 9 = <strong>54</strong> | | <strong>Storage per cube</strong> | 54 × 5,000 = <strong>270,000 characters (270KB)</strong> |</p>
+<h3>Physical Cube (Bricks)</h3>
+<p>| Quantity | Value | |----------|-------| | <strong>Brick lattice</strong> | <strong>6×6×6</strong> | | <strong>Total bricks</strong> | <strong>216</strong> | | <strong>Bricks per QR</strong> | 216 ÷ 54 = <strong>4</strong> | | <strong>Cluster</strong> | <strong>2×2</strong> bricks per QR | | <strong>Storage per brick</strong> | 5,000 ÷ 4 = <strong>1,250 characters</strong> |</p>
+<h3>Grid Size Variants</h3>
+<p>| Name | Cell (px) | QR grid | QR / cell | Storage / cell | Typical use | |------|-----------|---------|-----------|----------------|-------------| | <strong>Retro 16</strong> | 16×16 | 2×2 | 4 | <strong>20KB</strong> | Tiny displays, watches | | <strong>Standard 24</strong> | 24×24 | 3×3 | 9 | <strong>45KB</strong> | Default, phones | | <strong>Console 32</strong> | 32×32 | 4×4 | 16 | <strong>80KB</strong> | Tablets, terminals | | <strong>HD 64</strong> | 64×64 | 8×8 | 64 | <strong>320KB</strong> | Desktop, monitors | | <strong>HDD 128</strong> | 128×128 | 16×16 | 256 | <strong>1.28MB</strong> | Large displays, kiosks |</p>
+<p><strong>Default:</strong> <strong>Standard 24</strong> — balance of <strong>45KB/cell</strong> clarity and density.</p>
+<h3>Visual Reference (Standard 24)</h3>
+<pre><code>Standard cell (24×24 px, 3×3 QR grid):
+
+┌────────────────────────┐
+│  ┌────┬────┬────┐      │   each small box = one 8×8 QR module
+│  │ QR │ QR │ QR │      │   QR indices 00–08
+│  ├────┼────┼────┤      │
+│  │ QR │ QR │ QR │      │
+│  ├────┼────┼────┤      │
+│  │ QR │ QR │ QR │      │
+│  └────┴────┴────┘      │
+│  9 QR  |  45KB/cell    │
+└────────────────────────┘
+
+Physical cube (6×6×6 = 216 bricks):
+
+     ┌─────┐  Layer 5  (36 bricks)
+     ├─────┤  Layer 4
+     ├─────┤  Layer 3
+     ├─────┤  Layer 2
+     ├─────┤  Layer 1
+     └─────┘  Layer 0
+
+1 brick  ≈ 1,250 chars  
+4 bricks (2×2) ≈ 1 QR (5,000 chars)  
+9 QR ≈ 1 cell (45KB)  
+6 cells ≈ 1 logical cube (270KB)</code></pre>
+<h2>Spatial Hierarchy</h2>
+<pre><code>Pixel (24×24 px) ──┐
+QR Code (5KB) ─────┼──► Cell (24×24 px, 45KB storage, 36 bricks)
+Physical Brick ────┘
+FCELL (flexible width, 24px height) ──► Cell (for prose/teletext)
+Cell × 6 (stacked) = Cube (display, storage, physical)
+Rows × Columns of Cells → Grid
+Single Z-plane (0-5) → Layer
+Named world, multiple Layers → Map</code></pre>
+<h2>Coordinate Format</h2>
+<pre><code>L{level}-{gridX}{gridY}-{cellX}{cellY}-{layer}
+
+Example: L100-AA10-0317-2
+  level=100, grid=AA10, cell=0317, layer=2</code></pre>
+<h2>Display Profiles</h2>
+<h3>Text-Terminal Profiles</h3>
+<p>| Profile | Width | Height | Grid (cells) | Cell size | |---------|-------|--------|-------------|-----------| | <strong>terminal</strong> | 80 columns | 24 rows | 12×12 | 2×6 chars | | <strong>mobile</strong> | 40 columns (scaled) | 12 rows (scaled) | 6×6 | 2×6 chars (scaled) | | <strong>desktop</strong> | 120 columns | 36 rows | 18×18 | 2×6 chars |</p>
+<h3>Pixel/QR Cell Variants</h3>
+<p>| Name | Cell (px) | Storage/cell | Notes | |------|-----------|-------------|-------| | <strong>Retro 16</strong> | 16×16 | 20KB | Tiny / watch | | <strong>Standard 24</strong> | 24×24 | <strong>45KB</strong> (default) | Phones | | <strong>Console 32</strong> | 32×32 | 80KB | Tablets | | <strong>HD 64</strong> | 64×64 | 320KB | Desktop | | <strong>HDD 128</strong> | 128×128 | 1.28MB | Kiosks |</p>
+<h2>Conventions</h2>
+<ul><li><strong>Character capacity</strong> is stated in <strong>decimal</strong> (e.g. 45,000 characters ≈ <strong>45KB</strong> when 1 "KB" = 1,000 characters for human-readable storage labels)</li><li><strong>QR module</strong> size on the pixel grid: <strong>8×8 pixels</strong> per small QR "tile"</li><li><strong>Storage per QR:</strong> <strong>5,000 characters</strong> (locked constant for uDos QR payload planning)</li></ul>
+<h2>See Also</h2>
+<ul><li><a href="usx-core.md">usx-core.md</a> — Core format and fence types</li><li><a href="usx-ui.md">usx-ui.md</a> — UI components and authoring blocks</li><li><a href="usx-style.md">usx-style.md</a> — Style tokens and themes</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

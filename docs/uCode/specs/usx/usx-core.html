@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/usx/usx-core.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / specs/usx/usx-core.md</span></header><main class="site-main"><p>--- title: "USX Core Specification — v1.0" status: draft last_updated: 2026-05-17T22:11:35+10:00 category: specification tags: [specification, surface, ucode1, usx] description: "> <strong>The style/design/surface format for the uDos ecosystem.</strong> Merged from OBF (Open Box Format) and USXD (Universal S..." ---</p>
+<h1>USX Core Specification — v1.0</h1>
+<blockquote><strong>The style/design/surface format for the uDos ecosystem.</strong> Merged from OBF (Open Box Format) and USXD (Universal Surface Definition).</blockquote>
+<h2>Core Principle</h2>
+<p><strong>Everything is text in a fenced code block.</strong> No proprietary canvas, no binary source, no lock-in.</p>
+<p>If it is not in a text code block, it is not USX.</p>
+<h2>Document Structure</h2>
+<p>Every USX document is a self-describing block with a defined kind, identity, and structure.</p>
+<h3>Fence Syntax</h3>
+<pre><code></code></pre>
+<h1>USX document content</h1>
+<pre><code></code></pre>
+<h3>Required Fields</h3>
+<pre><code>usx: 1.0                    # USX version (required)
+kind: Style                  # Document kind (required)
+id: style.udos-wireframe     # Unique identifier (required)
+name: uDos Wireframe         # Human-readable name (optional)
+description: ...             # Description (optional)
+version: 1.0.0               # Semantic version (optional)
+tags: [wireframe]            # Discovery tags (optional)</code></pre>
+<h3>Common Fields</h3>
+<p>| Field | Type | Required | Description | |-------|------|----------|-------------| | <code>usx</code> | string | Yes | USX format version | | <code>kind</code> | string | Yes | Document kind | | <code>id</code> | string | Yes | Unique identifier (dot-separated) | | <code>name</code> | string | No | Human-readable name | | <code>description</code> | string | No | Description | | <code>version</code> | string | No | Semantic version | | <code>tags</code> | string[] | No | Discovery tags | | <code>metadata</code> | object | No | Arbitrary key-value metadata |</p>
+<h2>Kinds</h2>
+<p>USX defines these surface/design kinds:</p>
+<p>| Kind | Spec | Description | |------|------|-------------| | <code>UI</code> | <a href="usx-ui.md">usx-ui.md</a> | UI component definitions | | <code>Style</code> | <a href="usx-style.md">usx-style.md</a> | Named theme/style tokens | | <code>Grid</code> | <a href="usx-grid.md">usx-grid.md</a> | Cell grid layouts | | <code>Surface</code> | <a href="usx-surface.md">usx-surface.md</a> | Surface definitions | | <code>Story</code> | <a href="usx-surface.md">usx-surface.md</a> | Story/narrative surfaces |</p>
+<p>For system-layer kinds (Skill, Task, Variable, Agent, Workflow, Publish, Meta), see the <a href="../udo/">UDO specification</a>.</p>
+<h2>Fence Types</h2>
+<p>| Fence | Kind | Purpose | |-------|------|---------| | <code> </code>`<code>usx </code> | Any | USX document (any surface kind) | | <code> </code>`<code>usx-ui </code> | UI | Component definitions: <code>COMPONENT</code>, <code>STYLE</code>, <code>VARIANTS</code> | | <code> </code>`<code>usx-style </code> | Style | Named theme: colours, typography, spacing | | <code> </code>`<code>usx-grid </code> | Grid | Cell grid: attributes <code>size</code>, <code>mode</code>, cell addresses | | <code> </code>`<code>usx-surface </code> | Surface | Surface definition | | <code> </code>`<code>usx-story </code> | Story | Narrative surface with step progression | | <code> </code>`<code>usx-template </code> | — | Markdown-first boilerplate |</p>
+<h2>ID Convention</h2>
+<p>IDs use dot-separated namespacing:</p>
+<pre><code>&lt;domain&gt;.&lt;group&gt;.&lt;name&gt;</code></pre>
+<p>Examples:</p>
+<ul><li><code>ui.dashboard-card</code></li><li><code>style.udos-wireframe</code></li><li><code>grid.main-layout</code></li><li><code>surface.teletext-display</code></li><li><code>story.onboarding</code></li></ul>
+<h2>Validation Rules</h2>
+<p>1. <code>usx</code> field must be a valid semver string 2. <code>kind</code> must be one of the defined surface kinds 3. <code>id</code> must be unique within its scope 4. All required fields must be present</p>
+<h2>Legacy Compatibility</h2>
+<p>USX v1.0 is backward-compatible with:</p>
+<ul><li><strong>OBF v1.0</strong> — <code>obf</code> field accepted as alias for <code>usx</code>; <code> </code>`<code>obf </code> fences accepted as alias for <code> </code>`<code>usx-ui </code></li><li><strong>USXD A1.0.0</strong> — <code> </code>`<code>usxd </code> fences accepted as alias for <code> </code>`<code>usx-surface </code></li></ul>
+<h2>See Also</h2>
+<ul><li><a href="usx-ui.md">usx-ui.md</a> — UI components and authoring blocks</li><li><a href="usx-style.md">usx-style.md</a> — Style tokens and themes</li><li><a href="usx-surface.md">usx-surface.md</a> — Surface definitions and story format</li><li><a href="usx-grid.md">usx-grid.md</a> — Grid system and cell maths</li><li><a href="../udo/">UDO specification</a> — System-layer kinds (Skill, Task, Workflow, etc.)</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

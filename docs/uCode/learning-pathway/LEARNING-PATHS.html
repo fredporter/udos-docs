@@ -1,0 +1,128 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>learning-pathway/LEARNING-PATHS.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / learning-pathway/LEARNING-PATHS.md</span></header><main class="site-main"><h1>Learning Paths: Choose Your Route</h1>
+<p><strong>Updated</strong>: 2026-03-10 <strong>Course</strong>: Universal Sonic Screwdriver <strong>Status</strong>: Multiple learning paths available</p>
+<p>---</p>
+<h2>Choose Your Path</h2>
+<p>Different people have different backgrounds and goals. Choose the path that matches your situation:</p>
+<ul><li><a href="#standard-path-for-most-learners"><strong>Standard Path</strong> (90 min)</a> — Full course with hands-on project</li><li><a href="#fast-track-path-for-experienced-operators"><strong>Fast-Track Path</strong> (30 min)</a> — Quick reference + essential hands-on</li><li><a href="#developer-path-for-extension-developers"><strong>Developer Path</strong> (60 min)</a> — Architecture + integration focus</li><li><a href="#troubleshooting-path-for-when-things-break"><strong>Troubleshooting Path</strong> (30 min)</a> — Fix issues + recovery</li><li><a href="#learning-lab-path-for-deep-understanding"><strong>Learning Lab Path</strong> (120+ min)</a> — Extended exploration + experiments</li></ul>
+<p>---</p>
+<h2>Standard Path (For Most Learners)</h2>
+<p><strong>Time</strong>: ~90 minutes <strong>Goal</strong>: Complete understanding of Sonic deployment workflow <strong>Best for</strong>: First-time users, operators, system administrators</p>
+<h3>Roadmap</h3>
+<p>1. <strong>Setup</strong> (5 min)</p>
+<ul><li>[ ] Read <a href="overview.md">Overview</a></li><li>[ ] Check <a href="prerequisites.md">Prerequisites</a></li><li>[ ] Skim <a href="objectives.md">Objectives</a></li></ul>
+<p>2. <strong>Foundation</strong> (15 min)</p>
+<ul><li>[ ] Read <a href="lessons/01-framework-and-boundaries.md">Lesson 01 - Framework and Boundaries</a></li><li>[ ] Key insight: "plan → inspect → dry-run → apply → handoff"</li><li>[ ] Understand: Sonic boundaries with uDOS and uHOME</li></ul>
+<p>3. <strong>Planning & Safety</strong> (30 min)</p>
+<ul><li>[ ] Read <a href="lessons/02-layout-manifest-and-dry-run.md">Lesson 02 - Layout, Manifest, Dry-Run</a></li><li>[ ] Understand: How planning works</li><li>[ ] Understand: Why dry-run matters</li></ul>
+<p>4. <strong>Hands-On: Phase 1</strong> (30 min)</p>
+<ul><li>[ ] Complete <a href="project/PHASES.md#phase-1-planning--inspection-lesson-2--project-p1">Project - Phase 1</a></li><li>[ ] Generate your first manifest</li><li>[ ] Inspect and understand the output</li></ul>
+<p>5. <strong>Execution & Recovery</strong> (15 min)</p>
+<ul><li>[ ] Read <a href="lessons/03-apply-rescue-and-handoff.md">Lesson 03 - Apply, Rescue, Handoff</a></li><li>[ ] Understand: Apply workflow and recovery</li></ul>
+<p>6. <strong>Hands-On: Phase 2-3</strong> (45 min+, optional)</p>
+<ul><li>[ ] Complete <a href="project/PHASES.md#phase-2-dry-run-safety-lesson-2--project-p2">Project - Phase 2</a> (dry-run practice)</li><li>[ ] Complete <a href="project/PHASES.md#phase-3-apply--recovery-lesson-3--project-p3">Project - Phase 3</a> (if you have test hardware)</li></ul>
+<h3>You're Ready For</h3>
+<p>After this path, you can:</p>
+<ul><li>Plan safe deployments</li><li>Use dry-run before applying</li><li>Understand Sonic's role in the repo family</li><li>Deploy Sonic to a USB device</li><li>Recover if something goes wrong</li></ul>
+<h3>Next Steps</h3>
+<ul><li><strong>Need to troubleshoot?</strong> → <a href="#troubleshooting-path-for-when-things-break">Troubleshooting Path</a></li><li><strong>Want to extend Sonic?</strong> → <a href="#developer-path-for-extension-developers">Developer Path</a></li><li><strong>Done for now?</strong> → Share your project and get feedback!</li></ul>
+<p>---</p>
+<h2>Fast-Track Path (For Experienced Operators)</h2>
+<p><strong>Time</strong>: ~30 minutes <strong>Goal</strong>: Quick reference + essential hands-on verification <strong>Best for</strong>: Experienced system admins, DevOps, infrastructure teams</p>
+<h3>Roadmap</h3>
+<p>1. <strong>Quick Mental Model</strong> (5 min)</p>
+<ul><li>[ ] Read the TL;DR here ↓</li><li>View: Sonic mental model = <code>plan → inspect → dry-run → apply → handoff</code></li><li>Remember: Sonic owns deployment; uHOME and uDOS own rest</li></ul>
+<p>2. <strong>Reference: Lesson Planning</strong> (10 min)</p>
+<ul><li>[ ] Skim <a href="lessons/02-layout-manifest-and-dry-run.md">Lesson 02 - Layout, Manifest, Dry-Run</a> (sections: "Configuration Walkthrough", "Understanding the Manifest")</li><li>[ ] Focus: <code>sonic plan</code> command, manifest output format</li></ul>
+<p>3. <strong>Hands-On: Quick Deploy</strong> (15 min)</p>
+<ul><li>[ ] Complete <a href="project/PHASES.md#phase-1-planning--inspection-lesson-2--project-p1">Project - Phase 1</a> (Tasks P1.1-P1.2 only)</li><li>[ ] Generate manifest with one command</li><li>[ ] Verify: "I know how to plan safely"</li></ul>
+<h3>You're Ready For</h3>
+<p>After this path, you can:</p>
+<ul><li>Generate a deployment plan in < 1 minute</li><li>Understand manifest output format</li><li>Deploy Sonic via CLI in familiar territory</li></ul>
+<h3>Quick Reference Card</h3>
+<pre><code># Generate a plan
+sonic plan --usb-device /dev/sdb --out manifest.json
+
+# Dry-run apply (safe, no changes)
+sonic-stick.sh --manifest manifest.json --dry-run
+
+# Real apply (destructive)
+sonic-stick.sh --manifest manifest.json
+
+# Check device status
+sonic status /dev/sdb</code></pre>
+<h3>When You Need More</h3>
+<ul><li><strong>Full understanding?</strong> → <a href="#standard-path-for-most-learners">Standard Path</a></li><li><strong>Something broke?</strong> → <a href="#troubleshooting-path-for-when-things-break">Troubleshooting Path</a></li></ul>
+<p>---</p>
+<h2>Developer Path (For Extension Developers)</h2>
+<p><strong>Time</strong>: ~60 minutes <strong>Goal</strong>: Understand Sonic architecture for customization/integration <strong>Best for</strong>: Software developers, DevOps tooling builders, integrators</p>
+<h3>Roadmap</h3>
+<p>1. <strong>Boundaries</strong> (10 min)</p>
+<ul><li>[ ] Read <a href="lessons/01-framework-and-boundaries.md">Lesson 01 - Framework and Boundaries</a></li><li>[ ] Focus: "Where does Sonic stop?"</li><li>[ ] Understand: uDOS, uHOME-server integration points</li></ul>
+<p>2. <strong>Architecture Deep Dive</strong> (20 min)</p>
+<ul><li>[ ] Read <a href="lessons/02-layout-manifest-and-dry-run.md">Lesson 02 - Layout, Manifest, Dry-Run</a></li><li>[ ] Reference architecture: <code>docs/architecture/services-*.md</code> (TBD - in development)</li><li>[ ] Understand: Planning service interface, manifest contract</li></ul>
+<p>3. <strong>Service Layer Exploration</strong> (20 min)</p>
+<ul><li>[ ] Explore <code>services/</code> in repo root</li><li>[ ] Review: <code>services/mcp_server.py</code>, <code>services/runtime_service.py</code></li><li>[ ] Understand: How Sonic exposes MCP interfaces</li></ul>
+<p>4. <strong>Hands-On: API Test</strong> (10 min)</p>
+<ul><li>[ ] Start <code>sonic-api</code> or <code>sonic-mcp</code> locally</li><li>[ ] Make a test request (e.g., <code>sonic plan</code> via API)</li><li>[ ] Verify: API responds correctly</li></ul>
+<h3>You're Ready For</h3>
+<p>After this path, you can:</p>
+<ul><li>Understand Sonic's service-oriented architecture</li><li>Write integrations that call Sonic APIs</li><li>Extend Sonic with custom build engines or planners</li><li>Contribute to the Sonic codebase</li></ul>
+<h3>Key Concepts</h3>
+<ul><li><strong>Planning service</strong>: Takes layout → outputs manifest</li><li><strong>Build service</strong>: Executes manifest operations</li><li><strong>Catalog service</strong>: Device and profile database</li><li><strong>MCP facade</strong>: Turns services into Claude protocol</li></ul>
+<h3>When You Need More</h3>
+<ul><li><strong>How to extend Sonic?</strong> → Look for <code>docs/howto/custom-extension.md</code> (in development)</li><li><strong>API reference?</strong> → <code>docs/v1/specs/sonic-screwdriver.md</code></li><li><strong>Service contracts?</strong> → <code>services/</code> docstrings and type hints</li></ul>
+<p>---</p>
+<h2>Troubleshooting Path (For When Things Break)</h2>
+<p><strong>Time</strong>: ~30 minutes <strong>Goal</strong>: Diagnose and recover from deployment failures <strong>Best for</strong>: Troubleshooters, operators on-call, recovery specialists</p>
+<h3>Roadmap</h3>
+<p>1. <strong>Know When to Stop</strong> (5 min)</p>
+<ul><li>[ ] Read <a href="lessons/03-apply-rescue-and-handoff.md">Lesson 03 - Apply, Rescue, Handoff</a> (section: "Recovery Procedures")</li><li>[ ] Key: When to attempt recovery vs. escalate</li></ul>
+<p>2. <strong>Diagnosis</strong> (10 min)</p>
+<ul><li>[ ] Reference: <code>docs/v1/howto/dry-run.md</code> (run tests safely first)</li><li>[ ] Read: Lesson 04 - Troubleshooting (under development, check back)</li><li>[ ] Understand: Common failure modes and diagnostic steps</li></ul>
+<p>3. <strong>Recovery</strong> (10 min)</p>
+<ul><li>[ ] Review: Your <code>contingency-plan.md</code> from project</li><li>[ ] Execute: Appropriate recovery procedure</li><li>[ ] Validate: Device state after recovery</li></ul>
+<p>4. <strong>Documentation</strong> (5 min)</p>
+<ul><li>[ ] Log: What broke, what you tried, what worked</li><li>[ ] Share: With team for future reference</li></ul>
+<h3>Common Issues</h3>
+<p>| Problem | Diagnosis | Recovery | |---------|-----------|----------| | "USB not recognized" | Check <code>/dev/</code> device name | Reseat cable, try different port | | "Manifest validation failed" | Review config.sonix-layout.json | Verify layout against device specs | | "Apply stopped mid-way" | Check logs for last successful step | Use <code>sonic resume</code> (if available) or restart | | "Device won't boot" | Check bootloader configuration | Boot into recovery, verify partition layout |</p>
+<h3>Escalation Path</h3>
+<p>If you can't resolve: 1. Document: What you tried and results 2. Compile: Logs and manifests 3. Escalate: With full context to senior operator/developer 4. Follow: Recovery procedure from Lesson 03</p>
+<h3>When You're Stuck</h3>
+<ul><li><strong>Specific error message?</strong> → Search <code>docs/</code> for error text</li><li><strong>Device won't boot?</strong> → Lesson 03 - Recovery procedures</li><li><strong>Need expert help?</strong> → Contact your team lead with full logs</li></ul>
+<p>---</p>
+<h2>Learning Lab Path (For Deep Understanding)</h2>
+<p><strong>Time</strong>: 120+ minutes (self-paced) <strong>Goal</strong>: Thorough comprehension and hands-on experimentation <strong>Best for</strong>: Students, learners, educators, contribut</p>
+<p>ors</p>
+<h3>Roadmap</h3>
+<p>1. <strong>All of Standard Path</strong> (90 min)</p>
+<ul><li>[ ] Complete every step (see above)</li></ul>
+<p>2. <strong>Deeper Dives</strong> (30+ min)</p>
+<ul><li>[ ] Read: <a href="../../docs/v1/sonic-structure-assessment-2026-03-08.md">Sonic Structure Assessment</a></li><li>[ ] Explore: <code>docs/v1/specs/sonic-screwdriver.md</code></li><li>[ ] Understand: Repo architecture and boundaries</li></ul>
+<p>3. <strong>Experiments</strong> (30+ min)</p>
+<ul><li>[ ] Try: Modify layout config and see how manifest changes</li><li>[ ] Test: What happens if you interrupt dry-run?</li><li>[ ] Explore: Inspect manifest JSON structure in detail</li><li>[ ] Question: What does Sonic NOT do? (boundary testing)</li></ul>
+<p>4. <strong>Integration Study</strong> (30+ min)</p>
+<ul><li>[ ] Read: <code>docs/v1/integration-spec.md</code></li><li>[ ] Understand: How Sonic integrates with uDOS and uHOME</li><li>[ ] Question: What happens at each boundary?</li></ul>
+<p>5. <strong>Contributing</strong> (optional, ongoing)</p>
+<ul><li>[ ] Identify: What could be improved in Sonic?</li><li>[ ] Propose: Changes in a GitHub issue</li><li>[ ] Contribute: A fix, feature, or doc improvement</li></ul>
+<h3>Learning Questions</h3>
+<p>As you explore, try to answer:</p>
+<p>1. <strong>Mental Model</strong>: Can you draw the <code>plan → inspect → dry-run → apply → handoff</code> flow? 2. <strong>Boundaries</strong>: Where exactly does Sonic hand off to uDOS? To uHOME-server? 3. <strong>Why Dry-Run?</strong>: What bad things could happen without dry-run? 4. <strong>Manifest Format</strong>: What does each section of the manifest represent? 5. <strong>Rescue</strong>: If a deployment fails at 50%, what can you do? 6. <strong>Architecture</strong>: How would you explain Sonic to someone who's never used it?</p>
+<h3>Project Extensions</h3>
+<p>Beyond the three phases, consider:</p>
+<ul><li>[ ] <strong>Compare</strong>: Two different deployment scenarios (different hardware, different profiles)</li><li>[ ] <strong>Troubleshoot</strong>: Intentionally break something and fix it</li><li>[ ] <strong>Automate</strong>: Write a script that automates multiple deployments</li><li>[ ] <strong>Document</strong>: Create a deployment runbook for your team</li><li>[ ] <strong>Extend</strong>: Propose a custom module for Sonic (e.g., post-deploy validation)</li></ul>
+<h3>You're Ready For</h3>
+<p>After this path, you can:</p>
+<ul><li>Explain Sonic to others with confidence</li><li>Design deployment solutions for complex scenarios</li><li>Troubleshoot advanced issues</li><li>Contribute to Sonic or related projects</li><li>Lead deployment efforts in your organization</li></ul>
+<h3>Continue Learning</h3>
+<ul><li><strong>Next course</strong>: Deployment Patterns (under development)</li><li><strong>Troubleshooting depth</strong>: Lesson 04 - Troubleshooting (under development)</li><li><strong>Contributing</strong>: See <code>CONTRIBUTING.md</code> in repo root</li></ul>
+<p>---</p>
+<h2>Path Comparison Quick Reference</h2>
+<p>| Path | Time | Audience | Outcome | |------|------|----------|---------| | <strong>Standard</strong> | 90 min | Most learners | Can deploy safely | | <strong>Fast-Track</strong> | 30 min | Experienced ops | Quick reference ready | | <strong>Developer</strong> | 60 min | Integrators/devs | Can extend Sonic | | <strong>Troubleshooting</strong> | 30 min | On-call teams | Can fix issues | | <strong>Learning Lab</strong> | 120+ min | Students/contributors | Expert understanding |</p>
+<p>---</p>
+<h2>Next Steps</h2>
+<p>1. <strong>Choose your path</strong> above 2. <strong>Work through it</strong> at your own pace 3. <strong>Ask questions</strong> if stuck (refer to resources in each path) 4. <strong>Share your project</strong> when done 5. <strong>Continue learning</strong> with advanced topics (in development)</p>
+<p>---</p>
+<h2>Still Have Questions?</h2>
+<ul><li><strong>"Where's Lesson 4 on troubleshooting?"</strong> → Under development as part of v1.6; check back</li><li><strong>"I'm lost!"</strong> → Re-read <a href="overview.md">Overview</a> and <a href="prerequisites.md">Prerequisites</a></li><li><strong>"I want to practice more"</strong> → Repeat the project with different hardware/configs</li><li><strong>"I want to contribute"</strong> → See <code>CONTRIBUTING.md</code> in repo root</li></ul>
+<p>---</p>
+<p><strong>Happy learning! You've got this.</strong> 🚀</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

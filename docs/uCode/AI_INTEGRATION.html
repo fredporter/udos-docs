@@ -1,0 +1,83 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>AI_INTEGRATION.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / AI_INTEGRATION.md</span></header><main class="site-main"><h1>AI Integration — Ollama Local-First + Hivemind/OpenRouter</h1>
+<p>uCode is configured for <strong>local-first AI</strong>: Ollama does the heavy lifting for free, with OpenRouter as a paid fallback only when Ollama is unavailable or the user explicitly requests a premium model.</p>
+<h2>Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                         JETBRAINS PYCHARM                       │
+│  AI Assistant ───→ Ollama (http://localhost:11434/v1) ←── FREE  │
+│       │                                                         │
+│       └──→ OpenRouter (cloud fallback, paid) ←── only if needed │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                         UCODE CLI / MCP                          │
+│  GridSmith MCP ──→ uCore Snackbar (port 8484) ──→ LiteLLM      │
+│       │                    │                                     │
+│       │                    ├── Ollama (local, free) ←── PRIMARY  │
+│       │                    └── OpenRouter (cloud)  ←── FALLBACK  │
+│       └── Ollama direct (bypass uCore)                           │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+<h2>Provider Routing (Local-First)</h2>
+<p>| Priority | Provider             | Models                       | Cost      | Use Case                            | | -------- | -------------------- | ---------------------------- | --------- | ----------------------------------- | | <strong>1</strong>    | <strong>Ollama (local)</strong>   | <code>qwen2.5-coder:3b</code>           | <strong>$0.00</strong> | <strong>Default — code gen, chat, edits</strong> | | <strong>2</strong>    | <strong>Ollama (local)</strong>   | <code>qwen2.5-coder:7b</code>           | <strong>$0.00</strong> | <strong>Complex reasoning, review</strong>       | | <strong>3</strong>    | <strong>Ollama (local)</strong>   | <code>llama3.2:3b</code>                | <strong>$0.00</strong> | <strong>Lightweight fast completions</strong>    | | 4        | OpenRouter (cloud)   | <code>qwen/qwen3.6-27b</code>           | $0.02/M   | Budget cloud fallback               | | 5        | OpenRouter (cloud)   | <code>deepseek/deepseek-v4-flash</code> | $0.05/M   | Cloud code gen                      | | opt-in   | OpenRouter (premium) | <code>anthropic/claude-opus-4.7</code>  | $15.00/M  | Premium reasoning                   |</p>
+<p><strong>Key principle:</strong> All local models are free. Cloud is only used when:</p>
+<ul><li>Ollama is not running</li><li>Required model is not pulled</li><li>User explicitly requests a cloud model</li></ul>
+<h2>Setup</h2>
+<h3>1. Install Ollama (Local LLM)</h3>
+<pre><code># Install
+brew install ollama
+
+# Start server
+ollama serve
+
+# Pull a model
+ollama pull qwen2.5-coder:3b
+
+# Verify
+curl http://localhost:11434/api/tags</code></pre>
+<h3>2. JetBrains PyCharm AI Assistant Setup</h3>
+<p>JetBrains AI Assistant auto-detects the project config in <code>.jetbrains/ai-assistant.xml</code> and <code>.idea/aiSettings.xml</code>. These files point to Ollama as default provider.</p>
+<p>To verify in PyCharm:</p>
+<p>1. Open <strong>Settings → Tools → AI Assistant</strong> 2. Check <strong>AI Providers</strong>: should show <code>Ollama Local (Free)</code> as default 3. Check <strong>Custom OpenAI-compatible</strong> endpoint is set to <code>http://localhost:11434/v1</code> 4. Model should be <code>qwen2.5-coder:3b</code></p>
+<p>To manually configure via UI:</p>
+<p>1. <strong>Settings → Tools → AI Assistant → AI Providers</strong> 2. Click <strong>+</strong> → <strong>Custom OpenAI-compatible</strong> 3. Endpoint: <code>http://localhost:11434/v1</code> 4. Model: <code>qwen2.5-coder:3b</code> 5. Set as default</p>
+<h3>3. Configure OpenRouter (Optional — Cloud Fallback Only)</h3>
+<pre><code>./scripts/setup-ai-integration.sh</code></pre>
+<p>Or manually:</p>
+<pre><code>mkdir -p ~/.ucore/config
+cp config/hivemind.env ~/.ucore/config/hivemind.env
+cp config/openrouter.yaml ~/.ucore/config/openrouter.yaml</code></pre>
+<h3>4. Start uCore Snackbar</h3>
+<pre><code>cd ../uCore
+python3 -m backend.app --host 127.0.0.1 --port 8484</code></pre>
+<h2>Verification</h2>
+<h3>Check Ollama is running</h3>
+<pre><code>curl -s http://localhost:11434/api/tags | python3 -m json.tool</code></pre>
+<h3>Check uCore snackbar health</h3>
+<pre><code>curl -s http://localhost:8484/api/health | python3 -m json.tool</code></pre>
+<h3>List available providers</h3>
+<pre><code>curl -s http://localhost:8484/api/mcp/providers | python3 -m json.tool</code></pre>
+<h3>Test chat completion</h3>
+<pre><code>curl -s http://localhost:8484/api/mcp/chat \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;message&quot;: &quot;Hello, what model are you?&quot;, &quot;provider&quot;: &quot;ollama&quot;}&#x27; \
+  | python3 -m json.tool</code></pre>
+<h2>Configuration Files</h2>
+<p>| File                     | Purpose                                             | | ------------------------ | --------------------------------------------------- | | <code>config/hivemind.env</code>    | API keys and endpoint URLs                          | | <code>config/openrouter.yaml</code> | Model routing tiers, costs, and budgets             | | <code>config/mcp_config.json</code> | MCP server definitions (GridSmith, uCore, Hivemind) | | <code>config/vault.yaml</code>      | Secret store paths and variables                    |</p>
+<h2>JetBrains Recommended Skills</h2>
+<p>These skills optimise JetBrains AI for uCode development:</p>
+<p>| Skill           | Model                       | Purpose                              | | --------------- | --------------------------- | ------------------------------------ | | Code generation | <code>qwen2.5-coder:3b</code> (Ollama) | Daily coding, refactoring, tests     | | Code review     | <code>qwen2.5-coder:7b</code> (Ollama) | Deeper analysis, architecture review | | Documentation   | <code>qwen2.5-coder:3b</code> (Ollama) | Docstrings, README, devlogs          | | Commit messages | <code>qwen2.5-coder:3b</code> (Ollama) | Conventional commit generation       | | Test generation | <code>qwen2.5-coder:3b</code> (Ollama) | Unit/integration test writing        | | Debugging       | <code>qwen2.5-coder:3b</code> (Ollama) | Error analysis, stack trace reading  |</p>
+<p>Configure these in <strong>Settings → Tools → AI Assistant → Skills</strong>.</p>
+<p>To add a new skill:</p>
+<pre><code># Skills are configured per-task in PyCharm AI Assistant UI.
+# Or use the project-level config: .jetbrains/ai-assistant.xml</code></pre>
+<h2>Cost Tracking (Zero-Cost by Default)</h2>
+<p>With local-first mode, <strong>all daily development costs $0.00</strong>.</p>
+<pre><code>Ollama inference: $0.00/1K tokens  ← everything runs locally
+OpenRouter:       $0.00             ← only used if Ollama unavailable</code></pre>
+<p>When cloud fallback is used, costs are tracked in:</p>
+<pre><code>~/.local/share/udos/costs/openrouter-usage.yaml</code></pre>
+<p>Budget limits in <code>config/openrouter.yaml</code>:</p>
+<ul><li>Alert threshold: $2.00 USD</li><li>Hard limit: $10.00 USD</li><li>Per-model cost tracking</li></ul>
+<h2>PyCharm Run Configs</h2>
+<p>| Config                    | Description                                                    | | ------------------------- | -------------------------------------------------------------- | | <code>uCode: self-check</code>       | Full repo health check (npm install/build/test + Python check) | | <code>uCode: inspect widgets</code>  | Lists widget/viewport files in viewport-renderer               | | <code>uCode: inspect terminal</code> | Lists terminal/teletext/renderer files                         |</p>
+<h2>Troubleshooting</h2>
+<p>| Symptom                                  | Likely Cause                         | Fix                                                                               | | ---------------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------- | | <code>Connection refused</code> on :11434           | Ollama not running                   | <code>ollama serve</code>                                                                    | | JetBrains AI says "Provider unavailable" | Ollama not running or wrong endpoint | Check <code>http://localhost:11434/v1</code> is reachable; verify in Settings → AI Providers | | JetBrains AI uses wrong model            | Config not picked up                 | Restart PyCharm; check <code>.jetbrains/ai-assistant.xml</code> is valid                     | | <code>401 Unauthorized</code> from OpenRouter       | Missing/expired API key              | Update <code>config/hivemind.env</code>                                                      | | <code>Model not found</code> errors                 | Model not pulled                     | <code>ollama pull qwen2.5-coder:3b</code>                                                    | | uCore snackbar not responding            | uCore not started                    | <code>python3 -m backend.app --port 8484</code>                                              | | High RAM usage                           | Too many Ollama models loaded        | <code>ollama stop <model></code> to unload; use 3B models on <16GB machines                  | | Slow responses                           | Wrong model for task                 | Switch to <code>qwen2.5-coder:3b</code> for quick tasks, <code>7b</code> for complex ones               |</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

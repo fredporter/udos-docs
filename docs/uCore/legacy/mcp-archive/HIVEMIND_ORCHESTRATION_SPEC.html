@@ -1,0 +1,152 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>legacy/mcp-archive/HIVEMIND_ORCHESTRATION_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / legacy/mcp-archive/HIVEMIND_ORCHESTRATION_SPEC.md</span></header><main class="site-main"><h1>Hivemind Orchestration Specification</h1>
+<blockquote><strong>Version:</strong> 1.0</blockquote>
+<blockquote><strong>Status:</strong> Draft</blockquote>
+<blockquote><strong>Scope:</strong> Multi-agent orchestration, consensus engine, MCP server topology</blockquote>
+<h2>1. Philosophy</h2>
+<p>Hivemind is uCore's multi-agent orchestration layer. It enables:</p>
+<p>1. <strong>Specialized agents</strong> — Each agent has a defined role (coder, tester, planner, reviewer) 2. <strong>Consensus-driven decisions</strong> — Agents vote/negotiate on ambiguous tasks 3. <strong>Roundtable AI integration</strong> — Leverage multiple LLM backends (OpenAI, Anthropic, Ollama) 4. <strong>Template-driven workflows</strong> — Agent interaction patterns are defined as templates</p>
+<h2>2. Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│                    Hivemind MCP Server                    │
+│  (backend/mcp/start_hivemind.sh → port 8490)             │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │  Agent   │  │  Agent   │  │  Agent   │  │  Agent   │ │
+│  │  Coder   │  │  Tester  │  │  Planner │  │ Reviewer │ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │           Consensus Engine                        │    │
+│  │  - Majority vote  - Weighted scoring             │    │
+│  │  - Escalation chain  - Deadlock detection        │    │
+│  └──────────────────────────────────────────────────┘    │
+│                                                          │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │           LLM Router                              │    │
+│  │  - Roundtable API  - Ollama local  - Fallback    │    │
+│  └──────────────────────────────────────────────────┘    │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────┐
+│                    uCore Backend                          │
+│  (port 8484 — skills, snacks, MCP tools)                 │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h2>3. MCP Server Topology</h2>
+<p>| Server | Port | Purpose | Status | |--------|------|---------|--------| | <code>mcp-main</code> | 8484 | uCore backend (skills, tools) | ✅ Active | | <code>mcp-firewatch</code> | 8485 | Browser automation testing | ⚙️ Setup | | <code>mcp-playwright</code> | 8486 | Playwright test runner | ⚙️ Setup | | <code>mcp-scheduler</code> | 8487 | Cron/scheduled tasks | ⚙️ Setup | | <code>mcp-secrets</code> | 8488 | Secret management | ⚙️ Setup | | <code>mcp-serena</code> | 8489 | Serena AI assistant | ⚙️ Setup | | <strong><code>mcp-hivemind</code></strong> | <strong>8490</strong> | <strong>Multi-agent orchestration</strong> | <strong>✅ Active</strong> |</p>
+<h2>4. Agent Definitions</h2>
+<p>Agents are defined in <code>backend/config/agents.yaml</code>:</p>
+<pre><code>agents:
+  coder:
+    name: &quot;Coder Agent&quot;
+    model: &quot;claude-sonnet-4-20250514&quot;
+    system_prompt: &quot;You are a senior software engineer...&quot;
+    tools: [&quot;skill_*&quot;, &quot;knowledge_search&quot;, &quot;tasker_*&quot;]
+    timeout: 120
+    weight: 1.0  # Voting weight in consensus
+
+  tester:
+    name: &quot;Tester Agent&quot;
+    model: &quot;gpt-4o&quot;
+    system_prompt: &quot;You are a QA engineer...&quot;
+    tools: [&quot;skill_lint_fix&quot;, &quot;gridsmith_*&quot;]
+    timeout: 60
+    weight: 0.8
+
+  planner:
+    name: &quot;Planner Agent&quot;
+    model: &quot;claude-opus-4-20250514&quot;
+    system_prompt: &quot;You are a technical architect...&quot;
+    tools: [&quot;knowledge_search&quot;, &quot;tasker_write_task&quot;]
+    timeout: 180
+    weight: 1.2
+
+  reviewer:
+    name: &quot;Reviewer Agent&quot;
+    model: &quot;gpt-4o&quot;
+    system_prompt: &quot;You are a code reviewer...&quot;
+    tools: [&quot;skill_lint_fix&quot;, &quot;knowledge_search&quot;]
+    timeout: 60
+    weight: 0.9</code></pre>
+<h2>5. Consensus Engine</h2>
+<h3>Voting Modes</h3>
+<p>| Mode | Description | Use Case | |------|-------------|----------| | <code>majority</code> | Simple majority wins | Low-risk decisions | | <code>unanimous</code> | All agents must agree | Destructive operations | | <code>weighted</code> | Weighted score threshold | Technical decisions | | <code>escalation</code> | Escalate to human on deadlock | Ambiguous requirements |</p>
+<h3>Consensus Flow</h3>
+<pre><code>1. PROPOSE  → Agent submits proposal with rationale
+2. DEBATE   → Other agents critique and suggest alternatives
+3. VOTE     → Each agent votes (approve/reject/abstain) with reasoning
+4. RESOLVE  → Apply voting mode to determine outcome
+5. EXECUTE  → Winning proposal is executed via MCP tools
+6. VERIFY   → Reviewer agent validates the result</code></pre>
+<h3>Deadlock Detection</h3>
+<ul><li>If no consensus after 3 rounds → escalate to human</li><li>If agent unresponsive for >30s → mark as abstained</li><li>If two agents repeatedly disagree → invoke tiebreaker agent</li></ul>
+<h2>6. LLM Router</h2>
+<p>The router selects which LLM backend to use for each agent:</p>
+<pre><code>router:
+  backends:
+    roundtable:
+      type: &quot;openai_compatible&quot;
+      base_url: &quot;http://localhost:4891/v1&quot;  # Roundtable local
+      models: [&quot;claude-sonnet-4-20250514&quot;, &quot;claude-opus-4-20250514&quot;, &quot;gpt-4o&quot;]
+      priority: 1
+
+    ollama:
+      type: &quot;openai_compatible&quot;
+      base_url: &quot;http://localhost:11434/v1&quot;
+      models: [&quot;llama3&quot;, &quot;codellama&quot;, &quot;mistral&quot;]
+      priority: 2  # Fallback when Roundtable unavailable
+
+    fallback:
+      type: &quot;openai&quot;
+      api_key: &quot;${OPENAI_API_KEY}&quot;
+      models: [&quot;gpt-4o-mini&quot;]
+      priority: 3  # Last resort</code></pre>
+<h2>7. Workflow Plates</h2>
+<p>Hivemind workflows are defined as YAML plates in <code>plates/hivemind/</code>:</p>
+<pre><code># plates/hivemind/code_review.yaml
+
+workflow:
+  id: &quot;hivemind.code_review&quot;
+  version: &quot;1.0.0&quot;
+  description: &quot;Multi-agent code review workflow&quot;
+  agents: [&quot;coder&quot;, &quot;reviewer&quot;]
+  consensus: &quot;majority&quot;
+  steps:
+    - role: &quot;coder&quot;
+      action: &quot;propose_change&quot;
+      tools: [&quot;skill_lint_fix&quot;, &quot;knowledge_search&quot;]
+    - role: &quot;reviewer&quot;
+      action: &quot;review_change&quot;
+      tools: [&quot;skill_lint_fix&quot;]
+    - role: &quot;coder&quot;
+      action: &quot;address_feedback&quot;
+    - role: &quot;reviewer&quot;
+      action: &quot;approve_or_reject&quot;
+  timeout: 300</code></pre>
+<h2>8. Integration with Plates System</h2>
+<p>Hivemind workflows are plates themselves (see <code>docs/PLATES_SYSTEM_SPEC.md</code>):</p>
+<ul><li><strong>Scaffolding</strong> — <code>ucore hivemind init --workflow code_review</code> generates a new workflow from a Cookiecutter plate</li><li><strong>Validation</strong> — <code>skill_audit</code> checks agent configs against workflow plates</li><li><strong>DESTROY/REBUILD</strong> — On agent corruption, salvage agent config and rebuild from plate</li></ul>
+<h2>9. Setup Steps</h2>
+<pre><code># 1. Create Hivemind MCP server
+cd backend/mcp
+cp mcp-serena-manifest.json mcp-hivemind-manifest.json
+# Edit: change port to 8490, name to &quot;hivemind&quot;
+
+# 2. Create startup script
+cat &gt; start_hivemind.sh &lt;&lt; &#x27;EOF&#x27;
+#!/bin/bash
+cd &quot;$(dirname &quot;$0&quot;)/..&quot;
+exec python3 -m app.mcp.hivemind_server --port 8490
+EOF
+chmod +x start_hivemind.sh
+
+# 3. Register in MCP config
+# Add to devlog.mcp.yaml or VS Code settings
+
+# 4. Verify
+python3 -m backend.mcp.mcp_diagnostics --check hivemind</code></pre>
+<h2>10. Implementation Status</h2>
+<ul><li>[x] Implement Hivemind MCP server (<code>backend/app/mcp/hivemind_server.py</code>) — ✅ Done</li><li>[x] Implement consensus engine (<code>backend/app/mcp/consensus.py</code>) — ✅ Done</li><li>[x] Implement LLM router (<code>backend/app/mcp/llm_router.py</code>) — ✅ Done</li><li>[x] Create MCP manifest (<code>backend/mcp/mcp-hivemind-manifest.json</code>) — ✅ Done</li><li>[x] Create startup script (<code>backend/mcp/start_hivemind.sh</code>) — ✅ Done</li><li>[ ] Create workflow plates directory (<code>plates/hivemind/</code>)</li></ul>
+<ul><li>[ ] Add <code>skill_hivemind</code> for agent orchestration via MCP</li><li>[ ] Integration with Roundtable AI for local LLM routing</li><li>[ ] Deadlock recovery and human escalation UI</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

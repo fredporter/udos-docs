@@ -1,0 +1,433 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>basic/SPATIAL_CHARACTER_INTEGRATION.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / basic/SPATIAL_CHARACTER_INTEGRATION.md</span></header><main class="site-main"><p>--- title: "uCode1 Spatial Grid & Character System Integration" status: draft last_updated: 2026-04-25T16:27:54+10:00 category: documentation tags: [ucode1] description: "This document specifies how the <strong>uCode1 Spatial Grid System</strong> integrates with the <strong>C-Layer Character System</strong> to en..." ---</p>
+<h1>uCode1 Spatial Grid & Character System Integration</h1>
+<h2>Overview</h2>
+<p>This document specifies how the <strong>uCode1 Spatial Grid System</strong> integrates with the <strong>C-Layer Character System</strong> to enable rich spatial documentation, mapping, and visualization.</p>
+<h2>1. System Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                 uCode1 Integrated System                    │
+├─────────────────────────────────────────────────────────────┤
+│  Spatial Grid System          │  C-Layer Character System    │
+│  (Coordinate-based)           │  (Visual representation)     │
+├─────────────────────────────────────────────────────────────┤
+│  L&lt;level&gt;-&lt;gridXY&gt;-&lt;cellXY&gt;  │  CXXX#YYY Character Format   │
+│  Example: L100-AA10-0317-2   │  Example: C245#1 (:rocket:)   │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<h2>2. Integration Points</h2>
+<h3>2.1 Spatial Character Anchoring</h3>
+<p><strong>Concept</strong>: Characters can be anchored to specific spatial coordinates, enabling location-based documentation and visual mapping.</p>
+<p><strong>Format</strong>:</p>
+<pre><code>[CXXX#YYY]@L&lt;level&gt;-&lt;gridXY&gt;-&lt;cellXY&gt;-&lt;layer&gt;</code></pre>
+<p><strong>Examples</strong>:</p>
+<pre><code># Main Entrance :door: (C123#1)@L100-AA10-0317-0
+# Server Room :computer: (C187#1)@L100-AA10-0318-1
+# Emergency Exit :warning: (C345#1)@L100-AA10-0319-2</code></pre>
+<h3>2.2 Character Grid Mapping</h3>
+<p><strong>Concept</strong>: Create visual character maps that align with spatial grids.</p>
+<p><strong>Format</strong>:</p>
+<pre><code>┏━━━━━━━━━━━━━━━━━━━━━━━━┓ [C404#1]@L100-AA10-0317-0
+┃  Floor Plan: Level 1     ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃  :door: Entrance (C123#1) ┃
+┃  :computer: IT (C187#1)   ┃
+┃  :coffee: Break (C245#1)  ┃
+
+### 2.3 SPRITE Cell Type (Animated/Interactive)
+
+**Concept**: SPRITE cells enable **animated characters and interactive personalities** using the base emoji map as Generation 1 sprites. SPRITEs are &quot;alive&quot; and can have behaviors, animations, and personalities.
+
+**Format**:</code></pre>
+<p>SPRITE@L<level>-<gridXY>-<cellXY>-<layer>[<interactive_properties>]</p>
+<pre><code>
+**Examples**:</code></pre>
+<h1>Interactive Assistant :robot: (C245#1)@L100-AA10-0317-0[hover="Help",click="assistant"]</h1>
+<h1>Fantasy Character :fairy: (C245#50)@L100-AA10-0318-1[hover="Magic",click="spell",animation="float"]</h1>
+<h1>Animated Decoration :sparkles: (C245#10)@L100-AA10-0319-2[animation="pulse",speed="slow"]</h1>
+<pre><code>
+**SPRITE Characteristics**:
+- **Alive/Animated**: Have movement, animations, personalities
+- **Interactive**: Respond to user actions (hover, click)
+- **Behaviors**: Can have AI-driven behaviors
+- **Personality**: Custom traits and characteristics
+
+### 2.4 OBJECT Cell Type (Inanimate/Interactive)
+
+**Concept**: OBJECT cells represent **inanimate interactive items** that users can manipulate. Unlike SPRITEs, OBJECTs are not &quot;alive&quot; but can still be interactive.
+
+**Format**:</code></pre>
+<p>OBJECT@L<level>-<gridXY>-<cellXY>-<layer>[<object_properties>]</p>
+<pre><code>
+**Examples**:</code></pre>
+<h1>Tool Object :pick: (C301#10)@L100-AA10-0317-0[hover="Shovel",click="dig",action="equip"]</h1>
+<h1>Container Object :purse: (C245#20)@L100-AA10-0318-1[hover="Bag",click="open",capacity=10]</h1>
+<h1>Utility Object :wrench: (C301#5)@L100-AA10-0319-2[hover="Tool",click="use",action="repair"]</h1>
+<pre><code>
+**OBJECT Characteristics**:
+- **Inanimate**: No animation or personality
+- **Functional**: Serve practical purposes (tools, containers)
+- **Interactive**: Can be picked up, used, or manipulated
+- **Static**: No AI behaviors or movement
+
+### 2.5 SPRITE vs OBJECT Comparison
+
+| Feature | SPRITE | OBJECT |
+|---------|--------|--------|
+| **Animation** | ✅ Yes (pulse, float, etc.) | ❌ No (static) |
+| **Personality** | ✅ Yes (traits, behaviors) | ❌ No |
+| **AI Behavior** | ✅ Yes (can move, react) | ❌ No |
+| **Interactivity** | ✅ Yes (hover, click) | ✅ Yes (use, equip) |
+| **Examples** | :robot:, :fairy:, :goblin: | :pick:, :purse:, :wrench: |
+| **Use Case** | Characters, assistants, NPCs | Tools, items, containers |
+
+**SPRITE Features**:
+- **Size**: 24×24 pixels (matches CELL size)
+- **Storage**: Uses CELL&#x27;s 45KB QR data for sprite frames and metadata
+- **Interactivity**: Supports hover text, click actions, animations
+- **Animation**: Multiple frames stored in CELL data
+- **Personality**: Custom behaviors and traits
+┗━━━━━━━━━━━━━━━━━━━━━━━━┛</code></pre>
+<h3>2.3 Spatial Character References</h3>
+<p><strong>Concept</strong>: Reference characters with their spatial context.</p>
+<p><strong>Format</strong>:</p>
+<pre><code>**Status Board** @L100-AA10-0317-0
+- ✅ Server A :check: (C211#1)
+- ⚠️ Server B :warning: (C345#1)
+- ❌ Server C :x: (C212#1)</code></pre>
+<h2>3. Spatial-Character Data Structures</h2>
+<h3>3.1 SQLite Schema Extension</h3>
+<pre><code>-- Spatial Character Mapping Table
+CREATE TABLE spatial_characters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ucode TEXT NOT NULL,           -- Spatial coordinate (L100-AA10-0317-0)
+    character_code TEXT NOT NULL,  -- Character code (C245#1)
+    character_type TEXT NOT NULL,  -- &#x27;emoji&#x27;, &#x27;teletext&#x27;, &#x27;c64&#x27;, &#x27;acorn&#x27;, &#x27;sprite&#x27;, &#x27;object&#x27;
+    description TEXT,              -- Optional description
+    entity_type TEXT,              -- &#x27;character&#x27;, &#x27;object&#x27;, &#x27;decoration&#x27; (for sprites/objects)
+    interactive_properties TEXT,   -- JSON: {&quot;hover&quot;:&quot;Help&quot;,&quot;click&quot;:&quot;assistant&quot;,&quot;animation&quot;:&quot;pulse&quot;}
+    animation_frames INTEGER,      -- Number of animation frames (for sprites)
+    personality_traits TEXT,      -- JSON: {&quot;friendly&quot;:true,&quot;helpful&quot;:true} (for character sprites)
+    object_properties TEXT,       -- JSON: {&quot;capacity&quot;:10,&quot;action&quot;:&quot;equip&quot;} (for objects)
+    created_at TEXT DEFAULT (datetime(&#x27;now&#x27;)),
+    updated_at TEXT DEFAULT (datetime(&#x27;now&#x27;)),
+    FOREIGN KEY (ucode) REFERENCES cells(ucode)
+);
+
+-- Character Anchoring Index
+CREATE INDEX idx_spatial_characters_ucode ON spatial_characters(ucode);
+CREATE INDEX idx_spatial_characters_type ON spatial_characters(character_type);</code></pre>
+<h3>3.2 Rust Struct Extension</h3>
+<pre><code>#[derive(Debug, Clone)]
+pub struct SpatialCharacter {
+    pub ucode: String,           // Spatial coordinate
+    pub character_code: String,  // C-layer character code
+    pub character_type: String,  // emoji/teletext/c64/acorn/sprite/object
+    pub description: Option&lt;String&gt;,
+    pub x_offset: i32,           // Pixel offset within cell (0-23)
+    pub y_offset: i32,           // Pixel offset within cell (0-23)
+    pub entity_type: Option&lt;String&gt;, // character/object/decoration
+    pub interactive_properties: Option&lt;serde_json::Value&gt;, // hover, click, animation
+    pub animation_frames: Option&lt;u8&gt;, // Number of animation frames (sprites only)
+    pub personality_traits: Option&lt;serde_json::Value&gt;, // For character sprites
+    pub object_properties: Option&lt;serde_json::Value&gt;, // For objects (capacity, action, etc.)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpriteProperties {
+    pub hover_text: Option&lt;String&gt;,
+    pub click_action: Option&lt;String&gt;,
+    pub animation: Option&lt;String&gt;, // &quot;pulse&quot;, &quot;spin&quot;, &quot;bounce&quot;, etc.
+    pub animation_speed: Option&lt;String&gt;, // &quot;slow&quot;, &quot;medium&quot;, &quot;fast&quot;
+    pub personality: Option&lt;SpritePersonality&gt;,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpritePersonality {
+    pub friendly: bool,
+    pub helpful: bool,
+    pub humorous: bool,
+    pub technical: bool,
+    pub traits: Vec&lt;String&gt;, // Custom personality traits
+}</code></pre>
+<h2>4. Spatial Character Operations</h2>
+<h3>4.1 Character Placement</h3>
+<pre><code>// Place character at spatial coordinate
+usystem.place_spatial_character(
+    &quot;L100-AA10-0317-0&quot;,  // Spatial coordinate
+    &quot;C245#1&quot;,           // Character code (:rocket:)
+    &quot;emoji&quot;,            // Character type
+    &quot;Main Entrance&quot;,    // Description
+    12,                 // X offset (pixels)
+    12                 // Y offset (pixels)
+);</code></pre>
+<h3>4.2 Character Retrieval</h3>
+<pre><code>// Get all characters at a spatial coordinate
+let characters = usystem.get_spatial_characters(&quot;L100-AA10-0317-0&quot;);
+
+// Get characters in a spatial range
+let range_characters = usystem.get_spatial_characters_in_range(
+    &quot;L100-AA10-0317-0&quot;,  // Start coordinate
+    &quot;L100-AA10-0319-2&quot;   // End coordinate
+);</code></pre>
+<h3>4.3 Character Rendering</h3>
+<pre><code>// Render spatial character map
+usystem.render_spatial_characters(
+    &quot;L100-AA10-0317-0&quot;,  // Center coordinate
+    5,                   // Radius (cells)
+    &quot;markdown&quot;           // Output format
+);
+
+// Create interactive SPRITE
+let sprite = SpatialCharacter {
+    ucode: &quot;L100-AA10-0317-0&quot;.to_string(),
+    character_code: &quot;C245#1&quot;.to_string(),
+    character_type: &quot;sprite&quot;.to_string(),
+    description: Some(&quot;Assistant Bot&quot;.to_string()),
+    x_offset: 12,
+    y_offset: 12,
+    sprite_type: Some(&quot;character&quot;.to_string()),
+    interactive_properties: Some(serde_json::json!({
+        &quot;hover&quot;: &quot;Click for help&quot;,
+        &quot;click&quot;: &quot;assistant&quot;,
+        &quot;animation&quot;: &quot;pulse&quot;
+    })),
+    animation_frames: Some(3),
+    personality_traits: Some(serde_json::json!({
+        &quot;friendly&quot;: true,
+        &quot;helpful&quot;: true,
+        &quot;humorous&quot;: false,
+        &quot;technical&quot;: true
+    }))
+};
+
+usystem.place_spatial_character(sprite);
+
+// Get interactive SPRITE
+let assistant = usystem.get_spatial_character(&quot;L100-AA10-0317-0&quot;, &quot;C245#1&quot;);
+if let Some(character) = assistant {
+    if character.character_type == &quot;sprite&quot; {
+        println!(&quot;Found interactive sprite: {:?}&quot;, character);
+    }
+}
+
+// Create interactive OBJECT
+let tool = SpatialCharacter {
+    ucode: &quot;L100-AA10-0320-0&quot;.to_string(),
+    character_code: &quot;C301#10&quot;.to_string(),
+    character_type: &quot;object&quot;.to_string(),
+    description: Some(&quot;Shovel&quot;.to_string()),
+    x_offset: 8,
+    y_offset: 8,
+    entity_type: Some(&quot;tool&quot;.to_string()),
+    interactive_properties: Some(serde_json::json!({
+        &quot;hover&quot;: &quot;Digging tool&quot;,
+        &quot;click&quot;: &quot;equip&quot;,
+        &quot;action&quot;: &quot;dig&quot;
+    })),
+    animation_frames: None,
+    personality_traits: None,
+    object_properties: Some(serde_json::json!({
+        &quot;durability&quot;: 100,
+        &quot;material&quot;: &quot;steel&quot;
+    }))
+};
+
+usystem.place_spatial_character(tool);
+
+// Get interactive OBJECT
+let shovel = usystem.get_spatial_character(&quot;L100-AA10-0320-0&quot;, &quot;C301#10&quot;);
+if let Some(character) = shovel {
+    if character.character_type == &quot;object&quot; {
+        println!(&quot;Found tool object: {:?}&quot;, character);
+        if let Some(props) = character.object_properties {
+            println!(&quot;Durability: {}&quot;, props[&quot;durability&quot;]);
+        }
+    }
+}</code></pre>
+<h2>5. Spatial-Character Mapping Examples</h2>
+<h3>5.1 Facility Map</h3>
+<pre><code># Data Center Layout @L100-AA10-0317-0
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  Data Center Floor 1  ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃  [C400#1] Entrance     ┃
+┃  [C400#1] Lobby        ┃
+┃  [C400#1] Security     ┃
+┃  [C400#1] Server Room  ┃
+┃  [C400#1] Network Ops  ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+**Legend**:
+- :door: Entrance (C123#1)@L100-AA10-0317-0
+- :computer: Servers (C187#1)@L100-AA10-0318-1
+- :warning: Fire Ext (C345#1)@L100-AA10-0319-2</code></pre>
+<h3>5.2 Status Dashboard</h3>
+<pre><code># System Status @L100-AA10-0317-0
+
+## Network
+- ✅ Core Router :check: (C211#1)
+- ✅ Switch A :check: (C211#1)
+- ⚠️ Switch B :warning: (C345#1)
+
+## Servers
+- ✅ Web Server :check: (C211#1)
+- ✅ DB Server :check: (C211#1)
+- ❌ Backup Server :x: (C212#1)
+
+## Power
+- ✅ UPS A :check: (C211#1)
+- ✅ UPS B :check: (C211#1)
+
+### 5.3 Interactive SPRITE Examples
+</code></pre>
+<h1>Interactive Control Panel @L100-AA10-0317-0</h1>
+<h2>Assistant SPRITE</h2>
+<p>:robot: Assistant (C245#1)@L100-AA10-0317-0[ hover="Click for help", click="assistant", animation="pulse", personality={"friendly":true,"helpful":true} ]</p>
+<h2>Control SPRITE</h2>
+<p>:control_knobs: Settings (C301#3)@L100-AA10-0318-1[ hover="System Configuration", click="config", animation="spin" ]</p>
+<h2>Animated Decoration</h2>
+<p>:sparkles: Effects (C245#10)@L100-AA10-0319-2[ animation="bounce", speed="slow" ]</p>
+<pre><code>
+### 5.4 Interactive OBJECT Examples
+</code></pre>
+<h1>Tool Inventory @L100-AA10-0320-0</h1>
+<h2>Tool OBJECT</h2>
+<p>:pick: Shovel (C301#10)@L100-AA10-0320-0[ hover="Digging tool", click="equip", action="dig", durability=100 ]</p>
+<h2>Container OBJECT</h2>
+<p>:purse: Bag (C245#20)@L100-AA10-0321-1[ hover="Storage bag", click="open", capacity=10, items=["key", "coin"] ]</p>
+<h2>Utility OBJECT</h2>
+<p>:wrench: Tool (C301#5)@L100-AA10-0322-2[ hover="Repair tool", click="use", action="repair", uses=50 ]</p>
+<pre><code>
+## 6. Spatial Character Queries
+
+### 6.1 SQL Queries
+</code></pre>
+<p>-- Get all emoji characters at a location SELECT * FROM spatial_characters WHERE ucode = 'L100-AA10-0317-0' AND character_type = 'emoji';</p>
+<p>-- Get all warning characters in a grid SELECT * FROM spatial_characters WHERE ucode LIKE 'L100-AA10-%' AND character_code = 'C345#1';</p>
+<p>-- Count characters by type in a layer SELECT character_type, COUNT(*) as count FROM spatial_characters WHERE ucode LIKE 'L100-AA10-%' GROUP BY character_type;</p>
+<pre><code>
+### 6.2 CLI Queries
+</code></pre>
+<h1>List spatial characters at coordinate</h1>
+<p>ucode1 spatial-chars list L100-AA10-0317-0</p>
+<h1>Search for specific character in spatial range</h1>
+<p>ucode1 spatial-chars find C345#1 L100-AA10-0317-0 L100-AA10-0319-2</p>
+<h1>Export spatial character map</h1>
+<p>ucode1 spatial-chars export L100-AA10-0317-0 5x5 markdown</p>
+<pre><code>
+## 7. Spatial Character Rendering
+
+### 7.1 Markdown Output
+</code></pre>
+<h1>Spatial Character Map: L100-AA10-0317-0</h1>
+<h2>Coordinate: L100-AA10-0317-0 (Level 100, Grid AA10, Cell 0317, Layer 0)</h2>
+<h3>Characters at this location:</h3>
+<ul><li>:rocket: Launch Point (C245#1)</li><li>:computer: Server Room (C187#1)</li><li>:door: Main Entrance (C123#1)</li></ul>
+<h3>Nearby Characters (1-cell radius):</h3>
+<ul><li>:warning: Fire Exit (C345#1) @L100-AA10-0318-0</li><li>:check: Status Board (C211#1) @L100-AA10-0316-0</li></ul>
+<pre><code>
+### 7.2 JSON Output
+</code></pre>
+<p>{ "coordinate": "L100-AA10-0317-0", "characters": [ { "code": "C245#1", "type": "emoji", "description": "Launch Point", "x_offset": 12, "y_offset": 12 }, { "code": "C187#1", "type": "emoji", "description": "Server Room", "x_offset": 8, "y_offset": 8 } ], "nearby": [ { "coordinate": "L100-AA10-0318-0", "code": "C345#1", "type": "emoji", "description": "Fire Exit" } ] }</p>
+<pre><code>
+## 8. Spatial Character Best Practices
+
+### 8.1 Consistency
+- Use consistent character types for similar spatial features
+- Maintain uniform offset patterns
+- Document character meanings in spatial context
+
+### 8.2 Performance
+- Limit spatial character density (max 4-6 per cell)
+- Use indexing for fast spatial queries
+- Cache frequently accessed spatial character maps
+
+### 8.3 Accessibility
+- Provide text alternatives for spatial characters
+- Ensure sufficient contrast in rendering
+- Support zoom levels for different character sizes
+
+## 9. Integration with Spatial Grid System
+
+### 9.1 Coordinate Resolution
+</code></pre>
+<h1>Character placement at different spatial resolutions</h1>
+<p>L0:   # 10km grid, ~7.7m per cell</p>
+<ul><li>Use large Teletext blocks [C400#1] for major landmarks</li><li>Limit to 1-2 characters per cell</li></ul>
+<p>L1:   # 100m grid, ~7.7cm per cell</p>
+<ul><li>Use emoji for building features</li><li>2-4 characters per cell maximum</li></ul>
+<p>L2:   # 1m grid, ~0.77mm per cell</p>
+<ul><li>Use small C64/Acorn characters for details</li><li>Up to 6 characters per cell</li></ul>
+<pre><code>
+### 9.2 Viewport Integration
+</code></pre>
+<h1>Character rendering at different viewport sizes</h1>
+<p>watch (20×20 cells):</p>
+<ul><li>Show only critical spatial characters</li><li>Use larger character sizes</li></ul>
+<p>phone (24×32 cells):</p>
+<ul><li>Show primary spatial characters</li><li>Standard character sizes</li></ul>
+<p>tablet (48×36 cells):</p>
+<ul><li>Show all spatial characters</li><li>Include detailed descriptions</li></ul>
+<pre><code>
+## 10. Spatial Character Tools
+
+### 10.1 Character Map Editor
+</code></pre>
+<h1>Interactive spatial character placement</h1>
+<p>ucode1 spatial-edit L100-AA10-0317-0</p>
+<h1>Batch import spatial characters</h1>
+<p>ucode1 spatial-import characters.json</p>
+<h1>Validate spatial character placement</h1>
+<p>ucode1 spatial-validate</p>
+<pre><code>
+### 10.2 Character Query Tools
+</code></pre>
+<h1>Find spatial characters by type</h1>
+<p>ucode1 spatial-find emoji L100-AA10-0317-0</p>
+<h1>Export spatial character map</h1>
+<p>ucode1 spatial-export L100-AA10-0317-0 3x3</p>
+<h1>Generate spatial character report</h1>
+<p>ucode1 spatial-report L100-AA10-0317-0</p>
+<pre><code>
+## 11. Spatial Character Reference
+
+### Common Spatial Character Mappings
+
+| Character | C-Layer Code | Spatial Use | Example Coordinate |
+|-----------|--------------|-------------|---------------------|
+| :rocket: | C245#1 | Launch points | L100-AA10-0317-0 |
+| :computer: | C187#1 | Server rooms | L100-AA10-0318-1 |
+| :door: | C123#1 | Entrances | L100-AA10-0319-2 |
+| :warning: | C345#1 | Hazards | L100-AA10-0320-0 |
+| :check: | C211#1 | Status OK | L100-AA10-0321-1 |
+| :x: | C212#1 | Status Error | L100-AA10-0322-2 |
+
+### Teletext Spatial Elements
+
+| Character | C-Layer Code | Spatial Use | Example |
+|-----------|--------------|-------------|---------|
+| [C400#1] | C400#1 | Walls | ━━━━━ |
+| [C404#1] | C404#1 | Paths | ━━━━━ |
+| [C406#1] | C406#1 | Corners | ┏┓┗┛ |
+
+## 12. Future Development
+
+### Roadmap
+
+**v1.1**: Spatial character visualization tool
+**v1.2**: 3D spatial character mapping
+**v1.3**: Augmented reality character overlay
+**v1.4**: Collaborative spatial character editing
+
+### Planned Features
+
+1. **Spatial Character Layers**: Multiple character layers per coordinate
+2. **Character Animation**: Time-based character changes
+3. **Character Groups**: Logical grouping of spatial characters
+4. **Character Search**: Full-text search across spatial characters
+
+---
+
+© 2024 uCode1 Team
+**Integration Version**: 1.0
+**Last Updated**: 2024-04-25
+**Reference**: uCode1/docs/SPATIAL_CHARACTER_INTEGRATION.md</code></pre></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FEATURE_SPEC_CONTROL_PANEL_AND_AGENTIC_EXECUTION.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / FEATURE_SPEC_CONTROL_PANEL_AND_AGENTIC_EXECUTION.md</span></header><main class="site-main"><h1>Feature Spec: Control Panel & Agentic Execution</h1>
+<p><strong>Version:</strong> 1.0.0 <strong>Date:</strong> 2026-07-02 <strong>Status:</strong> Delivered</p>
+<h2>Overview</h2>
+<p>Unified Control Panel tab for the Developer Surface replacing 11 scattered panels with a single dashboard, plus 10 new skills implementing a complete agentic execution pipeline for Dev Mode.</p>
+<h2>What Was Built</h2>
+<h3>Backend Aggregation (2 files)</h3>
+<ul><li><code>backend/app/services/control_service.py</code> — Aggregates all ecosystem health checks: Cline, OpenRouter, Hivemind, Roundtable, Ollama, Feed, Slate, Budget. Concurrent health probes with fallback paths.</li><li><code>backend/app/api/control_api.py</code> — <code>GET /api/control/status</code> endpoint serving unified payload.</li><li>Route registered in <code>backend/app/api/routes.py</code>.</li></ul>
+<h3>Control Panel UI (8 Vue files)</h3>
+<ul><li><code>ControlPanel.vue</code> — Unified dashboard with status badges, live feed, agent cards, cost dashboard, active mission, bottom bar, quick actions. 60-second polling.</li><li>7 sub-components: <code>StatusBadges.vue</code>, <code>LiveFeedStream.vue</code>, <code>AgentStatusCard.vue</code>, <code>CostDashboard.vue</code>, <code>ActiveMission.vue</code>, <code>BottomBar.vue</code>, <code>QuickActions.vue</code>.</li></ul>
+<h3>Post-Delivery Enhancements (2026-07)</h3>
+<ul><li>Lane selector renamed: <code>Ecosystem Dev</code> → <code>System</code>, <code>Project Dev</code> → <code>Project</code>.</li><li>Project lane now supports repo selection from <code>~/Code</code> (excluding system repos) via second dropdown selector.</li><li>Developer repo discovery now enforces a Code vs Vault boundary: Developer Surface lists code repos only and excludes vault/doc libraries (including mirrored doc-vault repos such as <code>global-knowledge</code>), which belong to Workflow/Missions.</li><li>Added <code>POST /api/control/recover</code> for one-click offline-service recovery.</li><li>Restart backend action now uses <code>POST /api/surfaces/popcorn/restart-backend</code>.</li></ul>
+<h3>Lane A: Catalogue & Assess (4 skills)</h3>
+<ul><li><code>skill_audit.py</code> — Rewritten as BaseSkill. Smoke-tests all 28+ builtin skills by importing, instantiating, and executing with dry_run. Classifies as working/untested/broken.</li><li><code>skill_ecosystem_audit.py</code> — Enhanced with <code>assess</code> action. Catalogues 173 items across 7 categories with health scoring.</li><li><code>skill_ucore_index.py</code> — Enhanced with <code>health-report</code> action. Cross-references audit reports with live service checks.</li><li><code>skill_enhancement_planner.py</code> — New. Bridges audit gaps to <code>.tasker</code> items, renders <code>ENHANCEMENT_PLAN.md</code>.</li></ul>
+<h3>Lane B: Agentic Execution (6 skills)</h3>
+<ul><li><code>skill_hivemind_consensus.py</code> — Multi-model deliberation via Hivemind (port 8490). 4 consensus modes.</li><li><code>skill_roundtable_dispatch.py</code> — Parallel specialized agent execution via Roundtable integration.</li><li><code>skill_cline_invoke.py</code> — Cline CLI bridge supporting yolo and interactive modes.</li><li><code>skill_dev_mode_executor.py</code> — Flagship 5-stage unified pipeline: fetch → analyze/route → consensus → execute → log.</li><li><code>skill_gh_workflow_bridge.py</code> — GitHub Actions/CLI bridge: trigger CI, create PRs, run workflows.</li><li><code>route_task.py</code> — Enhanced with <code>target_agent</code> parameter for specialized agent routing.</li></ul>
+<h3>Existing Panels Wired to APIs (10 Vue files)</h3>
+<ul><li>ModelsPanel, AgentsPanel, MCPServersPanel, SkillsPanel, ReposPanel, ReviewPanel, KanbanPanel, WorkflowsPanel, SettingsPanel — all now call real backend endpoints instead of hardcoded arrays.</li><li>ServerSurface + SystemSurface — all 13 tabs across both surfaces now call real APIs.</li></ul>
+<h3>Ecosystem Audit Results</h3>
+<ul><li>173 items catalogued across skills (41), MCP servers (1), runtimes (8), routes (97), paths (14), secrets (4), variables (8)</li><li>Health: 172 working, 1 untested (dev-destroy-rebuild), 0 broken — 99.4%</li></ul>
+<h2>Architecture</h2>
+<pre><code>GET /api/control/status
+  ├── Status badges (Cline, OpenRouter, Hivemind, Roundtable, Ollama, Feed, Slate, Budget)
+  ├── Live feed stream (20 recent activities)
+  ├── Agent status (Hivemind consensus, Roundtable swarm, Cline session, Ollama models)
+  ├── Cost dashboard (daily/weekly/monthly budget + top models)
+  ├── Active mission (from .tasker)
+  ├── Bottom bar (Tasker, MCP servers, Slates)
+  ├── Alerts (budget warnings, feed backlog, offline services)
+  └── 60-second polling for live updates</code></pre>
+<h2>Agentic Execution Pipeline</h2>
+<pre><code>User Task (.tasker)
+  → dev-mode-executor (B4)
+    → route_task (C1) — analyze &amp; select agent
+    → hivemind-consensus (B1) — multi-model deliberation
+    → roundtable-dispatch (B2) — parallel agent execution
+    → cline-invoke (B3) — autonomous file/terminal ops
+    → gh-workflow-bridge (B5) — CI/CD integration
+    → Log to spool + update .tasker</code></pre></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

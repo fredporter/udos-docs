@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>handovers/PHASE10_FINAL_CLOSURE_NOTES_2026-08-03.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / handovers/PHASE10_FINAL_CLOSURE_NOTES_2026-08-03.md</span></header><main class="site-main"><h1>Phase 10 Final Closure Notes (2026-08-03)</h1>
+<p>Status: Updated with scaffold and autonomy evidence Scope: Ecosystem hardening waves G, H, I, and final dev-round closure gates</p>
+<h2>1. Release Notes</h2>
+<h3>Summary</h3>
+<p>This round closes the remaining implementation and verification path for:</p>
+<p>1. Wave G (Google plugin foundation) 2. Wave H (Dreamscape foundation) 3. Wave I (Developer Surface and MCP bridge integration) 4. Wave J entry conditions (final dev-round execution and evidence collection)</p>
+<h3>Shipped outcomes</h3>
+<p>1. Wave G is now complete in planning and implementation tracking.</p>
+<p>2. Wave H is complete.</p>
+<p>3. Wave I is complete.</p>
+<p>4. Governance and anti-regression gates remain green after integration.</p>
+<ul><li>OAuth/token ownership model implemented in <code>udos-google</code>.</li><li>Gemini/Gems chat thin slice implemented with session-aware turn progression.</li><li>Vault docs to Drive thin sync slice implemented with revision/checksum tracking.</li><li>Mission intake and task scaffolding routes implemented in <code>udos-dreamscape</code>.</li><li>Daily briefing baseline output flow implemented.</li><li>Chronos contract readiness model defined and validated.</li><li>Developer Surface control panel now shows capability readiness cards.</li><li>Capability-gated controls are disabled when readiness is blocked.</li><li>MCP bridge now exposes capability preflight and readiness tools.</li></ul>
+<h2>2. Repairs Log</h2>
+<h3>Repair 1: udos-google service syntax regression</h3>
+<p>1. Symptom:</p>
+<p>2. Root cause:</p>
+<p>3. Fix:</p>
+<p>4. Verification:</p>
+<ul><li><code>python3 -m unittest discover</code> failed with <code>SyntaxError: unmatched '}'</code>.</li><li>Stray trailing <code>}</code> in <code>udos_google/src/service.py</code> after thin-slice edits.</li><li>Removed the extraneous brace.</li><li>Re-ran <code>python3 -m unittest discover</code> in <code>udos-google</code>.</li><li>Result: <code>Ran 3 tests ... OK</code>.</li></ul>
+<h3>Repair 2: Closure evidence incompleteness</h3>
+<p>1. Symptom:</p>
+<p>2. Root cause:</p>
+<p>3. Fix:</p>
+<p>4. Verification:</p>
+<ul><li>Final-round tracker still had open closure items despite wave implementation being complete.</li><li>Required consolidated closure notes (repairs/release/rollback) were not yet published as a canonical artifact.</li><li>Added this closure notes document and updated phase tracker checkboxes tied to evidence publication.</li><li>Phase tracker now marks final-round execution and evidence completion where proof exists.</li></ul>
+<h2>3. Command and Gate Proof</h2>
+<p>Commands executed for final-round closure evidence:</p>
+<p>1. <code>cd /Users/fredbook/Code/udos-google && python3 -m unittest discover</code> 2. <code>cd /Users/fredbook/Code/uCore && python3 scripts/audit_duplicate_routes.py && python3 scripts/validate_extension_manifests.py && python3 scripts/validate_legacy_settings_cleanup.py && python3 scripts/validate_capability_requirements.py</code> 3. <code>cd /Users/fredbook/Code/uCore && python3 scripts/validate_split_repo_packaging.py && python3 scripts/smoke_split_repo_imports.py && python3 scripts/validate_docs_nonregression.py</code></p>
+<p>Gate results:</p>
+<p>1. Duplicate route audit: pass (<code>0</code> duplicates) 2. Extension manifest validation: pass 3. Legacy cleanup validation: pass 4. Capability requirements validation: pass (<code>Discovered 7</code>, <code>Declared 9</code>) 5. Split-repo packaging validation: pass 6. Split-repo import smoke: pass 7. Documentation non-regression: pass</p>
+<h2>4. Rollback Notes</h2>
+<p>If post-close regressions are found, use this rollback order.</p>
+<h3>Fast rollback (docs and planning only)</h3>
+<p>1. Revert closure-note and phase-tracker documentation commits. 2. Re-open Wave J checklist items in phase tracker. 3. Keep code artifacts untouched until impact is confirmed.</p>
+<h3>Code rollback (Wave G thin slices)</h3>
+<p>1. Revert <code>udos-google</code> thin-slice changes to:</p>
+<p>2. Re-run <code>python3 -m unittest discover</code> in <code>udos-google</code>. 3. Re-run uCore capability and governance validators.</p>
+<ul><li>chat session handling,</li><li>drive mirror sync revision/checksum behavior,</li><li>related route contract changes.</li></ul>
+<h3>Bridge/UI rollback (Wave I)</h3>
+<p>1. Revert capability readiness additions in:</p>
+<p>2. Rebuild both:</p>
+<ul><li><code>uDev/mcp-bridge/src/index.ts</code></li><li><code>uDev/developer-surface/src/api/mcpClient.ts</code></li><li><code>uDev/developer-surface/src/panels/ControlPanel.vue</code></li><li><code>cd /Users/fredbook/Code/uDev/mcp-bridge && npm run build</code></li><li><code>cd /Users/fredbook/Code/uDev/developer-surface && npm run build</code></li></ul>
+<h3>Stop-the-line rollback gate</h3>
+<p>Do not proceed to phase closure if any of the following fail after rollback:</p>
+<p>1. <code>python3 scripts/audit_duplicate_routes.py</code> 2. <code>python3 scripts/validate_extension_manifests.py</code> 3. <code>python3 scripts/validate_legacy_settings_cleanup.py</code> 4. <code>python3 scripts/validate_capability_requirements.py</code> 5. <code>python3 scripts/validate_split_repo_packaging.py</code> 6. <code>python3 scripts/smoke_split_repo_imports.py</code> 7. <code>python3 scripts/validate_docs_nonregression.py</code></p>
+<h2>5. Residual Risks</h2>
+<p>1. <code>udos-google</code> and <code>udos-dreamscape</code> are local directories in this workspace snapshot without confirmed git remotes/history in this run context. 2. Final phase close remains blocked until commit/push of outstanding uCore planning/docs and any associated uDev changes are explicitly completed.</p>
+<h2>6. Remaining Before Full Phase Closure</h2>
+<p>1. Commit and push remaining planning/documentation updates. 2. Optionally execute cost/performance comparison artifacts for autonomous-round economics (if required by governance policy for this phase).</p>
+<h2>7. Wave F2 Scaffold Completion Evidence</h2>
+<p>Scaffold actions completed:</p>
+<p>1. Added <code>publishing_mirror</code> capability requirements in <code>uCore/config/capability_requirements.json</code>. 2. Added <code>udos-publishing/ucore-extension.json</code> manifest to complete plugin scaffold shape. 3. Added route-contract scaffold checker:</p>
+<p>4. Added publishing preflight probe:</p>
+<ul><li><code>scripts/check_wavef2_publishing_route_contract.py</code></li><li><code>scripts/probe_wavef2_publishing_preflight.py</code></li></ul>
+<p>Execution proof:</p>
+<p>1. <code>python3 scripts/check_wavef2_publishing_route_contract.py</code> passed (<code>ok: true</code>). 2. <code>python3 scripts/probe_wavef2_publishing_preflight.py</code> passed contract checks with expected preflight status <code>412</code> while extension registration is pending at runtime.</p>
+<h2>8. Autonomous Low-Cost and Broad-Strokes Metrics</h2>
+<h3>Low-cost route-first (ollama-first)</h3>
+<p>Command:</p>
+<p>1. <code>POST /api/skills/route_task/run</code> with <code>complexity=low</code>, <code>prefer_provider=ollama</code>, <code>confirm=true</code>.</p>
+<p>Observed result:</p>
+<p>1. HTTP <code>200</code> 2. Routed provider/model: <code>ollama</code> + <code>qwen2.5-coder:3b</code> 3. Execution mode: <code>advice-only</code> 4. Timing: <code>real 0.01s</code></p>
+<h3>Broad-strokes diagnostics and hivemind checks</h3>
+<p>Command:</p>
+<p>1. <code>bash scripts/ai_stack_health_check.sh</code></p>
+<p>Observed result:</p>
+<p>1. Pass: <code>12</code> 2. Warn: <code>3</code> 3. Fail: <code>0</code> 4. Warnings:</p>
+<p>5. Timing: <code>real 2.56s</code></p>
+<ul><li>AI runtime stats unavailable in <code>/api/system</code> payload</li><li><code>route_task</code> call without confirm returned <code>403</code> (policy gate)</li><li>Hivemind health endpoint unavailable on <code>127.0.0.1:8490</code></li></ul>
+<h3>Cost/performance comparison scaffold</h3>
+<p>1. Local low-cost route pass completed in <code>0.01s</code> using local Ollama model path. 2. Broad-strokes health pass completed in <code>2.56s</code> with zero hard failures. 3. Manual-throughput baseline is now scaffolded through timed commands and can be compared in the next round by rerunning these same timed probes after new plan changes.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

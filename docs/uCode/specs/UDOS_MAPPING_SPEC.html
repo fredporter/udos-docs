@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/UDOS_MAPPING_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / specs/UDOS_MAPPING_SPEC.md</span></header><main class="site-main"><h1>uDos Mapping Specification</h1>
+<p>Status: LOCKED - Development Baseline Version: 1.0 Date: 2026-07-31 Legacy alias: uPlace (historical name in older docs)</p>
+<h2>1. Purpose</h2>
+<p>Define a geographic mapping system for uCode that converts between WGS84 latitude/longitude and uCode grid coordinates, supports layered world cells, and feeds both interactive and static renderers.</p>
+<p>Primary near-term target:</p>
+<p>1. GridCore/uCode runtime integration for 2D map workflows.</p>
+<p>Future target:</p>
+<p>1. Virtual/3D world mapping and advanced uCode2-profile rendering paths.</p>
+<h2>2. Architectural Position</h2>
+<p>Current boundary alignment:</p>
+<p>1. uCode owns mapping math, grid conversion, layer model, render adapters, and packaging. 2. uCore consumes mapping capabilities through package and manifest contracts. 3. Mapping must remain usable offline after initial asset/data hydration.</p>
+<h2>3. Coordinate Model</h2>
+<p>Format:</p>
+<p><code>L{level}-{col}-{row}-{layer}</code></p>
+<p>Components:</p>
+<p>1. <code>level</code>: Earth zoom hierarchy in L300-L399. 2. <code>col</code>: grid column index (hex/base-encoded display string is allowed). 3. <code>row</code>: grid row index (hex/base-encoded display string is allowed). 4. <code>layer</code>: logical layer index (0-5 baseline).</p>
+<h2>4. Earth Zoom Hierarchy</h2>
+<p>Baseline operational range:</p>
+<p>1. L300-L399 for Earth mapping. 2. Default: L340 for city/metro operations.</p>
+<p>Illustrative intent:</p>
+<p>1. Lower levels: broader regions. 2. Higher levels: finer local/building precision.</p>
+<p>Exact cell spans may vary by implementation calibration and projection tuning, but level monotonicity is required (higher level -> smaller cell footprint).</p>
+<h2>5. Projection and Conversion</h2>
+<p>Projection basis:</p>
+<p>1. WGS84 input/output. 2. Web Mercator variant for planar grid mapping.</p>
+<p>Required conversions:</p>
+<p>1. <code>latlonToUCode(lat, lon, level)</code> 2. <code>uCodeToLatLon(coord)</code> 3. <code>getCellCenter(coord)</code> 4. <code>getNeighbours(coord, radius)</code> 5. <code>getParent(coord)</code> 6. <code>getChildren(coord)</code> 7. <code>getDistance(coordA, coordB)</code></p>
+<p>Round-trip accuracy target:</p>
+<p>1. Coordinate inversion error <= 0.0001 degrees in validation fixtures.</p>
+<h2>6. Layer Model</h2>
+<p>Grid cell layers (baseline 6):</p>
+<p>1. terrain 2. details 3. foreground 4. lighting 5. collision 6. entities</p>
+<p>Layer schema must be stable so both Leaflet and SVG pipelines consume identical cell data contracts.</p>
+<h2>7. Data Providers</h2>
+<p>Provider priority:</p>
+<p>1. Primary: OpenStreetMap/Overpass (no key required). 2. Secondary: GeoNames (POI augmentation). 3. Optional fallback: Google Maps APIs (keyed, optional).</p>
+<p>Normalization rule:</p>
+<p>1. All provider outputs must normalize to a common GeoJSON-like internal model before grid rasterization.</p>
+<h2>8. Rendering Modes</h2>
+<p>Required dual modes:</p>
+<p>1. Interactive renderer (Leaflet tile/grid integration). 2. Static renderer (SVG export, stylized/piri-capable output).</p>
+<p>Both must share the same grid/layer data source to avoid visual drift.</p>
+<h2>9. Asset System</h2>
+<p>Required capabilities:</p>
+<p>1. Material Symbols icon repository (self-hostable). 2. Marker generation for both interactive and static renderers. 3. Font system for labels/annotation. 4. Emoji-to-icon mapping with overridable custom mappings.</p>
+<p>Offline rule:</p>
+<p>1. Runtime works without external network after initial asset hydration.</p>
+<h2>10. API Baseline</h2>
+<p>Core API surface must support:</p>
+<p>1. Coordinate conversion and hierarchy utilities. 2. Provider feature ingestion. 3. Grid cell generation (6 layers). 4. Interactive map rendering. 5. Static SVG rendering. 6. Marker/icon/emoji asset resolution.</p>
+<h2>11. Performance Baselines</h2>
+<p>Initial goals:</p>
+<p>1. 1000 coordinate conversions under 100ms. 2. 100 marker renders under 500ms. 3. 10x10 grid generation under 5s (network/provider dependent). 4. Interactive first paint under 2s on warm cache target.</p>
+<h2>12. Test Baseline</h2>
+<p>Unit tests:</p>
+<p>1. Known city conversion fixtures. 2. Round-trip conversion tolerance. 3. Neighbour/parent/child math. 4. Distance calculation sanity. 5. Emoji/icon mapping resolution.</p>
+<p>Integration tests:</p>
+<p>1. OSM provider fetch + normalization. 2. Grid generation with all layers present. 3. Leaflet renderer output validity. 4. SVG output validity.</p>
+<h2>13. Delivery Phases</h2>
+<p>Phase 1:</p>
+<p>1. Core engine and tests.</p>
+<p>Phase 2:</p>
+<p>1. Data providers and normalization.</p>
+<p>Phase 3:</p>
+<p>1. Asset system and marker/font/emoji support.</p>
+<p>Phase 4:</p>
+<p>1. Dual rendering pipeline.</p>
+<p>Phase 5:</p>
+<p>1. Integration, benchmarks, release docs.</p>
+<h2>14. Future Expansion (Not in current implementation scope)</h2>
+<p>1. Virtual/3D world coordinate bindings. 2. uCode2-profile advanced visual overlays and scene integration. 3. Hybrid geospatial + simulation entities across layered runtime scenes.</p>
+<p>These future tracks must preserve compatibility with the GridCore/uCode foundation defined here.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

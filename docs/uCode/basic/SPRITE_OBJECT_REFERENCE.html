@@ -1,0 +1,441 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>basic/SPRITE_OBJECT_REFERENCE.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / basic/SPRITE_OBJECT_REFERENCE.md</span></header><main class="site-main"><p>--- title: "uCode1 SPRITE & OBJECT Reference" status: draft last_updated: 2026-04-25T16:27:54+10:00 category: reference tags: [reference, ucode1] description: "This document provides a comprehensive reference for <strong>SPRITE</strong> and <strong>OBJECT</strong> cell types in uCode1, including their ..." ---</p>
+<h1>uCode1 SPRITE & OBJECT Reference</h1>
+<h2>Overview</h2>
+<p>This document provides a comprehensive reference for <strong>SPRITE</strong> and <strong>OBJECT</strong> cell types in uCode1, including their characteristics, usage patterns, and implementation details.</p>
+<h2>1. Cell Type Comparison</h2>
+<h3>1.1 SPRITE vs OBJECT</h3>
+<pre><code>SPRITE:
+  type: &quot;animated/interactive&quot;
+  size: &quot;24×24 pixels (1 CELL)&quot;
+  characteristics: &quot;alive, animated, personality&quot;
+  examples: &quot;:robot:, :fairy:, :goblin:&quot;
+  use_cases: &quot;characters, assistants, NPCs&quot;
+
+OBJECT:
+  type: &quot;inanimate/interactive&quot;
+  size: &quot;24×24 pixels (1 CELL)&quot;
+  characteristics: &quot;static, functional, utilitarian&quot;
+  examples: &quot;:pick:, :purse:, :wrench:&quot;
+  use_cases: &quot;tools, containers, equipment&quot;</code></pre>
+<h3>1.2 Feature Comparison Table</h3>
+<p>| Feature | SPRITE | OBJECT | |---------|--------|--------| | <strong>Animation</strong> | ✅ Yes (pulse, float, spin, etc.) | ❌ No (static) | | <strong>Personality</strong> | ✅ Yes (traits, behaviors) | ❌ No | | <strong>AI Behavior</strong> | ✅ Yes (can move, react) | ❌ No | | <strong>Interactivity</strong> | ✅ Yes (hover, click, complex) | ✅ Yes (use, equip, simple) | | <strong>Storage</strong> | ✅ 45KB CELL data | ✅ 45KB CELL data | | <strong>Multiple Frames</strong> | ✅ Yes (animation sequences) | ❌ No (single frame) | | <strong>Examples</strong> | :robot:, :fairy:, :elf: | :pick:, :purse:, :wrench: | | <strong>Use Cases</strong> | Characters, assistants, NPCs | Tools, items, containers |</p>
+<h2>2. SPRITE Reference</h2>
+<h3>2.1 SPRITE Characteristics</h3>
+<p><strong>Animated</strong>: SPRITE cells support multiple animation frames stored in the 45KB CELL data.</p>
+<p><strong>Interactive</strong>: SPRITE cells respond to user interactions with hover effects, click actions, and complex behaviors.</p>
+<p><strong>Personality</strong>: SPRITE cells can have custom personality traits that influence their behavior.</p>
+<p><strong>Behavioral</strong>: SPRITE cells can exhibit AI-driven behaviors and autonomous actions.</p>
+<h3>2.2 SPRITE Types</h3>
+<h4>Character SPRITEs</h4>
+<pre><code>character_sprites:
+  - type: &quot;assistant&quot;
+    examples: [&quot;:robot:&quot;, &quot;:fairy:&quot;, &quot;:genie:&quot;]
+    c_layer_range: &quot;C245#1-C245#50&quot;
+    characteristics: &quot;helpful, interactive, animated&quot;
+    use_cases: &quot;user assistants, guides, helpers&quot;
+
+  - type: &quot;npc&quot;
+    examples: [&quot;:elf:&quot;, &quot;:goblin:&quot;, &quot;:wizard:&quot;]
+    c_layer_range: &quot;C245#51-C245#100&quot;
+    characteristics: &quot;autonomous, behavioral, personality&quot;
+    use_cases: &quot;non-player characters, quest givers, story elements&quot;
+
+  - type: &quot;creature&quot;
+    examples: [&quot;:dragon:&quot;, &quot;:unicorn:&quot;, &quot;:phoenix:&quot;]
+    c_layer_range: &quot;C245#101-C245#150&quot;
+    characteristics: &quot;animated, behavioral, complex&quot;
+    use_cases: &quot;fantasy creatures, pets, companions&quot;</code></pre>
+<h4>Decoration SPRITEs</h4>
+<pre><code>decoration_sprites:
+  - type: &quot;effect&quot;
+    examples: [&quot;:sparkles:&quot;, &quot;:stars:&quot;, &quot;:fireworks:&quot;]
+    c_layer_range: &quot;C245#151-C245#200&quot;
+    characteristics: &quot;animated, decorative, atmospheric&quot;
+    use_cases: &quot;visual effects, ambiance, mood setting&quot;
+
+  - type: &quot;particle&quot;
+    examples: [&quot;:zap:&quot;, &quot;:boom:&quot;, &quot;:dizzy:&quot;]
+    c_layer_range: &quot;C245#201-C245#250&quot;
+    characteristics: &quot;dynamic, temporary, effect-based&quot;
+    use_cases: &quot;magic effects, explosions, status indicators&quot;</code></pre>
+<h3>2.3 SPRITE Properties</h3>
+<pre><code>sprite_properties:
+  hover_text:
+    description: &quot;Text displayed when user hovers over sprite&quot;
+    example: &quot;Click for help&quot;
+    format: &quot;string&quot;
+
+  click_action:
+    description: &quot;Action triggered when user clicks sprite&quot;
+    example: &quot;assistant&quot;
+    format: &quot;string (action identifier)&quot;
+
+  animation:
+    description: &quot;Animation type for sprite&quot;
+    options: [&quot;pulse&quot;, &quot;float&quot;, &quot;spin&quot;, &quot;bounce&quot;, &quot;shake&quot;, &quot;none&quot;]
+    example: &quot;pulse&quot;
+    format: &quot;string&quot;
+
+  animation_speed:
+    description: &quot;Speed of animation&quot;
+    options: [&quot;slow&quot;, &quot;medium&quot;, &quot;fast&quot;]
+    example: &quot;slow&quot;
+    format: &quot;string&quot;
+
+  personality:
+    description: &quot;Personality traits (for character sprites)&quot;
+    traits: [&quot;friendly&quot;, &quot;helpful&quot;, &quot;humorous&quot;, &quot;technical&quot;, &quot;serious&quot;]
+    example: {&quot;friendly&quot;: true, &quot;helpful&quot;: true}
+    format: &quot;JSON object&quot;
+
+  behavior:
+    description: &quot;AI behavior pattern&quot;
+    options: [&quot;passive&quot;, &quot;active&quot;, &quot;aggressive&quot;, &quot;curious&quot;, &quot;shy&quot;]
+    example: &quot;active&quot;
+    format: &quot;string&quot;</code></pre>
+<h3>2.4 SPRITE Examples</h3>
+<h4>Assistant SPRITE</h4>
+<pre><code># Interactive Assistant
+:robot: Assistant (C245#1)@L100-AA10-0317-0[
+  hover=&quot;Click for help&quot;,
+  click=&quot;assistant&quot;,
+  animation=&quot;pulse&quot;,
+  personality={&quot;friendly&quot;:true,&quot;helpful&quot;:true,&quot;technical&quot;:true}
+]</code></pre>
+<h4>Fantasy Character SPRITE</h4>
+<pre><code># Magic Helper
+:fairy: Fairy (C245#50)@L100-AA10-0318-1[
+  hover=&quot;Cast spell&quot;,
+  click=&quot;magic&quot;,
+  animation=&quot;float&quot;,
+  personality={&quot;friendly&quot;:true,&quot;humorous&quot;:true,&quot;helpful&quot;:true}
+]</code></pre>
+<h4>Creature SPRITE</h4>
+<pre><code># Mythical Creature
+:dragon: Dragon (C245#101)@L100-AA10-0319-2[
+  hover=&quot;Beware!&quot;,
+  click=&quot;interact&quot;,
+  animation=&quot;bounce&quot;,
+  personality={&quot;aggressive&quot;:true,&quot;powerful&quot;:true}
+]</code></pre>
+<h4>Effect SPRITE</h4>
+<pre><code># Visual Effect
+:sparkles: Magic (C245#151)@L100-AA10-0320-0[
+  animation=&quot;pulse&quot;,
+  speed=&quot;medium&quot;,
+  duration=&quot;continuous&quot;
+]</code></pre>
+<h2>3. OBJECT Reference</h2>
+<h3>3.1 OBJECT Characteristics</h3>
+<p><strong>Static</strong>: OBJECT cells are single-frame and do not animate.</p>
+<p><strong>Functional</strong>: OBJECT cells serve practical purposes and can be manipulated by users.</p>
+<p><strong>Utilitarian</strong>: OBJECT cells represent tools, containers, and equipment.</p>
+<p><strong>Interactive</strong>: OBJECT cells support basic interactions like use, equip, and open.</p>
+<h3>3.2 OBJECT Types</h3>
+<h4>Tool OBJECTs</h4>
+<pre><code>tool_objects:
+  - type: &quot;digging&quot;
+    examples: [&quot;:pick:&quot;, &quot;:shovel:&quot;]
+    c_layer_range: &quot;C301#1-C301#10&quot;
+    characteristics: &quot;durable, functional, equipment&quot;
+    use_cases: &quot;construction, mining, excavation&quot;
+
+  - type: &quot;repair&quot;
+    examples: [&quot;:wrench:&quot;, &quot;:hammer:&quot;]
+    c_layer_range: &quot;C301#11-C301#20&quot;
+    characteristics: &quot;functional, durable, utilitarian&quot;
+    use_cases: &quot;maintenance, repair, building&quot;
+
+  - type: &quot;precision&quot;
+    examples: [&quot;:gear:&quot;, &quot;:nut_and_bolt:&quot;]
+    c_layer_range: &quot;C301#21-C301#30&quot;
+    characteristics: &quot;precise, technical, specialized&quot;
+    use_cases: &quot;engineering, mechanics, assembly&quot;</code></pre>
+<h4>Container OBJECTs</h4>
+<pre><code>container_objects:
+  - type: &quot;storage&quot;
+    examples: [&quot;:purse:&quot;, &quot;:bag:&quot;, &quot;:box:&quot;]
+    c_layer_range: &quot;C245#11-C245#20&quot;
+    characteristics: &quot;capacity, organizable, portable&quot;
+    use_cases: &quot;inventory, storage, transportation&quot;
+
+  - type: &quot;specialized&quot;
+    examples: [&quot;:toolbox:&quot;, &quot;:briefcase:&quot;, &quot;:backpack:&quot;]
+    c_layer_range: &quot;C245#21-C245#30&quot;
+    characteristics: &quot;organized, functional, purpose-specific&quot;
+    use_cases: &quot;professional, technical, organized storage&quot;</code></pre>
+<h4>Utility OBJECTs</h4>
+<pre><code>utility_objects:
+  - type: &quot;lighting&quot;
+    examples: [&quot;:flashlight:&quot;, &quot;:bulb:&quot;]
+    c_layer_range: &quot;C301#31-C301#40&quot;
+    characteristics: &quot;functional, illuminative, portable&quot;
+    use_cases: &quot;visibility, exploration, emergency&quot;
+
+  - type: &quot;measurement&quot;
+    examples: [&quot;:ruler:&quot;, &quot;:balance_scale:&quot;]
+    c_layer_range: &quot;C301#41-C301#50&quot;
+    characteristics: &quot;precise, functional, technical&quot;
+    use_cases: &quot;measurement, calibration, analysis&quot;</code></pre>
+<h3>3.3 OBJECT Properties</h3>
+<pre><code>object_properties:
+  hover_text:
+    description: &quot;Text displayed when user hovers over object&quot;
+    example: &quot;Digging tool&quot;
+    format: &quot;string&quot;
+
+  click_action:
+    description: &quot;Primary action when user clicks object&quot;
+    options: [&quot;use&quot;, &quot;equip&quot;, &quot;open&quot;, &quot;examine&quot;, &quot;pickup&quot;]
+    example: &quot;equip&quot;
+    format: &quot;string&quot;
+
+  action:
+    description: &quot;Specific action performed by object&quot;
+    options: [&quot;dig&quot;, &quot;repair&quot;, &quot;open&quot;, &quot;measure&quot;, &quot;cut&quot;]
+    example: &quot;dig&quot;
+    format: &quot;string&quot;
+
+  capacity:
+    description: &quot;Storage capacity (for containers)&quot;
+    example: 10
+    format: &quot;integer&quot;
+
+  durability:
+    description: &quot;Usage lifespan (for tools)&quot;
+    example: 100
+    format: &quot;integer (percentage)&quot;
+
+  material:
+    description: &quot;Construction material&quot;
+    options: [&quot;steel&quot;, &quot;wood&quot;, &quot;plastic&quot;, &quot;glass&quot;, &quot;stone&quot;]
+    example: &quot;steel&quot;
+    format: &quot;string&quot;
+
+  contents:
+    description: &quot;Items contained within (for containers)&quot;
+    example: [&quot;key&quot;, &quot;coin&quot;, &quot;tool&quot;]
+    format: &quot;array of strings&quot;</code></pre>
+<h3>3.4 OBJECT Examples</h3>
+<h4>Tool OBJECT</h4>
+<pre><code># Digging Tool
+:pick: Shovel (C301#1)@L100-AA10-0317-0[
+  hover=&quot;Digging tool&quot;,
+  click=&quot;equip&quot;,
+  action=&quot;dig&quot;,
+  durability=100,
+  material=&quot;steel&quot;
+]</code></pre>
+<h4>Container OBJECT</h4>
+<pre><code># Storage Bag
+:purse: Bag (C245#11)@L100-AA10-0318-1[
+  hover=&quot;Storage bag&quot;,
+  click=&quot;open&quot;,
+  capacity=10,
+  contents=[&quot;key&quot;, &quot;coin&quot;, &quot;tool&quot;],
+  material=&quot;leather&quot;
+]</code></pre>
+<h4>Utility OBJECT</h4>
+<pre><code># Repair Tool
+:wrench: Wrench (C301#11)@L100-AA10-0319-2[
+  hover=&quot;Repair tool&quot;,
+  click=&quot;use&quot;,
+  action=&quot;repair&quot;,
+  durability=75,
+  material=&quot;steel&quot;
+]</code></pre>
+<h4>Measurement OBJECT</h4>
+<pre><code># Precision Tool
+:ruler: Ruler (C301#41)@L100-AA10-0320-0[
+  hover=&quot;Measuring tool&quot;,
+  click=&quot;use&quot;,
+  action=&quot;measure&quot;,
+  precision=&quot;mm&quot;,
+  material=&quot;metal&quot;
+]</code></pre>
+<h2>4. Implementation Patterns</h2>
+<h3>4.1 SPRITE Implementation</h3>
+<pre><code>// Create a character SPRITE
+let sprite = SpatialCharacter {
+    ucode: &quot;L100-AA10-0317-0&quot;.to_string(),
+    character_code: &quot;C245#1&quot;.to_string(),
+    character_type: &quot;sprite&quot;.to_string(),
+    entity_type: Some(&quot;character&quot;.to_string()),
+    description: Some(&quot;Assistant Bot&quot;.to_string()),
+    x_offset: 12,
+    y_offset: 12,
+    interactive_properties: Some(serde_json::json!({
+        &quot;hover&quot;: &quot;Click for help&quot;,
+        &quot;click&quot;: &quot;assistant&quot;,
+        &quot;animation&quot;: &quot;pulse&quot;
+    })),
+    animation_frames: Some(3),
+    personality_traits: Some(serde_json::json!({
+        &quot;friendly&quot;: true,
+        &quot;helpful&quot;: true,
+        &quot;technical&quot;: true
+    })),
+    object_properties: None
+};
+
+// Place the SPRITE
+usystem.place_spatial_character(sprite);
+
+// Update SPRITE animation
+usystem.update_sprite_animation(&quot;L100-AA10-0317-0&quot;, &quot;C245#1&quot;, &quot;float&quot;);
+
+// Trigger SPRITE behavior
+usystem.trigger_sprite_behavior(&quot;L100-AA10-0317-0&quot;, &quot;C245#1&quot;, &quot;help&quot;);</code></pre>
+<h3>4.2 OBJECT Implementation</h3>
+<pre><code>// Create a tool OBJECT
+let tool = SpatialCharacter {
+    ucode: &quot;L100-AA10-0318-1&quot;.to_string(),
+    character_code: &quot;C301#1&quot;.to_string(),
+    character_type: &quot;object&quot;.to_string(),
+    entity_type: Some(&quot;tool&quot;.to_string()),
+    description: Some(&quot;Shovel&quot;.to_string()),
+    x_offset: 8,
+    y_offset: 8,
+    interactive_properties: Some(serde_json::json!({
+        &quot;hover&quot;: &quot;Digging tool&quot;,
+        &quot;click&quot;: &quot;equip&quot;,
+        &quot;action&quot;: &quot;dig&quot;
+    })),
+    animation_frames: None,
+    personality_traits: None,
+    object_properties: Some(serde_json::json!({
+        &quot;durability&quot;: 100,
+        &quot;material&quot;: &quot;steel&quot;,
+        &quot;type&quot;: &quot;digging&quot;
+    }))
+};
+
+// Place the OBJECT
+usystem.place_spatial_character(tool);
+
+// Use OBJECT
+usystem.use_object(&quot;L100-AA10-0318-1&quot;, &quot;C301#1&quot;);
+
+// Update OBJECT durability
+usystem.update_object_durability(&quot;L100-AA10-0318-1&quot;, &quot;C301#1&quot;, 95);</code></pre>
+<h3>4.3 SPRITE-OBJECT Interaction</h3>
+<pre><code>// SPRITE picks up OBJECT
+usystem.sprite_pickup_object(
+    &quot;L100-AA10-0317-0&quot;,  // SPRITE coordinate
+    &quot;C245#1&quot;,           // SPRITE code
+    &quot;L100-AA10-0318-1&quot;,  // OBJECT coordinate
+    &quot;C301#1&quot;            // OBJECT code
+);
+
+// SPRITE uses OBJECT
+usystem.sprite_use_object(
+    &quot;L100-AA10-0317-0&quot;,  // SPRITE coordinate
+    &quot;C245#1&quot;,           // SPRITE code
+    &quot;L100-AA10-0318-1&quot;,  // OBJECT coordinate
+    &quot;C301#1&quot;            // OBJECT code
+);
+
+// SPRITE drops OBJECT
+usystem.sprite_drop_object(
+    &quot;L100-AA10-0317-0&quot;,  // SPRITE coordinate
+    &quot;C245#1&quot;,           // SPRITE code
+    &quot;L100-AA10-0319-2&quot;   // Target coordinate
+);</code></pre>
+<h2>5. SPRITE & OBJECT Queries</h2>
+<h3>5.1 SQL Queries</h3>
+<pre><code>-- Get all SPRITEs at a location
+SELECT * FROM spatial_characters
+WHERE ucode = &#x27;L100-AA10-0317-0&#x27;
+AND character_type = &#x27;sprite&#x27;;
+
+-- Get all OBJECTs in a grid
+SELECT * FROM spatial_characters
+WHERE ucode LIKE &#x27;L100-AA10-%&#x27;
+AND character_type = &#x27;object&#x27;;
+
+-- Get all character SPRITEs with specific personality
+SELECT * FROM spatial_characters
+WHERE character_type = &#x27;sprite&#x27;
+AND entity_type = &#x27;character&#x27;
+AND personality_traits LIKE &#x27;%friendly%&#x27;;
+
+-- Get all tool OBJECTs with low durability
+SELECT * FROM spatial_characters
+WHERE character_type = &#x27;object&#x27;
+AND entity_type = &#x27;tool&#x27;
+AND object_properties LIKE &#x27;%durability%&#x27;
+AND json_extract(object_properties, &#x27;$.durability&#x27;) &lt; 20;</code></pre>
+<h3>5.2 CLI Queries</h3>
+<pre><code># List all SPRITEs at coordinate
+ucode1 sprite-list L100-AA10-0317-0
+
+# List all OBJECTs in grid
+ucode1 object-list L100-AA10-0317-0 L100-AA10-0319-2
+
+# Get SPRITE details
+ucode1 sprite-details L100-AA10-0317-0 C245#1
+
+# Get OBJECT details
+ucode1 object-details L100-AA10-0318-1 C301#1
+
+# Export SPRITE map
+ucode1 sprite-export L100-AA10-0317-0 3x3 markdown
+
+# Export OBJECT inventory
+ucode1 object-export L100-AA10-0318-1 2x2 json</code></pre>
+<h2>6. SPRITE & OBJECT Best Practices</h2>
+<h3>6.1 SPRITE Best Practices</h3>
+<p>1. <strong>Animation Economy</strong>: Limit animation complexity for performance 2. <strong>Personality Consistency</strong>: Maintain consistent personality traits 3. <strong>Behavior Boundaries</strong>: Define clear behavior rules 4. <strong>Interaction Feedback</strong>: Provide clear user feedback 5. <strong>Performance Optimization</strong>: Cache frequently used SPRITEs</p>
+<h3>6.2 OBJECT Best Practices</h3>
+<p>1. <strong>Functional Clarity</strong>: Clear purpose and usage 2. <strong>Durability Management</strong>: Track and update durability states 3. <strong>Capacity Limits</strong>: Enforce reasonable capacity limits 4. <strong>Material Realism</strong>: Use appropriate material properties 5. <strong>Interaction Simplicity</strong>: Keep interactions straightforward</p>
+<h3>6.3 Integration Best Practices</h3>
+<p>1. <strong>Type Separation</strong>: Keep SPRITE and OBJECT logic distinct 2. <strong>Interaction Patterns</strong>: Define clear interaction rules 3. <strong>Performance Balancing</strong>: Optimize SPRITE-OBJECT interactions 4. <strong>State Management</strong>: Track interaction states properly 5. <strong>Error Handling</strong>: Graceful handling of invalid interactions</p>
+<h2>7. SPRITE & OBJECT Reference Tables</h2>
+<h3>7.1 Common SPRITE Types</h3>
+<p>| Type | C-Layer Range | Examples | Characteristics | |------|---------------|----------|----------------| | Assistant | C245#1-C245#10 | :robot:, :fairy: | Helpful, interactive | | NPC | C245#11-C245#50 | :elf:, :goblin: | Autonomous, behavioral | | Creature | C245#51-C245#100 | :dragon:, :unicorn: | Animated, complex | | Effect | C245#101-C245#150 | :sparkles:, :zap: | Decorative, dynamic |</p>
+<h3>7.2 Common OBJECT Types</h3>
+<p>| Type | C-Layer Range | Examples | Characteristics | |------|---------------|----------|----------------| | Tool | C301#1-C301#50 | :pick:, :wrench: | Functional, durable | | Container | C245#11-C245#50 | :purse:, :box: | Storage, portable | | Utility | C301#51-C301#100 | :flashlight:, :ruler: | Specialized, precise |</p>
+<h3>7.3 Animation Types</h3>
+<p>| Animation | Description | Speed Options | |-----------|-------------|---------------| | pulse | Gentle pulsing effect | slow, medium, fast | | float | Gentle floating motion | slow, medium, fast | | spin | Rotational movement | slow, medium, fast | | bounce | Bouncing effect | slow, medium, fast | | shake | Shaking motion | slow, medium, fast | | none | No animation | - |</p>
+<h3>7.4 Personality Traits</h3>
+<p>| Trait | Description | Applies To | |-------|-------------|------------| | friendly | Helpful and approachable | Characters | | helpful | Provides assistance | Characters | | humorous | Jokes and lighthearted | Characters | | technical | Knowledgeable and precise | Characters | | serious | Professional and formal | Characters | | aggressive | Confrontational | Creatures | | powerful | Strong and dominant | Creatures | | curious | Inquisitive | NPCs | | shy | Reserved and cautious | NPCs |</p>
+<h2>8. SPRITE & OBJECT Examples</h2>
+<h3>8.1 Fantasy Adventure</h3>
+<pre><code># Fantasy World @L100-AA10-0317-0
+
+## Characters
+- :fairy: Guide (C245#50)@L100-AA10-0317-0[hover=&quot;Help&quot;,click=&quot;guide&quot;]
+- :goblin: Trader (C245#15)@L100-AA10-0318-1[hover=&quot;Trade&quot;,click=&quot;shop&quot;]
+
+## Objects
+- :pick: Mining Tool (C301#1)@L100-AA10-0319-2[hover=&quot;Shovel&quot;,click=&quot;equip&quot;]
+- :purse: Treasure Bag (C245#20)@L100-AA10-0320-0[hover=&quot;Loot&quot;,click=&quot;open&quot;]</code></pre>
+<h3>8.2 Facility Management</h3>
+<pre><code># Data Center @L100-AA10-0317-0
+
+## Assistants
+- :robot: Tech Bot (C245#1)@L100-AA10-0317-0[hover=&quot;Help&quot;,click=&quot;assist&quot;]
+- :computer: AI Helper (C245#2)@L100-AA10-0318-1[hover=&quot;Info&quot;,click=&quot;query&quot;]
+
+## Tools
+- :wrench: Repair Kit (C301#11)@L100-AA10-0319-2[hover=&quot;Tools&quot;,click=&quot;use&quot;]
+- :flashlight: Inspection Light (C301#31)@L100-AA10-0320-0[hover=&quot;Light&quot;,click=&quot;equip&quot;]</code></pre>
+<h3>8.3 Game Inventory</h3>
+<pre><code># Player Inventory @L100-AA10-0317-0
+
+## Character
+- :elf: Hero (C245#12)@L100-AA10-0317-0[hover=&quot;Hero&quot;,click=&quot;stats&quot;,animation=&quot;pulse&quot;]
+
+## Equipment
+- :pick: Mining Pick (C301#1)@L100-AA10-0318-1[hover=&quot;Pickaxe&quot;,click=&quot;equip&quot;,durability=85]
+- :purse: Backpack (C245#21)@L100-AA10-0319-2[hover=&quot;Bag&quot;,click=&quot;open&quot;,capacity=15]
+- :wrench: Repair Kit (C301#11)@L100-AA10-0320-0[hover=&quot;Tools&quot;,click=&quot;use&quot;,uses=10]</code></pre>
+<h2>9. Future Development</h2>
+<h3>9.1 SPRITE Enhancements</h3>
+<p><strong>v1.1</strong>: Advanced animation system with physics <strong>v1.2</strong>: SPRITE-to-SPRITE communication <strong>v1.3</strong>: SPRITE learning and adaptation <strong>v1.4</strong>: SPRITE emotion system</p>
+<h3>9.2 OBJECT Enhancements</h3>
+<p><strong>v1.1</strong>: OBJECT crafting and combination <strong>v1.2</strong>: OBJECT wear and tear visualization <strong>v1.3</strong>: OBJECT nesting and containment <strong>v1.4</strong>: OBJECT market and trading</p>
+<h3>9.3 Integration Enhancements</h3>
+<p><strong>v1.1</strong>: SPRITE-OBJECT crafting system <strong>v1.2</strong>: SPRITE-OBJECT quest system <strong>v1.3</strong>: SPRITE-OBJECT economy system <strong>v1.4</strong>: SPRITE-OBJECT social system</p>
+<p>---</p>
+<p>© 2024 uCode1 Team <strong>SPRITE/OBJECT Version</strong>: 1.0 <strong>Last Updated</strong>: 2024-04-25 <strong>Reference</strong>: uCode1/docs/SPRITE_OBJECT_REFERENCE.md</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

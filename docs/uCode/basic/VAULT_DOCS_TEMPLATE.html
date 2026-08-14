@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>basic/VAULT_DOCS_TEMPLATE.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / basic/VAULT_DOCS_TEMPLATE.md</span></header><main class="site-main"><p>--- title: "uSystem Documentation in Vault" status: draft last_updated: 2026-04-25T16:27:54+10:00 category: documentation tags: [storage, ucode1, vault] description: "<strong>These documents are automatically generated from usystem.db and synced ONE-WAY to your Vault.</strong>" ---</p>
+<h1>uSystem Documentation in Vault</h1>
+<h2>Important Notice</h2>
+<p><strong>These documents are automatically generated from usystem.db and synced ONE-WAY to your Vault.</strong></p>
+<h3>What This Means:</h3>
+<p>1. <strong>Read-Only Reference</strong>: These documents are for your reference only 2. <strong>No Reverse Sync</strong>: Modifying these documents will NOT update usystem.db 3. <strong>Regeneration</strong>: Documents can be regenerated at any time from usystem.db 4. <strong>Source of Truth</strong>: The usystem.db database is the authoritative source</p>
+<h2>Documentation Sync Process</h2>
+<h3>How Documents Are Created:</h3>
+<pre><code>usystem.db → uCode1 Vault Sync → Your Vault Documents
+                    (one-way)</code></pre>
+<h3>When Documents Are Updated:</h3>
+<p>1. <strong>Initial Setup</strong>: When you first initialize uCode1 2. <strong>Version Updates</strong>: When uCode1 is updated to new versions 3. <strong>Manual Sync</strong>: When you run <code>ucode1 vault sync-docs</code></p>
+<h3>For Developers:</h3>
+<p>If you need to modify system documentation:</p>
+<p>1. Update the source in <code>usystem_schema.sql</code> or Rust code 2. Rebuild uCode1: <code>cargo build --release</code> 3. Regenerate documents: <code>./scripts/generate_docs.sh</code> 4. Sync to vault: <code>ucode1 vault sync-docs</code></p>
+<h2>Document Types in Vault</h2>
+<h3>1. Command Reference</h3>
+<p>Automatically generated from registered commands in usystem.db:</p>
+<ul><li>Command names and descriptions</li><li>Usage examples</li><li>Available options</li></ul>
+<h3>2. Schema Documentation</h3>
+<p>Versioned schemas for uCode1 components:</p>
+<ul><li>uCode core schemas</li><li>Vault database schemas</li><li>Module schemas</li></ul>
+<h3>3. System Documentation</h3>
+<p>Reference documentation for:</p>
+<ul><li>Permission matrix</li><li>Role definitions</li><li>System variables</li></ul>
+<h2>Working with Vault Documents</h2>
+<h3>Best Practices:</h3>
+<p>1. <strong>Don't Modify</strong>: Treat as read-only reference 2. <strong>Create New</strong>: Add your own documents for custom workflows 3. <strong>Version Control</strong>: Use Git to track your custom documents 4. <strong>Backup</strong>: Regularly backup your Vault directory</p>
+<h3>Recommended Workflow:</h3>
+<pre><code># 1. Review system documentation
+ucode1 docs
+
+# 2. Create your own documentation in Vault
+ucode1 note create &quot;My Workflow&quot; &quot;# My Custom Process...&quot;
+
+# 3. Organize with folders/tags
+ucode1 note create &quot;Project/Setup&quot; &quot;# Project setup steps...&quot;
+
+# 4. Backup your customizations
+git add ~/Code/Vault</code></pre>
+<h2>Indexing Vault Documents</h2>
+<h3>Important Note:</h3>
+<p><strong>Vault documents are NOT automatically indexed.</strong> This is by design to:</p>
+<p>1. <strong>Maintain Control</strong>: You decide what gets indexed 2. <strong>Avoid Clutter</strong>: Only important documents in search 3. <strong>Performance</strong>: Faster searches with curated index</p>
+<h3>How to Index Documents:</h3>
+<pre><code># Index a specific document
+ucode1 vault index-doc &quot;Document Name&quot;
+
+# Index all documents in a category
+ucode1 vault index-category &quot;Getting Started&quot;
+
+# View indexed documents
+ucode1 vault list-indexed</code></pre>
+<h3>Indexing Best Practices:</h3>
+<p>1. <strong>Curate Carefully</strong>: Only index documents you frequently search 2. <strong>Use Categories</strong>: Group related documents 3. <strong>Review Regularly</strong>: Clean up unused indexed documents 4. <strong>Performance</strong>: Too many indexed docs slow down search</p>
+<h2>Roadmap for Documentation Features</h2>
+<h3>uCode1.1+ Development Plan:</h3>
+<p>1. <strong>Health Commands</strong> (Priority)</p>
+<ul><li><code>ucode1 vault health-check</code></li><li><code>ucode1 vault optimize</code></li><li><code>ucode1 vault repair</code></li></ul>
+<p>2. <strong>Maintenance Commands</strong></p>
+<ul><li><code>ucode1 vault cleanup</code></li><li><code>ucode1 vault defrag</code></li><li><code>ucode1 vault backup</code></li></ul>
+<p>3. <strong>Advanced Indexing</strong></p>
+<ul><li>Automatic indexing suggestions</li><li>Index usage analytics</li><li>Smart indexing recommendations</li></ul>
+<p>4. <strong>Documentation Management</strong></p>
+<ul><li>Versioned document history</li><li>Document change tracking</li><li>Collaboration features</li></ul>
+<h2>Getting Help</h2>
+<h3>System Documentation:</h3>
+<pre><code># View all commands
+ucode1 docs
+
+# Get markdown reference
+ucode1 docs --format markdown
+
+# View specific help
+ucode1 note --help</code></pre>
+<h3>Community Resources:</h3>
+<ul><li>GitHub Issues: https://github.com/your-repo/uCode1/issues</li><li>Documentation: https://docs.ucode1.example.com</li><li>Community Forum: https://community.ucode1.example.com</li></ul>
+<h2>License</h2>
+<p>This documentation template is part of uCode1 and is released under the MIT License.</p>
+<p>---</p>
+<p>© 2024 uCode1 Team. All rights reserved.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

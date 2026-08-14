@@ -1,0 +1,12 @@
+{
+  "status": "ok",
+  "built_at": "2026-08-14T01:02:22.986899+00:00",
+  "site_root": "/Users/fredbook/Public/doc-sites/udos-docs",
+  "total_files": 168,
+  "rendered_pages": 168,
+  "repos": {
+    "uCode": 96,
+    "uCore": 70,
+    "uVector": 2
+  }
+}

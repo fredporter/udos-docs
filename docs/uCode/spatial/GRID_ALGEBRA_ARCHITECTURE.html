@@ -1,0 +1,250 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>spatial/GRID_ALGEBRA_ARCHITECTURE.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / spatial/GRID_ALGEBRA_ARCHITECTURE.md</span></header><main class="site-main"><p>--- title: "Grid Algebra & Viewport Architecture — The Unified Rendering Pipeline" status: draft last_updated: 2026-06-16 category: specification tags: [devstudio, architecture, grid-algebra, teletext, terminal, viewport, ucode1, userver] description: "<strong>Document ID:</strong> UDN-GRID-ARCH-001 — The definitive reference for how Terminal, Teletext, uServer Feed Surface, and proseui/uCode2 all share a single grid algebra data model." ---</p>
+<h1>Grid Algebra & Viewport Architecture</h1>
+<p><strong>Document ID:</strong> UDN-GRID-ARCH-001 <strong>Status:</strong> Living Specification <strong>Version:</strong> 1.0.0 <strong>Date:</strong> 2026-06-16 <strong>Principle:</strong> <em>The grid is the truth. Views are just lenses.</em></p>
+<p>---</p>
+<h2>Executive Summary</h2>
+<p>To understand the Dev Agent's architecture, stop thinking of "Terminal" and "Teletext" as separate applications. Instead, they are <strong>rendering engines</strong> — two different <code>Viewport</code> classes — that parse the exact same underlying data structure: <strong>uCode1's grid algebra</strong>.</p>
+<p>This document defines the complete pipeline:</p>
+<p>1. <strong>uCode1 Grid Algebra</strong> — The spatial algebra that defines cells on a Cartesian grid 2. <strong>Terminal Viewport</strong> — Linear, sequential, scroll-based rendering (the CLI) 3. <strong>Teletext Viewport</strong> — Page-based, indexed, non-scrolling rendering (the Information Radiator) 4. <strong>uServer Feed Surface</strong> — The traffic cop that multiplexes data sources into grid coordinates 5. <strong>Doc-Sites / Publishing Pipeline</strong> — How Vault docs and device libraries become Teletext pages 6. <strong>proseui/uCode2 Bridge</strong> — How Dashboard widgets consume the same grid algebra as data</p>
+<p>---</p>
+<h2>1. The Common Core: uCode1 & Grid Algebra</h2>
+<h3>1.1 What Grid Algebra Is</h3>
+<p><strong>uCode1</strong> is not a markup language; it is a <strong>spatial algebra</strong> for defining cells on a Cartesian grid (X, Y, depth, and attribute flags). Every piece of data entering the system — whether a log line, a workflow status, or a Vault document — is reduced to a set of <strong>grid primitives</strong> (tokens, color attributes, blink/reverse flags, and cell coordinates).</p>
+<h3>1.2 The GridCell Primitive</h3>
+<p>Both the Python (<code>uCode1/ucode1/grid_algebra/</code>) and TypeScript (<code>uConnect/ui/src/surfaces/gridui/grid-algebra/</code>) implementations define the same core cell type:</p>
+<pre><code># Python (uCode1/ucode1/grid_algebra/grid_cell.py)
+@dataclass
+class GridCell:
+    x: int = 0          # Column position
+    y: int = 0          # Row position
+    z: int = 0          # Depth/layer
+    char: str = &#x27; &#x27;     # Single character glyph
+    fg: int = 7         # Foreground colour index (0-15)
+    bg: int = 0         # Background colour index (0-15)
+    bold: bool = False
+    italic: bool = False
+    underline: bool = False
+    blink: bool = False
+    reverse: bool = False
+    meta: dict = {}     # Arbitrary metadata</code></pre>
+<pre><code>// TypeScript (uConnect/ui/src/surfaces/gridui/grid-algebra/GridCell.ts)
+interface GridCell {
+  char: string           // Single glyph
+  fg: number             // Foreground colour index (0-7 teletext, 0-15 ANSI)
+  bg: number             // Background colour index
+  bold: boolean
+  flash: boolean         // Teletext flash/blink
+  doubleHeight: boolean  // Teletext double-height row
+  doubleWidth: boolean   // Teletext double-width char
+}</code></pre>
+<h3>1.3 The GridBuffer</h3>
+<p>A <code>GridBuffer</code> is a 2D array of <code>GridCell</code>s — rows × cols (y × x). Neither view stores data; they only store <em>projections</em>. The Terminal and Teletext views are passed the same <code>GridBuffer</code> object; they just iterate over it differently.</p>
+<pre><code>type GridBuffer = GridCell[][]  // rows × cols (y × x)</code></pre>
+<h3>1.4 Key Design Principle</h3>
+<blockquote><strong>Neither view stores data. They only store projections.</strong></blockquote>
+<p>The Terminal and Teletext views are passed the same <code>GridBuffer</code> object; they just iterate over it differently. This means a single data source can be viewed simultaneously as:</p>
+<ul><li>A scrolling terminal line (Terminal mode)</li><li>A static Teletext sub-page (Teletext mode)</li><li>A real-time graph in a Dashboard (proseui mode)</li></ul>
+<p>...all without rewriting the data ingestion pipeline.</p>
+<h3>1.5 Grid Transform Operations</h3>
+<p>The <code>GridTransform</code> module provides pure functions for manipulating GridBuffers:</p>
+<p>| Operation | Description | File | |-----------|-------------|------| | <code>resize()</code> | Change grid dimensions | <code>GridTransform.ts</code> | | <code>overlay()</code> | Merge one buffer onto another | <code>GridTransform.ts</code> | | <code>scroll()</code> | Scroll buffer contents | <code>GridTransform.ts</code> | | <code>crop()</code> | Extract a sub-region | <code>GridTransform.ts</code> | | <code>merge()</code> | Combine two buffers with conflict resolution | <code>operations.py</code> | | <code>rotate_90/180()</code> | Rotate grid contents | <code>operations.py</code> | | <code>flip_horizontal/vertical()</code> | Mirror grid | <code>operations.py</code> | | <code>transpose()</code> | Swap X and Y axes | <code>operations.py</code> | | <code>map_cells()</code> | Apply a function to every cell | <code>operations.py</code> | | <code>filter_cells()</code> | Keep only matching cells | <code>operations.py</code> |</p>
+<p>---</p>
+<h2>2. Terminal Mode (The Retro Computer Terminal)</h2>
+<h3>2.1 Rendering Philosophy</h3>
+<p><strong>Linear, sequential, scroll-based.</strong> Terminal treats the grid as a <strong>TTY stream</strong>. Incoming data is appended to the bottom of the grid; older data scrolls up and out of the viewport.</p>
+<h3>2.2 Specification</h3>
+<p>| Property | Value | |----------|-------| | <strong>Type</strong> | Grid Viewport | | <strong>Inspiration</strong> | C64 / PET | | <strong>Font Pack</strong> | PETME (petme64, petme128) | | <strong>Renderer</strong> | DOM-based grid (1,920 CELL nodes) | | <strong>Grid Size</strong> | 80×24 characters (fixed) | | <strong>Cell Size</strong> | 24×24 pixels (1 CELL) | | <strong>Total Pixels</strong> | 1,920×576 | | <strong>Character Sets</strong> | PETSCII, ASCII, Box-drawing | | <strong>Use Case</strong> | Interactive CLI, coding, retro terminal |</p>
+<h3>2.3 Behavior</h3>
+<ul><li><strong>Input:</strong> Accepts keyboard input and ANSI escape sequences</li><li><strong>Output:</strong> Appends data to bottom of grid; older data scrolls up</li><li><strong>Collision:</strong> Last write wins (no overlapping elements)</li><li><strong>Resolution:</strong> Strictly emulates fixed character-cell resolution (80×24)</li><li><strong>Use Cases:</strong> Running REPLs, executing uCode2 scripts, tailing logs</li></ul>
+<h3>2.4 Implementation</h3>
+<p><strong>File:</strong> <code>uConnect/ui/src/surfaces/gridui/panels/TerminalPanel.tsx</code></p>
+<p>The TerminalPanel is a C64 BASIC terminal emulator that uses <code>grid-algebra</code> internally. All display operations go through <code>GridBuffer</code> and <code>GridTransform</code>. It renders via the shared <code>GridBufferRenderer</code> component.</p>
+<p><strong>Supported Commands:</strong> <code>HELP</code>, <code>CLS</code>, <code>LIST</code>, <code>PRINT</code>, <code>TIME</code>, <code>DATE</code>, <code>WHOAMI</code>, <code>NEW</code>, <code>RUN</code>, <code>LOAD</code>, <code>SAVE</code>, <code>POKE</code>, <code>PEEK</code>, <code>SYS</code>, <code>EXIT</code></p>
+<p>---</p>
+<h2>3. Teletext Mode (The Ceefax Reader)</h2>
+<h3>3.1 Rendering Philosophy</h3>
+<p><strong>Page-based, indexed, non-scrolling.</strong> Teletext treats the grid as a <strong>frame buffer</strong> for specific "Pages" (e.g., Page 100, Page 2A). Instead of scrolling, it flips instantly between pre-rendered grid states.</p>
+<h3>3.2 Specification</h3>
+<p>| Property | Value | |----------|-------| | <strong>Type</strong> | Canvas Viewport | | <strong>Inspiration</strong> | Ceefax / Teletext | | <strong>Font Pack</strong> | Teletext50 | | <strong>Renderer</strong> | Canvas 2D (single draw call) | | <strong>Grid Size</strong> | 80×24 characters (logical) | | <strong>Cell Size</strong> | 24×24 pixels (scalable) | | <strong>Total Pixels</strong> | Variable (scaled to container) | | <strong>Character Sets</strong> | G0-G3 (alphanumeric, mosaic, supplementary, special) | | <strong>Use Case</strong> | Broadcast, page-based information, mosaic graphics |</p>
+<h3>3.3 Behavior</h3>
+<ul><li><strong>Input:</strong> Accepts numeric keypad inputs (e.g., "100" + "Reveal")</li><li><strong>Output:</strong> Flips instantly between pre-rendered grid states</li><li><strong>Refresh:</strong> Entire page refreshes on timed interval (e.g., every 30 seconds)</li><li><strong>Overlay Advantage:</strong> Supports "sub-pages" and hidden metadata (the "Reveal" button)</li><li><strong>Multi-source:</strong> Can hold multiple data streams simultaneously on the same page without scrolling — e.g., top-left quadrant shows system logs, bottom-right shows a workflow DAG</li></ul>
+<h3>3.4 Broadcast Features</h3>
+<p>| Feature | Description | |---------|-------------| | <strong>Page Navigation</strong> | 3-digit page numbers (100-899) | | <strong>Sub-pages</strong> | 0-9 per page | | <strong>Fasttext</strong> | Coloured shortcut buttons (red, green, yellow, cyan) | | <strong>Magazine</strong> | Numbering derived from first digit (1-8) | | <strong>Reveal</strong> | Concealed text (e.g., quiz answers) | | <strong>Size</strong> | Toggle double-height mode | | <strong>Flash</strong> | 500ms animation interval | | <strong>CRT Effects</strong> | Scanlines, glow, vignette | | <strong>PNG Export</strong> | <code>toDataURL()</code> / <code>toBlob()</code> |</p>
+<h3>3.5 Teletext Control Codes</h3>
+<p>| Code | Description | |------|-------------| | <code>ALPHA</code> | Switch to alphanumeric (G0) | | <code>MOSAIC</code> | Switch to mosaic (G1) | | <code>SEPARATED</code> | S1 — separated mosaic (1px gap) | | <code>CONTIGUOUS</code> | S2 — contiguous mosaic (no gap) | | <code>SMOOTH</code> | S3 — smooth mosaic (anti-aliased) | | <code>FLASH</code> | Start flashing (500ms on/off) | | <code>STEADY</code> | Stop flashing | | <code>CONCEAL</code> | Hide text (reveal via REVEAL) | | <code>REVEAL</code> | Show concealed text | | <code>SIZE</code> | Set size (normal, double-height, double-width, double) | | <code>COLOUR</code> | Set foreground colour (USX 0-31) | | <code>BGCOLOUR</code> | Set background colour (USX 0-31) | | <code>HOLD</code> | Hold page (don't update until released) | | <code>UPDATE</code> | Release hold and update |</p>
+<h3>3.6 Implementation</h3>
+<p><strong>File:</strong> <code>uConnect/ui/src/surfaces/gridui/panels/TeletextPanel.tsx</code></p>
+<p>The TeletextPanel is a Ceefax-style page viewer using <code>grid-algebra</code>. Pages are 40×25 <code>GridBuffer</code>s stored in <code>TeletextPageStore</code>. It renders via the shared <code>GridBufferRenderer</code> component.</p>
+<p><strong>Built-in Pages:</strong> Welcome (100), System Status (101), News (200), Colour Test Card (888)</p>
+<h3>3.7 Teletext Page Server</h3>
+<p><strong>File:</strong> <code>uConnect/teletext/server.ts</code> (port 5199)</p>
+<p>A standalone HTTP server that serves static teletext pages (P100–P999) and proxies surface URLs with fallback to error pages.</p>
+<p><strong>Page Registry:</strong> | Page | Name | Description | |------|------|-------------| | P100 | User Setup | Profile, preferences, workspace config | | P200 | API Connections | Secrets and API configuration | | P800 | Service Unavailable | Primary service not responding | | P801 | Server Not Running | Backend API unreachable | | P802 | Maintenance Mode | System under maintenance | | P804 | Service Stopped | Service intentionally stopped | | P805 | Service Starting | Service in startup sequence | | P810 | 404 Not Found | Requested page doesn't exist | | P820 | Network Disconnected | No network connectivity | | P822 | Connection Refused | Target server refused connection | | P830 | Database Error | Cannot connect to database | | P890 | Generic Error | Unclassified error | | P900 | System Status | Overall health dashboard | | P904 | Port Usage | Listening ports | | P910 | Log Viewer | System logs | | P950 | Teletext Navigator | Page index + quick jump | | P999 | About | Version, license, credits |</p>
+<p>---</p>
+<h2>4. Dual Viewport Comparison</h2>
+<p>| Feature | Terminal (C64) | Teletext (Ceefax) | |---------|----------------|-------------------| | <strong>Renderer</strong> | DOM grid (1,920 nodes) | Canvas (single draw call) | | <strong>Font</strong> | PETME64/128 | Teletext50 | | <strong>Character Sets</strong> | PETSCII, ASCII | G0-G3 (alphanumeric, mosaic) | | <strong>Interaction</strong> | Direct, cursor, input | Page-based, broadcast | | <strong>Animation</strong> | Sprites/BOBs (20fps) | Flash (2fps), page updates | | <strong>Collision</strong> | Yes (cell/pixel) | No (canvas only) | | <strong>CRT Effects</strong> | Optional | Yes (scanlines, glow, vignette) | | <strong>Export</strong> | DOM screenshot | PNG (toDataURL/toBlob) | | <strong>Use Case</strong> | Interactive, CLI, coding | Broadcast, information, retro | | <strong>Data Flow</strong> | Streamed live | Pre-rendered page packs | | <strong>Refresh</strong> | Continuous scroll | Timed interval (30s) |</p>
+<h3>Shared Grid Rules</h3>
+<p>Both viewports follow the same underlying grid rules:</p>
+<pre><code>SHARED_RULES:
+  grid_size: &quot;80×24 CELLS&quot;
+  cell_size: &quot;24×24px base&quot;
+  flexible_sizing: &quot;Characters can be 1px-48px&quot;
+  color_palette: &quot;USX 32-color&quot;
+  block_graphics: &quot;2:3 teletext blocks (2×3 CELLS = 48×72px)&quot;
+  sprites: &quot;8×8 to 48×48px, animated&quot;
+  bobs: &quot;49×49 to 192×192px, glitter objects&quot;
+  coordinates: &quot;uCode L{level}-{gridXY}-{cellXY}-{layer}&quot;</code></pre>
+<p>---</p>
+<h2>5. uServer: The Traffic Cop & Feed Surface</h2>
+<h3>5.1 Architecture</h3>
+<p>The <strong>uServer</strong> does not push data directly to the views. Instead, it manages a <strong>Feed Surface</strong> — a routing table that maps incoming data streams to grid coordinates.</p>
+<pre><code>┌──────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│  Data Sources │     │  uServer         │     │  Viewports       │
+│              │     │  Feed Surface    │     │                  │
+│ WebSocket    │────▶│                  │────▶│ Terminal (CLI)   │
+│ File Tailers │     │  Source A →      │     │ Teletext (Pages) │
+│ MQTT         │     │    Grid 10-20    │     │ proseui (Widgets)│
+│ DB Polls     │     │  Source B →      │     │                  │
+│              │     │    Grid 1-5      │     │                  │
+└──────────────┘     └──────────────────┘     └──────────────────┘</code></pre>
+<h3>5.2 The Feed Surface Configuration</h3>
+<p>This is a YAML/JSON mapping that defines how incoming data maps to grid coordinates:</p>
+<pre><code>feed_surface:
+  sources:
+    - id: &quot;system-logs&quot;
+      type: &quot;stream&quot;
+      grid_mapping:
+        rows: [10, 20]    # Grid Rows 10-20
+        cols: [0, 79]     # Columns 0-79
+      spool: &quot;clean&quot;
+      keep_last: 500
+
+    - id: &quot;workflow-status&quot;
+      type: &quot;poll&quot;
+      grid_mapping:
+        rows: [1, 5]      # Grid Rows 1-5
+        cols: [40, 79]    # Columns 40-79
+      spool: &quot;archive&quot;
+      poll_interval: 30</code></pre>
+<h3>5.3 uServer's Job</h3>
+<p>uServer multiplexes disparate sources into a single unified <code>GridBuffer</code> using atomic grid algebra operations (<code>set cell X,Y to value Z with attribute W</code>).</p>
+<h3>5.4 The Feed System (uServer/feed/)</h3>
+<p><strong>File:</strong> <code>uServer/feed/core.py</code></p>
+<p>The feed system provides a universal JSON feed transport. Every event, email, task, and notification becomes a queryable JSON feed entry:</p>
+<pre><code>{
+  &quot;version&quot;: &quot;1.0&quot;,
+  &quot;type&quot;: &quot;feed&quot;,
+  &quot;source&quot;: &quot;system.events&quot;,
+  &quot;items&quot;: [
+    {
+      &quot;id&quot;: &quot;evt-001&quot;,
+      &quot;timestamp&quot;: &quot;2026-04-21T08:00:00Z&quot;,
+      &quot;type&quot;: &quot;event.start&quot;,
+      &quot;summary&quot;: &quot;System booted&quot;,
+      &quot;payload&quot;: { &quot;uptime&quot;: &quot;0:00:00&quot;, &quot;kernel&quot;: &quot;6.8.0&quot; }
+    }
+  ]
+}</code></pre>
+<p><strong>Feed Directory Structure:</strong></p>
+<pre><code>~/.local/share/udos/feeds/
+├── system/     (events, hardware, security)
+├── user/       (notify, sessions, preferences)
+├── mcp/        (messages, tools, resources)
+├── network/    (family, nas, sync)
+└── spool/      (compress, archive, vector)</code></pre>
+<h3>5.5 Source Type Split</h3>
+<p>| Source Type | Terminal Mode | Teletext Mode | | :--- | :--- | :--- | | <strong>Vault Docs/Libraries</strong> | Not used (too dense) | <strong>Preconfigured Pages:</strong> Published Vault docs chunked into Teletext pages (e.g., Page 300 = API reference) | | <strong>System Logs</strong> | Streamed live into main scrollback buffer | Mapped to static sub-page that updates every 10s (e.g., Page 001) | | <strong>Workflows/Notifications</strong> | Appear as interruptive ANSI alerts | Rendered as persistent status matrix on Page 002 | | <strong>SonicScrewdriver DB</strong> | Queried via CLI commands (<code>db.get(id)</code>) | Pre-published as browsable index (Page 500-599), each device has its own sub-page |</p>
+<p>---</p>
+<h2>6. The Doc-Sites / Database Publishing Pipeline</h2>
+<h3>6.1 Overview</h3>
+<p>The <code>doc-sites/</code> configuration directory defines <strong>what gets published to Teletext</strong>. When you mark a Vault library or the SonicScrewdriver device library as "published," the uServer converts those structured databases into <strong>static Teletext page packs</strong>.</p>
+<h3>6.2 Publishing Flow</h3>
+<pre><code>Vault Docs (Markdown/XDC)
+        │
+        ▼
+  vault-publish script
+  (config/vault-publish)
+        │
+        ├── mdBook or pandoc → Static HTML
+        │
+        ▼
+  Teletext Page Packs
+  (pre-rendered GridBuffer snapshots)
+        │
+        ▼
+  uServer Cache
+        │
+        ▼
+  Teletext Viewport requests Page 504
+        │
+        ▼
+  uServer serves pre-rendered grid algebra from cache
+  (no live DB query — instant flipping)</code></pre>
+<h3>6.3 The vault-publish Script</h3>
+<p><strong>File:</strong> <code>config/vault-publish</code></p>
+<p>This script: 1. Reads from the XDC-compliant vault (3-level hierarchy: user / shared / public) 2. Only publishes the "public" level to the web server 3. Uses mdBook (preferred) or pandoc (fallback) for Markdown → HTML conversion 4. Rsyncs to the uServer Linux machine</p>
+<h3>6.4 Teletext Page Numbering</h3>
+<p>The full page numbering system (specified in <code>UDN-TELETEXT-001</code>):</p>
+<p>| Range | Category | Example | |-------|----------|---------| | P100–P199 | HomeNest — Core & Media | P100 = HomeNest Launcher | | P200–P299 | HomeNest — Automation & Integrations | P200 = HA Dashboard | | P300–P399 | HomeNest — Settings & System | P300 = Main Settings | | P400–P499 | uDOS — Core & Workflow | P400 = uDOS Workspace | | P500–P599 | uDOS — Binders & Sync / <strong>Device Libraries</strong> | P500 = Binder List, P504 = Sonic Device | | P600–P699 | uCode — Learning & Projects | P600 = uCode Dashboard | | P700–P799 | uCode — Labs & Sandbox | P700 = Code Lab | | P800–P899 | Shared — Errors & Fallbacks | P800 = Service Unavailable | | P900–P999 | Shared — System & Debug | P900 = System Status |</p>
+<p><strong>Total specified:</strong> 181 pages across all ranges.</p>
+<p>---</p>
+<h2>7. The Bridge to proseui / uCode2 (Dashboards)</h2>
+<h3>7.1 Architecture</h3>
+<p><strong>uCode2</strong> (the proseui layout engine) consumes the <strong>same grid algebra</strong> but uses it as a <strong>data source for widgets</strong>, not as a display itself.</p>
+<pre><code>GridBuffer (from uServer Feed Surface)
+        │
+        ├── Terminal Viewport → Renders as scrolling text
+        ├── Teletext Viewport → Renders as static page
+        └── proseui/uCode2    → Parses grid algebra, strips cell styling,
+                                renders underlying data as:
+                                ├── Bar charts
+                                ├── KPI cards
+                                └── Real-time graphs</code></pre>
+<h3>7.2 Dashboard Integration</h3>
+<p>A Dashboard layout can import a Teletext page as a <strong>Panel Item</strong>:</p>
+<ul><li>Teletext Page 002 (Workflow Status) can be dragged into a proseui Dashboard</li><li>It ceases to look like Teletext; the proseui renderer parses the grid algebra, strips the character-cell styling, and renders the underlying numbers as a bar chart or a KPI card</li></ul>
+<h3>7.3 Bidirectional Data Flow</h3>
+<p>Data can flow <strong>back</strong> to the grid from a Dashboard widget:</p>
+<pre><code>Dashboard Widget → writes data → GridBuffer → uServer broadcasts → Terminal/Teletext views</code></pre>
+<h3>7.4 The GridWidget Component</h3>
+<p><strong>File:</strong> <code>uConnect/ui/src/surfaces/gridui/panels/GridWidget.tsx</code></p>
+<p>A lightweight React component that renders a <code>GridBuffer</code> at any size. Can be embedded in ProseUI, Dashboard, or any other surface:</p>
+<pre><code>&lt;GridWidget
+  buffer={myGridBuffer}
+  paletteId=&quot;modern&quot;
+  width={400}
+  height={300}
+/&gt;</code></pre>
+<p>---</p>
+<h2>8. Colour System</h2>
+<h3>8.1 Standard 16-Colour Teletext Palette</h3>
+<p>| Index | Name | Hex | ANSI | |-------|------|-----|------| | 0 | Black | <code>#000000</code> | 30 | | 1 | Red | <code>#FF0000</code> | 31 | | 2 | Green | <code>#00FF00</code> | 32 | | 3 | Yellow | <code>#FFFF00</code> | 33 | | 4 | Blue | <code>#0000FF</code> | 34 | | 5 | Magenta | <code>#FF00FF</code> | 35 | | 6 | Cyan | <code>#00FFFF</code> | 36 | | 7 | White | <code>#FFFFFF</code> | 37 | | 8 | Bright Black | <code>#555555</code> | 90 | | 9 | Bright Red | <code>#FF5555</code> | 91 | | 10 | Bright Green | <code>#55FF55</code> | 92 | | 11 | Bright Yellow | <code>#FFFF55</code> | 93 | | 12 | Bright Blue | <code>#5555FF</code> | 94 | | 13 | Bright Magenta | <code>#FF55FF</code> | 95 | | 14 | Bright Cyan | <code>#55FFFF</code> | 96 | | 15 | Bright White | <code>#FFFFFF</code> | 97 |</p>
+<h3>8.2 Palette Presets (GridUI)</h3>
+<p>| Palette | Description | |---------|-------------| | <code>modern</code> | GitHub Dark-inspired (default) | | <code>c64</code> | Commodore 64 blue theme | | <code>teletext</code> | Classic green-on-black | | <code>nes</code> | NES Classic warm tones |</p>
+<p>---</p>
+<h2>9. Implementation Map</h2>
+<h3>9.1 Python (uCode1 Core)</h3>
+<p>| File | Purpose | |------|---------| | <code>ucode1/grid_algebra/grid_cell.py</code> | GridCell dataclass | | <code>ucode1/grid_algebra/grid_transform.py</code> | Coordinate transformations | | <code>ucode1/grid_algebra/colour_palette.py</code> | 16-colour palette management | | <code>ucode1/grid_algebra/spatial_codec.py</code> | Serialization/deserialization | | <code>core_py/grid/models.py</code> | Grid, GridCell, GridRegion, Coordinate | | <code>core_py/grid/operations.py</code> | Slice, rotate, flip, merge, resize, crop |</p>
+<h3>9.2 TypeScript (uConnect UI)</h3>
+<p>| File | Purpose | |------|---------| | <code>ui/src/surfaces/gridui/grid-algebra/GridCell.ts</code> | GridCell interface, GridBuffer type, factory | | <code>ui/src/surfaces/gridui/grid-algebra/GridTransform.ts</code> | Resize, overlay, scroll, crop, merge | | <code>ui/src/surfaces/gridui/grid-algebra/ColourPalette.ts</code> | Palette definitions | | <code>ui/src/surfaces/gridui/grid-algebra/TeletextPage.ts</code> | Teletext page store + builder | | <code>ui/src/surfaces/gridui/panels/TerminalPanel.tsx</code> | C64 BASIC terminal | | <code>ui/src/surfaces/gridui/panels/TeletextPanel.tsx</code> | Ceefax page viewer | | <code>ui/src/surfaces/gridui/panels/GridBufferRenderer.tsx</code> | Shared GridBuffer → DOM renderer | | <code>ui/src/surfaces/gridui/panels/GridWidget.tsx</code> | Embeddable grid renderer |</p>
+<h3>9.3 uServer Feed System</h3>
+<p>| File | Purpose | |------|---------| | <code>feed/core.py</code> | Feed types, operations, spool engine | | <code>feed/config.py</code> | Feed source configuration | | <code>feed/cli.py</code> | CLI for feed management |</p>
+<h3>9.4 Teletext Server</h3>
+<p>| File | Purpose | |------|---------| | <code>uConnect/teletext/server.ts</code> | HTTP server (port 5199) | | <code>uConnect/teletext/pages/</code> | Static HTML pages (P100–P999) |</p>
+<p>---</p>
+<h2>10. Quick Reference</h2>
+<h3>For the Dev Agent</h3>
+<p>| Role | Component | What It Is | |------|-----------|------------| | <strong>CLI / Debugging</strong> | Terminal | Fast scrolling, immediate REPL feedback | | <strong>Information Radiator</strong> | Teletext | Curated, glanceable status pages that don't move | | <strong>ORB (Object Request Broker)</strong> | uServer + Feed Surface | Translates chaotic incoming data into disciplined grid coordinates | | <strong>BI Tool</strong> | proseui/uCode2 | Visualizes grid coordinates as modern UI widgets |</p>
+<h3>The Magic</h3>
+<blockquote><strong>A single grid algebra</strong> allows a system log to be viewed as:</blockquote>
+<blockquote>1. A scrolling terminal line (Terminal mode)</blockquote>
+<blockquote>2. A static Teletext sub-page (Teletext mode)</blockquote>
+<blockquote>3. A real-time graph in a Dashboard (proseui mode)</blockquote>
+<p>></p>
+<blockquote>...all without rewriting the data ingestion pipeline. The view is just a lens; the grid is the truth.</blockquote>
+<p>---</p>
+<h2>11. Related Documents</h2>
+<p>| Document | Location | |----------|----------| | Terminal vs Teletext Viewport Spec | <code>docs/specs/terminal-vs-teletext-viewport.md</code> | | GridUI Surface Spec | <code>docs/specs/GRIDUI_SPEC.md</code> | | Teletext Error & Status Pages | <code>docs/specs/TELETEXT_PAGES.md</code> | | uCode1 + CEETEX Integration | <code>docs/specs/UCODE1_CEETEX_INTEGRATION.md</code> | | Spatial Algebra v1.2 (Locked) | <code>uConnect/docs/specs/UDOS_SPATIAL_ALGEBRA_LOCKED_v1.2.md</code> | | Character Set Spec | <code>docs/specs/CHARACTER_SETS.md</code> | | USX Grid Specification | <code>uCode1/docs/specs/usx/usx-grid.md</code> | | uServer Feed System | <code>uServer/feed/README.md</code> | | Architecture Overview | <code>ARCHITECTURE.md</code> |</p>
+<p>---</p>
+<h2>12. Version History</h2>
+<p>| Version | Date | Changes | |---------|------|---------| | 1.0.0 | 2026-06-16 | Initial comprehensive architecture document |</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

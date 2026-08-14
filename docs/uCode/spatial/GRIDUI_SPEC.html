@@ -1,0 +1,210 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>spatial/GRIDUI_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / spatial/GRIDUI_SPEC.md</span></header><main class="site-main"><p>--- title: "GridUI — Surface Specification" status: draft last_updated: 2026-06-11T20:58:00+10:00 category: specification tags: [devstudio, grid, specification, ui] description: "> <strong>File:</strong> <code>uConnect/ui/src/surfaces/gridui/</code>" ---</p>
+<h1>GridUI — Surface Specification</h1>
+<blockquote><strong>File:</strong> <code>uConnect/ui/src/surfaces/gridui/</code></blockquote>
+<blockquote><strong>Styles:</strong> <code>uConnect/ui/src/styles/gridui.css</code> (2268 lines) + <code>uConnect/ui/src/styles/surface-host.css</code> (USX token mappings)</blockquote>
+<blockquote><strong>Store:</strong> <code>GridUIStore.ts</code> — React hook-based state management</blockquote>
+<blockquote><strong>Registration:</strong> <code>UIHubManager.tsx</code> — core surface ID <code>'gridui'</code>, port 5178, icon <code>widgets</code>, color <code>#f0883e</code></blockquote>
+<blockquote><strong>Project Type:</strong> Technical (TC) | <strong>Autonomy Level:</strong> L4 (Delegator)</blockquote>
+<blockquote><strong>Tags:</strong> <code>#grid #composer #layers #surface</code></blockquote>
+<blockquote><strong>Last Updated:</strong> 2026-06-11 (grid-algebra v1.0)</blockquote>
+<p>---</p>
+<h2>1. Architecture Overview</h2>
+<p>GridUI is a <strong>USX Schema v3.1 Grid Layer Composer</strong> — a retro-computing-inspired surface that provides a character-based grid system with layered overlays, a C64 BASIC terminal, document vault, dashboard, and settings panel. It's one of the core surfaces in the uConnect UI Hub, registered as the first surface in <code>CORE_SURFACE_IDS</code>.</p>
+<h3>1.1 Surface Registration (UIHubManager.tsx)</h3>
+<pre><code>{ id: &#x27;gridui&#x27;, name: &#x27;uCode1&#x27;, subtitle: &#x27;Grid Layer Composer&#x27;,
+  description: &#x27;Chat sheets, nav rails, teledesk panels, terminal, vault docs, and maps layers.&#x27;,
+  port: 5178, color: &#x27;#f0883e&#x27;, icon: &#x27;widgets&#x27;, status: &#x27;stopped&#x27;,
+  cell: &#x27;L100-AA10-0101-1&#x27; }</code></pre>
+<h3>1.2 File Structure</h3>
+<pre><code>uConnect/ui/src/surfaces/gridui/
+├── GridUISurface.tsx              # Main surface component — nav rail + panel router
+├── GridUIStore.ts                 # State management — React hooks + localStorage persistence
+├── grid-algebra/                  # Universal grid data model (NEW)
+│   ├── GridCell.ts                # GridCell interface, GridBuffer type, factory functions
+│   ├── GridTransform.ts           # Pure transform functions (resize, overlay, scroll, crop, merge)
+│   ├── ColourPalette.ts           # Palette definitions (teletext, c64, ansi, modern, amber, green)
+│   └── TeletextPage.ts            # Teletext page store + page builder (40×25 pages)
+└── panels/
+    ├── TerminalPanel.tsx          # C64 BASIC terminal (grid-algebra backed)
+    ├── TeletextPanel.tsx          # Ceefax teletext page viewer (NEW)
+    ├── DashboardPanel.tsx         # System stats, tasks, activity feed
+    ├── VaultPanel.tsx             # Ceetex document viewer
+    ├── GridEditorPanel.tsx        # Layer editor + character map
+    ├── SettingsPanel.tsx          # Viewport, display, palette config
+    ├── GridBufferRenderer.tsx     # Shared GridBuffer → DOM renderer (NEW)
+    ├── GridWidget.tsx             # Embeddable grid renderer for any surface (NEW)
+    └── SurfaceToolbar.tsx         # Viewport dropdown + nav keypad</code></pre>
+<p>---</p>
+<h2>2. State Management (GridUIStore.ts)</h2>
+<h3>2.1 Core Types</h3>
+<pre><code>type GridPanelId = &#x27;terminal&#x27; | &#x27;teletext&#x27; | &#x27;dashboard&#x27; | &#x27;vault&#x27; | &#x27;grid&#x27; | &#x27;settings&#x27;
+type Palette = &#x27;modern&#x27; | &#x27;c64&#x27; | &#x27;teletext&#x27; | &#x27;nes&#x27;
+type FontStyle = &#x27;serif&#x27; | &#x27;sans&#x27; | &#x27;mono&#x27;
+type GridDisplayMode = &#x27;teletext&#x27; | &#x27;mono&#x27; | &#x27;wireframe&#x27;
+type BorderMode = 1 | 2 | 3
+type ChatRole = &#x27;user&#x27; | &#x27;assistant&#x27; | &#x27;system&#x27;</code></pre>
+<h3>2.2 Panel Definitions</h3>
+<pre><code>PANELS: GridPanel[] = [
+  { id: &#x27;terminal&#x27;,  label: &#x27;Terminal&#x27;,    icon: &#x27;terminal&#x27;,           description: &#x27;C64 BASIC terminal&#x27; },
+  { id: &#x27;teletext&#x27;,  label: &#x27;Teletext&#x27;,    icon: &#x27;tv&#x27;,                 description: &#x27;Ceefax teletext page viewer&#x27; },
+  { id: &#x27;dashboard&#x27;, label: &#x27;Dashboard&#x27;,   icon: &#x27;speedometer2&#x27;,       description: &#x27;System stats &amp; tasks&#x27; },
+  { id: &#x27;vault&#x27;,     label: &#x27;Vault&#x27;,       icon: &#x27;folder&#x27;,             description: &#x27;Ceetex document viewer&#x27; },
+  { id: &#x27;grid&#x27;,      label: &#x27;Grid Editor&#x27;, icon: &#x27;grid-3x3-gap-fill&#x27;,  description: &#x27;USX grid layers, cell editor &amp; character maps&#x27; },
+  { id: &#x27;settings&#x27;,  label: &#x27;Settings&#x27;,    icon: &#x27;gear&#x27;,               description: &#x27;Styling &amp; viewport configuration&#x27; },
+]</code></pre>
+<h3>2.3 Viewport Presets</h3>
+<pre><code>VIEWPORT_PRESETS: Record&lt;string, ViewportSettings&gt; = {
+  &#x27;40x25&#x27;: { cols: 40, rows: 25, zoom: 1, bgColor: &#x27;#000000&#x27;, gridColor: &#x27;#21262d&#x27;,
+             textColor: &#x27;#00ff00&#x27;, surfaceBgColor: &#x27;#000000&#x27;, borderMode: 1, borderBgColor: &#x27;#000000&#x27; },
+  &#x27;80x24&#x27;: { cols: 80, rows: 24, zoom: 1, bgColor: &#x27;#0d1117&#x27;, gridColor: &#x27;#21262d&#x27;,
+             textColor: &#x27;#e6edf3&#x27;, surfaceBgColor: &#x27;#010409&#x27;, borderMode: 1, borderBgColor: &#x27;#0d1117&#x27; },
+  &#x27;60x24&#x27;: { cols: 60, rows: 24, zoom: 1, bgColor: &#x27;#0d1117&#x27;, gridColor: &#x27;#21262d&#x27;,
+             textColor: &#x27;#e6edf3&#x27;, surfaceBgColor: &#x27;#010409&#x27;, borderMode: 1, borderBgColor: &#x27;#0d1117&#x27; },
+}</code></pre>
+<h3>2.4 Border Mode Configs</h3>
+<pre><code>BORDER_MODE_CONFIGS: Record&lt;BorderMode, { fillFraction: number; surfaceBg: string; borderBg: string }&gt; = {
+  1: { fillFraction: 0.80, surfaceBg: &#x27;#010409&#x27;, borderBg: &#x27;#21262d&#x27; },  // Wide border
+  2: { fillFraction: 0.90, surfaceBg: &#x27;#010409&#x27;, borderBg: &#x27;#161b22&#x27; },  // Medium border
+  3: { fillFraction: 0.98, surfaceBg: &#x27;#010409&#x27;, borderBg: &#x27;#010409&#x27; },  // Borderless (full fill)
+}</code></pre>
+<h3>2.5 Character Dimensions</h3>
+<pre><code>CHAR_W = 9   // Character width in pixels
+CHAR_H = 16  // Character height in pixels</code></pre>
+<h3>2.6 Grid Layers (Default)</h3>
+<pre><code>gridLayers: GridLayer[] = [
+  { id: &#x27;layer-0&#x27;, name: &#x27;Base Grid&#x27;,     visible: true,  zIndex: 0, color: &#x27;#1a1a1a&#x27;, opacity: 1 },
+  { id: &#x27;layer-1&#x27;, name: &#x27;System Status&#x27;,  visible: false, zIndex: 1, color: &#x27;#00FF00&#x27;, opacity: 1 },
+  { id: &#x27;layer-2&#x27;, name: &#x27;Vault Contents&#x27;, visible: false, zIndex: 2, color: &#x27;#00FFFF&#x27;, opacity: 1 },
+  { id: &#x27;layer-3&#x27;, name: &#x27;Feed Items&#x27;,     visible: false, zIndex: 3, color: &#x27;#FFFF00&#x27;, opacity: 1 },
+  { id: &#x27;layer-4&#x27;, name: &#x27;QR Storage&#x27;,     visible: false, zIndex: 4, color: &#x27;#FF00FF&#x27;, opacity: 1 },
+  { id: &#x27;layer-5&#x27;, name: &#x27;Overlay&#x27;,        visible: false, zIndex: 5, color: &#x27;#FF6600&#x27;, opacity: 1 },
+]</code></pre>
+<h3>2.7 Persistence</h3>
+<p>All user preferences are persisted to <code>localStorage</code> under key <code>'gridui-prefs'</code>:</p>
+<ul><li><code>isDark</code>, <code>currentPalette</code>, <code>fontSize</code>, <code>fontStyle</code>, <code>viewport</code>, <code>navRailCollapsed</code>, <code>displayMode</code></li></ul>
+<p>---</p>
+<h2>3. Surface Layout (GridUISurface.tsx)</h2>
+<h3>3.1 Component Tree</h3>
+<pre><code>GridUISurface
+├── GridUIContext.Provider (store)
+│   ├── GlobalToolbar (USX surface header — tabs, chat toggle, settings, sidebar)
+│   ├── usx-surface-body
+│   │   ├── usx-nav-rail (collapsible — 5 panel buttons + collapse toggle)
+│   │   └── usx-surface-main
+│   │       ├── {activePanel} (Terminal | Dashboard | Vault | GridEditor | Settings)
+│   │       └── ViewportDropdown (floating bottom-right)
+│   └── ChatSheet (fixed bottom-right overlay)
+│   └── Snackbar (fixed bottom-center toast)</code></pre>
+<h3>3.2 Nav Rail</h3>
+<ul><li>5 panel buttons with Bootstrap Icons</li><li>Collapsible via chevron button at bottom</li><li>Active panel highlighted</li><li>Each button has <code>title</code> attribute showing panel description</li></ul>
+<h3>3.3 Chat Sheet</h3>
+<ul><li>Fixed position: bottom-right, 360px wide, 50vh tall</li><li>Rounded top-left corner, shadow</li><li>Message list with user/assistant styling</li><li>Input field with Enter-to-send</li><li>Simulated responses (800ms delay)</li><li>Clear button, loading spinner</li></ul>
+<h3>3.4 Snackbar</h3>
+<ul><li>Fixed bottom-center toast</li><li>Color-coded by type: info (#58a6ff), success (#238636), warning (#d29922), error (#E76F51)</li><li>Queue-based: shows one at a time, auto-dismiss after <code>duration</code> (default 4000ms)</li><li>Optional action button</li></ul>
+<p>---</p>
+<h2>4. Panels</h2>
+<h3>4.1 TerminalPanel — C64 BASIC Terminal (grid-algebra backed)</h3>
+<p><strong>File:</strong> <code>panels/TerminalPanel.tsx</code></p>
+<p>A retro terminal emulator that simulates a Commodore 64 BASIC environment. Now uses <code>grid-algebra</code> internally — all display operations go through <code>GridBuffer</code> and <code>GridTransform</code>.</p>
+<p><strong>Features:</strong></p>
+<ul><li>Viewport-sized display: <code>width = cols × CHAR_W</code>, <code>height = rows × CHAR_H</code></li><li>Font: <code>'PetMe128','C64 User Mono','Courier New',monospace</code> at 16px</li><li>Line-numbered input prompt (1, 2, 3...)</li><li>Supported commands: <code>HELP/?</code>, <code>CLS/CLEAR</code>, <code>LIST</code>, <code>PRINT</code>, <code>TIME</code>, <code>DATE</code>, <code>WHOAMI</code>, <code>NEW</code>, <code>RUN</code>, <code>LOAD</code>, <code>SAVE</code>, <code>POKE</code>, <code>PEEK</code>, <code>SYS</code>, <code>EXIT/QUIT</code></li><li>Display mode filters: <code>mono</code> → grayscale(100%), <code>wireframe</code> → invert(100%) contrast(200%)</li><li>Border mode controls viewport padding and background colors</li><li>Auto-scroll to bottom on new output</li><li>Input auto-focus on mount</li><li><strong>Renders via <code>GridBufferRenderer</code></strong> — consistent cell rendering with TeletextPanel</li></ul>
+<h3>4.2 TeletextPanel — Ceefax Teletext Page Viewer (NEW)</h3>
+<p><strong>File:</strong> <code>panels/TeletextPanel.tsx</code></p>
+<p>A Ceefax-style teletext page viewer using <code>grid-algebra</code>. Pages are 40×25 <code>GridBuffer</code>s stored in <code>TeletextPageStore</code>.</p>
+<p><strong>Features:</strong></p>
+<ul><li>3-digit page dialer (type a number to navigate)</li><li>Built-in pages: Welcome (100), System Status (101), News (200), Colour Test Card (888)</li><li>Palette switching (teletext, amber, green, modern)</li><li>Viewport resize via <code>GridTransform.resize()</code></li><li>Keyboard shortcut: any digit key opens the page nav overlay</li><li>Escape to dismiss nav overlay</li><li>Page info bar showing current page number and title</li><li><strong>Renders via <code>GridBufferRenderer</code></strong> — shared renderer with TerminalPanel</li></ul>
+<h3>4.3 GridBufferRenderer — Shared GridBuffer → DOM Renderer (NEW)</h3>
+<p><strong>File:</strong> <code>panels/GridBufferRenderer.tsx</code></p>
+<p>Pure component that renders a <code>GridBuffer</code> as a grid of character cells with proper foreground/background colours. Used by TerminalPanel, TeletextPanel, and GridWidget.</p>
+<p><strong>Props:</strong></p>
+<ul><li><code>buffer: GridBuffer</code> — the grid data</li><li><code>paletteId: PaletteId</code> — colour palette to use</li><li><code>cellWidth?: number</code> — px per cell (default: 9)</li><li><code>cellHeight?: number</code> — px per cell (default: 16)</li></ul>
+<p><strong>Features:</strong></p>
+<ul><li>Maps colour indices through the selected palette</li><li>Supports bold, flash (blink animation), double-height, double-width flags</li><li>Flash animation via CSS <code>@keyframes teletext-flash</code></li></ul>
+<h3>4.4 GridWidget — Embeddable Grid Renderer (NEW)</h3>
+<p><strong>File:</strong> <code>panels/GridWidget.tsx</code></p>
+<p>A lightweight React component that renders a <code>GridBuffer</code> at any size. Can be embedded in ProseUI, Dashboard, or any other surface.</p>
+<p><strong>Props:</strong></p>
+<ul><li><code>buffer: GridBuffer</code> — the grid data</li><li><code>paletteId?: PaletteId</code> — colour palette (default: 'modern')</li><li><code>width?: number</code> — px width (auto-fit if omitted)</li><li><code>height?: number</code> — px height (auto-fit if omitted)</li><li><code>className?: string</code> — CSS class</li><li><code>style?: React.CSSProperties</code> — inline styles</li></ul>
+<p><strong>Utility:</strong></p>
+<ul><li><code>textToGridBuffer(text, cols?)</code> — create a GridBuffer from plain text</li></ul>
+<h3>4.5 DashboardPanel — System Stats & Tasks</h3>
+<p><strong>File:</strong> <code>panels/DashboardPanel.tsx</code></p>
+<p>A 3-card dashboard with system stats, task management, and activity feed.</p>
+<p><strong>Cards:</strong> 1. <strong>System Stats</strong> — CPU, Memory, Disk (percentage bars with color thresholds: >80% red, >60% yellow, else green) + Uptime 2. <strong>Tasks</strong> — Checkbox list with priority tags (high/medium/low), add task dialog with priority selector, snackbar feedback 3. <strong>Activity</strong> — Date-stamped activity feed (static mock data)</p>
+<p><strong>Interactions:</strong></p>
+<ul><li>Refresh button randomizes stats</li><li>Add task dialog with title input + priority buttons</li><li>Task completion toggling</li><li>Snackbar on task add and data refresh</li></ul>
+<h3>4.6 VaultPanel — Ceetex Document Viewer</h3>
+<p><strong>File:</strong> <code>panels/VaultPanel.tsx</code></p>
+<p>A split-pane document browser with search and tag filtering.</p>
+<p><strong>Features:</strong></p>
+<ul><li>Search input (filters by title + content)</li><li>Tag filter bar (All + unique tags from documents)</li><li>Document list sidebar with active highlight</li><li>Document detail view: title, type badge, tag chips, content in <code><pre></code> block</li><li>5 mock documents: USX Grid Specification, C64 Memory Map, Teletext Standards, Font Encoding Guide, GridUI Architecture</li><li>Empty states for no documents and no selection</li></ul>
+<h3>4.7 GridEditorPanel — Layer Editor & Character Map</h3>
+<p><strong>File:</strong> <code>panels/GridEditorPanel.tsx</code></p>
+<p>A two-tab editor for managing grid layers and exploring character maps.</p>
+<p><strong>Tab 1 — Layers:</strong></p>
+<ul><li>List of all layers with: visibility toggle, color indicator, name, z-index, opacity slider, delete button</li><li>Add layer form: name input + color picker + Add/Cancel buttons</li><li>Layer count shown in canvas overlay</li></ul>
+<p><strong>Tab 2 — Chars:</strong></p>
+<ul><li>128-character grid (ASCII 0-127)</li><li>Cells colored by glyph availability (32-126 = has glyph)</li><li>Hover tooltip showing character, Unicode codepoint, and decimal value</li><li>Grid layout: compact cells with index number below character</li></ul>
+<p><strong>Canvas:</strong></p>
+<ul><li>Fixed 640×384px SVG grid (80×24 cells at 8×16px each)</li><li>Grid lines at 0.3 opacity</li><li>Layer overlays with colored borders and name labels</li><li>Center text showing current dimensions and visible layer count</li></ul>
+<h3>4.8 SettingsPanel — Viewport & Display Configuration</h3>
+<p><strong>File:</strong> <code>panels/SettingsPanel.tsx</code></p>
+<p><strong>Sections:</strong> 1. <strong>Viewport</strong> — Columns (40-160) and Rows (12-60) number inputs 2. <strong>Display Mode</strong> — Teletext (full color), Monochrome (grayscale), Wireframe (high contrast) 3. <strong>Font Size</strong> — Preset buttons: 12, 14, 16, 18, 20, 24 4. <strong>Color Palette</strong> — Modern Dark, C64 Blue, Teletext, NES Classic (each with 4-color swatch) 5. <strong>Options</strong> — Show border toggle, Show chat sheet toggle</p>
+<p><strong>Palette definitions:</strong></p>
+<pre><code>PALETTES = [
+  { id: &#x27;modern&#x27;,   name: &#x27;Modern Dark&#x27;,  colors: [&#x27;#0d1117&#x27;, &#x27;#161b22&#x27;, &#x27;#30363d&#x27;, &#x27;#58a6ff&#x27;] },
+  { id: &#x27;c64&#x27;,      name: &#x27;C64 Blue&#x27;,     colors: [&#x27;#352879&#x27;, &#x27;#6c5ce7&#x27;, &#x27;#a29bfe&#x27;, &#x27;#dfe6e9&#x27;] },
+  { id: &#x27;teletext&#x27;, name: &#x27;Teletext&#x27;,     colors: [&#x27;#000000&#x27;, &#x27;#00ff00&#x27;, &#x27;#ffff00&#x27;, &#x27;#ffffff&#x27;] },
+  { id: &#x27;nes&#x27;,      name: &#x27;NES Classic&#x27;,  colors: [&#x27;#181a1b&#x27;, &#x27;#e08a3e&#x27;, &#x27;#c84c0c&#x27;, &#x27;#f8d8b8&#x27;] },
+]</code></pre>
+<h3>4.9 SurfaceToolbar — Viewport Dropdown & Nav Keypad</h3>
+<p><strong>File:</strong> <code>panels/SurfaceToolbar.tsx</code></p>
+<p><strong>ViewportDropdown:</strong></p>
+<ul><li>Floating button at bottom-right of main content</li><li>Shows current dimensions (e.g., "80×24")</li><li>Dropup menu with presets: 40×25, 80×24, 60×24, 40×24, 80×48, 120×36</li><li>Active preset highlighted</li><li>Click-outside-to-close behavior</li></ul>
+<p><strong>NavKeypad:</strong></p>
+<ul><li>Arrow buttons for incrementing/decrementing cols and rows</li><li>Home button to reset to 80×24</li><li>Compact 3×3 grid layout</li></ul>
+<p>---</p>
+<h2>5. USX Integration</h2>
+<h3>5.1 Token Mappings (surface-host.css)</h3>
+<p>GridUI maps all its visual properties to USX design tokens for consistency:</p>
+<pre><code>:root {
+  --grid-bg:              var(--usx-color-background, #0d1117);
+  --grid-text:            var(--usx-color-on-background, #e6edf3);
+  --grid-text-secondary:  var(--usx-color-on-surface-variant, #8b949e);
+  --grid-bg-card:         var(--usx-color-surface-container, #161b22);
+  --grid-bg-hover:        var(--usx-color-surface-container-high, #1c2333);
+  --grid-border-light:    var(--usx-color-outline-variant, #21262d);
+  --grid-border:          var(--usx-color-outline, #30363d);
+  --gridui-surface-bg:    var(--usx-color-background, #0d1117);
+  --gridui-viewport-text: var(--usx-color-on-background, #e6edf3);
+  --gridui-viewport-bg:   var(--usx-color-surface, #0d1117);
+  --gridui-border-bg:     var(--usx-color-surface-container, #161b22);
+  --gridui-dynamic-zoom:  1;
+  --gridui-viewport-padding: 0px;
+}</code></pre>
+<h3>5.2 Surface Layout Classes</h3>
+<p>GridUI uses the USX v3.1 surface layout pattern:</p>
+<ul><li><code>usx-surface-body</code> — flex container for nav rail + main content</li><li><code>usx-nav-rail</code> — vertical navigation rail (collapsible via <code>.collapsed</code> class)</li><li><code>usx-surface-main</code> — main content area</li></ul>
+<h3>5.3 GlobalToolbar Integration</h3>
+<p>The <code>GlobalToolbar</code> component provides:</p>
+<ul><li>Panel tabs (mapped from <code>PANELS</code> array)</li><li>Chat toggle button</li><li>Settings shortcut</li><li>Sidebar toggle</li></ul>
+<p>---</p>
+<h2>6. Styling Architecture (gridui.css)</h2>
+<p><strong>File:</strong> <code>uConnect/ui/src/styles/gridui.css</code> — 2268 lines</p>
+<h3>6.1 NestFrame Compliance</h3>
+<ul><li><code>*:focus-visible</code> — 3px primary-colored outline (6px on large screens ≥1800×800)</li><li><code>@media (prefers-reduced-motion: reduce)</code> — disables all animations/transitions</li></ul>
+<h3>6.2 Component Styles</h3>
+<p>| Section | Lines | Description | |---------|-------|-------------| | Chat Sheet | 438-574 | Fixed overlay chat panel | | Snackbar | 576-626 | Bottom-center toast notifications | | Panel Shared | 628-660 | <code>.gridui-panel</code>, <code>.gridui-panel-header</code>, <code>.gridui-panel-body</code> | | Card | 662-681 | <code>.gridui-card</code>, <code>.gridui-card-header</code>, <code>.gridui-card-body</code> | | Buttons | 683-742 | <code>.gridui-btn</code>, primary/small/icon/close variants | | Input | 744-757 | <code>.gridui-input</code> with focus state | | Tag/Badge | 759-772 | <code>.gridui-tag</code> with high/medium/low color variants | | Dialog/Modal | 774-799 | Overlay + dialog box | | Agent Switcher | 801-838 | Chat agent tab bar | | Prompt Cards | 840-896 | Horizontal scrolling prompt row | | Prose Output | 898-1000+ | Markdown rendering (headings, code, tables, blockquotes) |</p>
+<h3>6.3 Color System</h3>
+<p>All colors use CSS custom properties mapped to USX tokens. The palette system (modern/c64/teletext/nes) is implemented via the Settings panel but currently only affects the swatch display — actual token values remain USX-based.</p>
+<p>---</p>
+<h2>7. Current State & Known Gaps</h2>
+<h3>7.1 What Works</h3>
+<ul><li>✅ All 6 panels render and are navigable via nav rail</li><li>✅ <strong>grid-algebra</strong> — GridCell, GridTransform, ColourPalette, TeletextPage modules</li><li>✅ <strong>GridBufferRenderer</strong> — shared renderer for all grid-based panels</li><li>✅ <strong>GridWidget</strong> — embeddable grid renderer for any surface</li><li>✅ <strong>TeletextPanel</strong> — Ceefax-style page viewer with 3-digit navigation</li><li>✅ <strong>40×25 viewport preset</strong> — teletext-native dimensions</li><li>✅ Viewport dimensions configurable (cols/rows) with presets</li><li>✅ Display modes: teletext, monochrome, wireframe</li><li>✅ Border modes: 1 (wide), 2 (medium), 3 (borderless)</li><li>✅ Font size presets (12-24px)</li><li>✅ Color palette selection (UI only — visual effect not fully wired)</li><li>✅ Grid layers: add, remove, toggle visibility, adjust opacity</li><li>✅ Character map: 128-char ASCII grid with hover tooltips</li><li>✅ C64 BASIC terminal with 15+ commands</li><li>✅ Dashboard with stats, tasks, activity</li><li>✅ Vault document browser with search + tag filter</li><li>✅ Chat sheet with simulated responses</li><li>✅ Snackbar notification system</li><li>✅ localStorage persistence for all preferences</li><li>✅ Nav rail collapse/expand</li><li>✅ Viewport dropdown with 5 presets</li><li>✅ Nav keypad for fine-grained viewport adjustment</li></ul>
+<h3>7.2 Known Gaps</h3>
+<ul><li>⚠️ <strong>Palette visual effect partially wired</strong> — GridBufferRenderer uses palette colours, but CSS tokens not fully dynamic</li><li>⚠️ <strong>Terminal is simulated</strong> — no real C64 emulator backend, just command parsing</li><li>⚠️ <strong>Dashboard data is mock</strong> — no real system stats integration</li><li>⚠️ <strong>Vault documents are mock</strong> — no real Ceetex/vault backend</li><li>⚠️ <strong>Chat is simulated</strong> — no real AI backend, just echo responses</li><li>⚠️ <strong>Grid canvas is static</strong> — no actual cell editing, just layer visualization</li><li>⚠️ <strong>No real-time updates</strong> — no WebSocket/SSE for live data</li><li>⚠️ <strong>No keyboard shortcuts</strong> — no key bindings for panel switching or commands</li></ul>
+<h3>7.3 Integration Points</h3>
+<ul><li><strong>USX Design System</strong> — Full token mapping via CSS variables</li><li><strong>UIHubManager</strong> — Registered as core surface, port 5178</li><li><strong>GlobalToolbar</strong> — Shared surface header component</li><li><strong>Snackbar API</strong> — Can trigger surface actions (start/stop/restart/repair/debug)</li></ul>
+<p>---</p>
+<h2>8. Quick Reference</h2>
+<p>| Aspect | Value | |--------|-------| | Surface ID | <code>gridui</code> | | Port | 5178 | | Route | <code>http://localhost:5178</code> | | Icon | <code>widgets</code> | | Color | <code>#f0883e</code> | | Cell | <code>L100-AA10-0101-1</code> | | Store Key | <code>gridui-prefs</code> (localStorage) | | Char Width | 9px | | Char Height | 16px | | Default Viewport | 80×24 | | Font | <code>PetMe128</code>, <code>C64 User Mono</code>, <code>Courier New</code> | | Framework | React + TypeScript | | State | React hooks + Context | | Styles | CSS custom properties + USX tokens | | Panels | 6 (terminal, teletext, dashboard, vault, grid, settings) |</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

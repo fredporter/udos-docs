@@ -1,0 +1,164 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>learning-pathway/02-layout-manifest-and-dry-run.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / learning-pathway/02-layout-manifest-and-dry-run.md</span></header><main class="site-main"><h1>Lesson 02 - Layout, Manifest, And Dry-Run</h1>
+<p>Sonic treats deployment structure as explicit and reviewable.</p>
+<h2>Core Concept: Safe Planning</h2>
+<p>The fundamental idea: <strong>Nothing destructive should feel magical or hidden.</strong></p>
+<p>Before any real changes, Sonic ensures you can: 1. Review what <em>will</em> change 2. Validate it before execution 3. Test it safely with dry-run 4. Only then proceed with confidence</p>
+<h2>The Three Main Surfaces</h2>
+<p>Understanding these surfaces is critical:</p>
+<p>| Surface | Purpose | Example | |---------|---------|---------| | <strong>Layout</strong> | Describes the target hardware and deployment structure | <code>config/sonic-layout.json</code> — specifies USB partitions, boot targets, payload locations | | <strong>Manifest</strong> | Generated plan showing exactly what will happen | <code>memory/sonic/sonic-manifest.json</code> — step-by-step deployment recipe | | <strong>CLI</strong> | Interface to generate plans and apply them | <code>sonic plan ...</code>, <code>scripts/sonic-stick.sh ...</code> |</p>
+<p>---</p>
+<h2>Real Example: Generating Your First Manifest</h2>
+<h3>Step 1: Understand the Layout</h3>
+<p>Let's start by looking at the deployment layout:</p>
+<pre><code>cat config/sonic-layout.json | jq .</code></pre>
+<p><strong>Sample Output:</strong></p>
+<pre><code>{
+  &quot;name&quot;: &quot;sonic-usb-standard&quot;,
+  &quot;version&quot;: &quot;1.5.5&quot;,
+  &quot;target&quot;: {
+    &quot;device&quot;: &quot;/dev/sdb&quot;,
+    &quot;partition_table&quot;: &quot;gpt&quot;,
+    &quot;partitions&quot;: [
+      {
+        &quot;number&quot;: 1,
+        &quot;size&quot;: &quot;500M&quot;,
+        &quot;type&quot;: &quot;EFI System&quot;,
+        &quot;mount&quot;: &quot;/boot/efi&quot;,
+        &quot;format&quot;: &quot;vfat&quot;
+      },
+      {
+        &quot;number&quot;: 2,
+        &quot;size&quot;: &quot;20G&quot;,
+        &quot;type&quot;: &quot;Linux&quot;,
+        &quot;mount&quot;: &quot;/&quot;,
+        &quot;format&quot;: &quot;ext4&quot;
+      }
+    ]
+  },
+  &quot;bootloader&quot;: &quot;GRUB2&quot;,
+  &quot;kernel&quot;: &quot;linux-zen&quot;,
+  &quot;payloads&quot;: {
+    &quot;base_system&quot;: &quot;file:///memory/sonic/artifacts/arch-base.tar.gz&quot;,
+    &quot;kernel_modules&quot;: &quot;file:///memory/sonic/artifacts/kernel-modules.tar.gz&quot;
+  }
+}</code></pre>
+<p><strong>What this means</strong>:</p>
+<ul><li>Target device: <code>/dev/sdb</code> (your USB drive)</li><li>Two partitions: EFI boot (500M) and root filesystem (20G)</li><li>Bootloader: GRUB2</li><li>Payloads come from local files</li></ul>
+<h3>Step 2: Generate a Plan in Dry-Run Mode</h3>
+<pre><code>sonic plan \
+  --layout-file config/sonic-layout.json \
+  --usb-device /dev/sdb \
+  --dry-run \
+  --out memory/sonic/my-plan.json</code></pre>
+<p><strong>What happens</strong>:</p>
+<ul><li>Sonic reads the layout</li><li>Validates the target device exists</li><li>Generates a manifest showing all steps</li><li><strong>No actual changes</strong> (dry-run mode)</li></ul>
+<p><strong>Sample Output:</strong></p>
+<pre><code>[INFO] Loading layout from config/sonic-layout.json
+[INFO] Validating target device /dev/sdb (4.0G USB drive)
+[INFO] Generating deployment manifest...
+[INFO] Manifest written to memory/sonic/my-plan.json
+[INFO] Dry-run mode: no changes applied
+→ Review manifest: cat memory/sonic/my-plan.json | jq .</code></pre>
+<h3>Step 3: Inspect the Generated Manifest</h3>
+<pre><code>cat memory/sonic/my-plan.json | jq . | head -50</code></pre>
+<p><strong>Sample Output (first sections):</strong></p>
+<pre><code>{
+  &quot;metadata&quot;: {
+    &quot;plan_id&quot;: &quot;plan-2026-03-10-001&quot;,
+    &quot;created_at&quot;: &quot;2026-03-10T14:32:00Z&quot;,
+    &quot;layout_version&quot;: &quot;1.5.5&quot;,
+    &quot;target_device&quot;: &quot;/dev/sdb&quot;,
+    &quot;dry_run&quot;: true
+  },
+  &quot;verification&quot;: {
+    &quot;device_exists&quot;: true,
+    &quot;device_size&quot;: &quot;4.0G&quot;,
+    &quot;device_type&quot;: &quot;USB&quot;,
+    &quot;can_write&quot;: true
+  },
+  &quot;steps&quot;: [
+    {
+      &quot;step_id&quot;: &quot;01-backup&quot;,
+      &quot;action&quot;: &quot;backup&quot;,
+      &quot;description&quot;: &quot;Backup existing USB partition table&quot;,
+      &quot;command&quot;: &quot;sgdisk --backup memory/sonic/sdb-backup.gpt /dev/sdb&quot;,
+      &quot;destructive&quot;: false,
+      &quot;estimated_time&quot;: &quot;5s&quot;
+    },
+    {
+      &quot;step_id&quot;: &quot;02-partition&quot;,
+      &quot;action&quot;: &quot;partition&quot;,
+      &quot;description&quot;: &quot;Create new GPT partition table&quot;,
+      &quot;command&quot;: &quot;sgdisk --zap-all --new 1:0:+500M --typecode 1:EF00 /dev/sdb&quot;,
+      &quot;destructive&quot;: true,
+      &quot;estimated_time&quot;: &quot;10s&quot;
+    },
+    {
+      &quot;step_id&quot;: &quot;03-format-efi&quot;,
+      &quot;action&quot;: &quot;format&quot;,
+      &quot;description&quot;: &quot;Format EFI partition as vfat&quot;,
+      &quot;command&quot;: &quot;mkfs.vfat -F 32 /dev/sdb1&quot;,
+      &quot;destructive&quot;: true,
+      &quot;estimated_time&quot;: &quot;2s&quot;
+    }
+  ]
+}</code></pre>
+<p><strong>What you're seeing</strong>:</p>
+<ul><li><code>metadata</code>: Plan ID, creation time, target device</li><li><code>verification</code>: Pre-flight checks (device exists, writable, etc.)</li><li><code>steps</code>: Each action that will be executed, in order</li><li>Each has a clear description</li><li>Each shows the exact command</li><li>Marked as destructive or safe</li><li>Estimated execution time</li></ul>
+<h3>Step 4: Verify Specific Sections</h3>
+<p>Check just the partitioning steps:</p>
+<pre><code>cat memory/sonic/my-plan.json | jq &#x27;.steps[] | select(.action == &quot;partition&quot;)&#x27;</code></pre>
+<p><strong>Sample Output:</strong></p>
+<pre><code>{
+  &quot;step_id&quot;: &quot;02-partition&quot;,
+  &quot;action&quot;: &quot;partition&quot;,
+  &quot;description&quot;: &quot;Create new GPT partition table&quot;,
+  &quot;command&quot;: &quot;sgdisk --zap-all --new 1:0:+500M --typecode 1:EF00 /dev/sdb&quot;,
+  &quot;destructive&quot;: true,
+  &quot;estimated_time&quot;: &quot;10s&quot;
+}</code></pre>
+<p>If this looks wrong, <strong>stop here</strong>. Do not proceed. Fix the layout.</p>
+<p>---</p>
+<h2>Dry-Run Workflow: Practice Safe Execution</h2>
+<p>Once you have a manifest, test it with dry-run:</p>
+<pre><code>bash scripts/sonic-stick.sh \
+  --manifest memory/sonic/my-plan.json \
+  --dry-run</code></pre>
+<p><strong>Sample Output:</strong></p>
+<pre><code>[INFO] Loading manifest from memory/sonic/my-plan.json
+[INFO] Verifying all steps (dry-run mode)
+[DRY-RUN] Would execute: sgdisk --backup memory/sonic/sdb-backup.gpt /dev/sdb
+[DRY-RUN] Would execute: sgdisk --zap-all --new 1:0:+500M --typecode 1:EF00 /dev/sdb
+[DRY-RUN] Would execute: mkfs.vfat -F 32 /dev/sdb1
+[DRY-RUN] Would execute: mkfs.ext4 /dev/sdb2
+[DRY-RUN] Would execute: mount /dev/sdb1 /mnt/sonic-boot
+[DRY-RUN] Completed 6 of 12 steps (dry-run verification)
+[INFO] All steps validated
+→ Run without --dry-run to apply changes</code></pre>
+<p><strong>What this tells you</strong>:</p>
+<ul><li>Each step is listed</li><li>" <code>[DRY-RUN] Would execute:</code>" = this will happen when you remove <code>--dry-run</code></li><li>No actual changes made</li><li>All validation passed</li></ul>
+<p>---</p>
+<h2>Why Dry-Run Matters: A Real Story</h2>
+<p>Imagine this scenario:</p>
+<p><strong>Without dry-run</strong>:</p>
+<ul><li>User runs deploy without checking</li><li>Script partitions the wrong device (their laptop!)</li><li>Disaster</li></ul>
+<p><strong>With dry-run</strong>:</p>
+<ul><li>User generates manifest</li><li>User inspects manifest</li><li>User runs dry-run</li><li>Output shows: "<strong>Wait, step 2 shows <code>/dev/sda</code>, not <code>/dev/sdb</code>!</strong>"</li><li>User stops, fixes the device name</li><li>Then proceeds safely</li></ul>
+<p><strong>The lesson</strong>: Dry-run is not optional. It's how you catch mistakes before they break things.</p>
+<p>---</p>
+<h2>Deeper Dive: Manifest Schema</h2>
+<p>For details on manifest format and validation:</p>
+<ul><li><strong>Archived manifest spec</strong>: See <a href="../../../docs/v1/specs/sonic-screwdriver.md">docs/v1/specs/sonic-screwdriver.md</a></li><li><strong>Plan file format</strong>: <code>docs/architecture/services-manifest.md</code> (under development)</li><li><strong>Validation rules</strong>: Check <code>services/manifest/</code> in the repo</li><li><strong>Vault manifest examples</strong>: <a href="../../../vault/manifests/README.md">vault/manifests/README.md</a></li><li><strong>Vault profile templates</strong>: <a href="../../../vault/templates/device-profiles/README.md">vault/templates/device-profiles/README.md</a></li></ul>
+<p>---</p>
+<h2>Checkpoint: Can You Read a Manifest?</h2>
+<p>Before moving to Lesson 03, verify you understand manifests:</p>
+<p><strong>Question 1</strong>: You run <code>sonic plan</code> and get a manifest. What's the first thing you should do?</p>
+<ul><li>A) Run it with <code>--dry-run</code> immediately</li><li>B) Review the manifest file to check the steps</li><li>C) Run it without <code>--dry-run</code> to deploy</li><li><strong>Answer</strong>: B — Always review before dry-run. Review before applying.</li></ul>
+<p><strong>Question 2</strong>: In the manifest output, what does <code>"destructive": true</code> mean?</p>
+<ul><li>A) The operation is safe to run multiple times</li><li>B) The operation will destroy data if applied</li><li>C) The operation requires administrator privileges</li><li><strong>Answer</strong>: B — Destructive means data will be lost. Take it seriously.</li></ul>
+<p><strong>Question 3</strong>: Dry-run shows 12 steps. After reviewing, you want to apply step 1-6 only. What do you do?</p>
+<ul><li>A) Edit the manifest to remove steps 7-12, then apply</li><li>B) Run with <code>--dry-run</code> again to verify</li><li>C) Sonic doesn't support partial applies; you must do all steps or none</li><li><strong>Answer</strong>: C — Sonic is all-or-nothing by design (safer). If you only want some steps, create a new layout.</li></ul>
+<p>---</p>
+<h2>Key Takeaway</h2>
+<p><strong>The Sonic workflow is review-focused</strong>: 1. Generate plan 2. <strong>Review the manifest</strong> 3. Dry-run it 4. Only then apply</p>
+<p>This three-step discipline prevents the vast majority of deployment disasters.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

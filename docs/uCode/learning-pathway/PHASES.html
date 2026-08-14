@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>learning-pathway/PHASES.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / learning-pathway/PHASES.md</span></header><main class="site-main"><h1>Course Project: Universal Sonic Screwdriver Hands-On</h1>
+<p><strong>Status</strong>: Active learning project <strong>Timeline</strong>: Complete all phases in 2-3 hours (or work at your own pace) <strong>Prerequisite</strong>: Complete <code>prerequisites.md</code> checks</p>
+<p>---</p>
+<h2>Project Overview</h2>
+<p>This project teaches you to safely plan, inspect, validate, and apply a Sonic deployment by working through three scaffolded phases:</p>
+<p>1. <strong>Phase 1: Planning & Inspection</strong> (45 min) — Build and understand a deployment plan 2. <strong>Phase 2: Dry-Run Safety</strong> (30 min) — Practice safe validation before applying 3. <strong>Phase 3: Apply & Recovery</strong> (45 min) — Execute a deployment with recovery options</p>
+<p>Each phase reinforces concepts from the corresponding lesson.</p>
+<p>---</p>
+<h2>What You'll Learn</h2>
+<p>By completing this project, you'll know how to:</p>
+<ul><li>[ ] Read and explain a Sonic deployment layout (<code>config/sonic-layout.json</code>)</li><li>[ ] Generate a manifest safely with <code>sonic plan</code></li><li>[ ] Inspect and interpret manifest output</li><li>[ ] Use dry-run to validate before applying</li><li>[ ] Understand boundaries with <code>uDOS-core</code>, <code>uDOS-wizard</code>, and <code>uHOME-server</code></li><li>[ ] Recover from deployment failures</li><li>[ ] Document a deployment for handoff</li></ul>
+<p>---</p>
+<h2>Phase 1: Planning & Inspection (Lesson 2 + Project P1)</h2>
+<p><strong>Goal</strong>: Create your first deployment plan and understand every part of it. <strong>Time</strong>: ~45 minutes <strong>Corresponds to</strong>: Lesson 2 - Plan, Inspect, Dry-Run</p>
+<h3>Phase 1 Tasks</h3>
+<h4>Task P1.1: Examine the Layout Configuration</h4>
+<p>Start by reading the layout that defines your deployment:</p>
+<pre><code># View the Sonic layout configuration
+cat config/sonic-layout.json</code></pre>
+<p><strong>Your job</strong>: Create a short document (<code>my-first-deployment.md</code>) that answers: 1. What surfaces (USB, archive, payload location, etc.) does this layout define? 2. What is the role of each surface in a deployment? 3. Which parts are read-only plans vs. destructive operations?</p>
+<p>Hint: Refer back to Lesson 2's "Configuration Walkthrough" section.</p>
+<h4>Task P1.2: Generate a Deployment Plan</h4>
+<p>Generate your first manifest <em>in dry-run mode</em> (safe, no changes):</p>
+<pre><code># Edit installers/setup/ to match your environment, then:
+cd /path/to/sonic-screwdriver
+
+# Install Sonic CLI (first time only)
+bash installers/setup/install-sonic-editable.sh
+
+# Generate a plan
+sonic plan \
+  --usb-device /dev/sdb \
+  --out memory/sonic/my-first-manifest.json</code></pre>
+<p><strong>Your job</strong>: 1. Run the command to success 2. Save the generated manifest location 3. Note any warnings or special messages</p>
+<h4>Task P1.3: Inspect the Manifest</h4>
+<p>Open and explore the generated manifest:</p>
+<pre><code># View the manifest in your editor
+cat memory/sonic/my-first-manifest.json | jq .
+
+# Or examine parts of it:
+cat memory/sonic/my-first-manifest.json | jq .plan
+cat memory/sonic/my-first-manifest.json | jq .verify</code></pre>
+<p><strong>Your job</strong>: Create a short report (<code>manifest-inspection.md</code>) that answers: 1. What sections does the manifest contain? (plan, verify, apply, etc.) 2. For each section, explain what information it holds 3. Which sections are safe to inspect vs. require careful handling during apply? 4. Where can you see this manifest being referenced in the layout?</p>
+<p>Hint: Refer to Lesson 2's "Understanding the Manifest" section.</p>
+<h4>Task P1.4: Identify Boundaries</h4>
+<p>Based on your manifest, identify where Sonic hands off work to other systems:</p>
+<p><strong>Your job</strong>: Create a <code>boundaries.md</code> document that identifies: 1. Any <code>uHOME</code> bundle references (would go to <code>uHOME-server</code>) 2. Any <code>uDOS-core</code> or <code>uDOS-wizard</code> references that belong back to those repos 3. What Sonic <em>does</em> own in this deployment 4. What Sonic <em>doesn't</em> own or delegates</p>
+<p>Hint: Refer to Lesson 1's "Sonic Boundaries" section.</p>
+<h3>Phase 1 Completion Checklist</h3>
+<ul><li>[ ] Layout analyzed in <code>my-first-deployment.md</code></li><li>[ ] Manifest generated successfully</li><li>[ ] Manifest inspection documented in <code>manifest-inspection.md</code></li><li>[ ] Boundaries identified in <code>boundaries.md</code></li><li>[ ] You can explain each section to a colleague</li></ul>
+<p>---</p>
+<h2>Phase 2: Dry-Run Safety (Lesson 2 + Project P2)</h2>
+<p><strong>Goal</strong>: Practice applying a deployment plan safely using dry-run. <strong>Time</strong>: ~30 minutes <strong>Corresponds to</strong>: Lesson 2 - Dry-Run Discipline</p>
+<h3>Phase 2 Tasks</h3>
+<p>Prerequisites:</p>
+<ul><li>Completed Phase 1</li><li>Generated manifest from Phase 1</li></ul>
+<h4>Task P2.1: Run Sonic Stick Apply in Dry-Run Mode</h4>
+<p>Practice the apply workflow without making real changes:</p>
+<pre><code># Use your manifest from Phase 1
+bash scripts/sonic-stick.sh \
+  --manifest memory/sonic/my-first-manifest.json \
+  --dry-run</code></pre>
+<p><strong>Your job</strong>: 1. Run the command to completion 2. Observe what would happen (without actually happening) 3. Note any changes that would be staged 4. Document what you see in <code>dry-run-output.md</code></p>
+<h4>Task P2.2: Verify Dry-Run Safety</h4>
+<p>Compare what dry-run said vs. what a real apply would do:</p>
+<p><strong>Your job</strong>: Create <code>dry-run-verification.md</code> that explains: 1. What operations are truly safe (read-only)? 2. What operations would be staged but not executed? 3. How would you know if something went wrong before apply? 4. What safety mechanisms does dry-run provide?</p>
+<p>Hint: Refer to Lesson 2's "Dry-Run Discipline" section.</p>
+<h4>Task P2.3: Plan for Failure</h4>
+<p>Before progressing to Phase 3 (real apply), plan your recovery:</p>
+<p><strong>Your job</strong>: Create <code>contingency-plan.md</code> that documents: 1. What could go wrong during apply? 2. For each risk, what's the recovery procedure? 3. When would you escalate vs. attempt recovery yourself? 4. How would you communicate the issue?</p>
+<h3>Phase 2 Completion Checklist</h3>
+<ul><li>[ ] Dry-run executed successfully</li><li>[ ] Dry-run output documented in <code>dry-run-output.md</code></li><li>[ ] Safety mechanisms understood in <code>dry-run-verification.md</code></li><li>[ ] Contingency plan created in <code>contingency-plan.md</code></li><li>[ ] You understand what would happen during apply</li></ul>
+<p>---</p>
+<h2>Phase 3: Apply & Recovery (Lesson 3 + Project P3)</h2>
+<p><strong>Goal</strong>: Execute a real deployment and practice recovery if needed. <strong>Time</strong>: ~45 minutes (varies by hardware) <strong>Corresponds to</strong>: Lesson 3 - Apply, Rescue, Handoff</p>
+<p><strong>⚠️ Important</strong>: Phase 3 involves real changes. Only proceed if you:</p>
+<ul><li>[ ] Completed Phase 1 & 2</li><li>[ ] Have backups of your USB device</li><li>[ ] Have tested dry-run multiple times</li><li>[ ] Have documented your contingency plan</li><li>[ ] Are ready to troubleshoot if needed</li></ul>
+<h3>Phase 3 Tasks</h3>
+<h4>Task P3.1: Execute the Deployment</h4>
+<p>Apply the plan from Phase 1:</p>
+<pre><code># Use your manifest (remove --dry-run)
+bash scripts/sonic-stick.sh \
+  --manifest memory/sonic/my-first-manifest.json</code></pre>
+<p><strong>Your job</strong>: 1. Run the deploy command 2. Monitor progress and note any issues 3. Document the execution in <code>deployment-log.md</code> with timestamps 4. Record any warnings or required manual steps</p>
+<h4>Task P3.2: Validate the Deployment</h4>
+<p>Verify the deployment succeeded:</p>
+<p><strong>Your job</strong>: Create <code>deployment-validation.md</code> that confirms: 1. Did all expected changes apply? 2. Are there any partial failures? 3. Are all safety gates still in place? 4. Can you boot the target device? 5. What does the device look like now vs. before?</p>
+<h4>Task P3.3: Document Handoff</h4>
+<p>Prepare documentation for the next engineer/operator:</p>
+<p><strong>Your job</strong>: Create <code>handoff-brief.md</code> that documents: 1. What was deployed and when 2. Current state of the device 3. Known issues or workarounds 4. What to do if something needs rolling back 5. Who to contact for questions</p>
+<p>Hint: Refer to Lesson 3's "Handoff Boundaries" section.</p>
+<h4>Task P3.4: Practice Recovery (Optional)</h4>
+<p>If something went wrong, practice recovery:</p>
+<p><strong>Your job</strong>: 1. Refer to <code>contingency-plan.md</code> from Phase 2 2. Follow the recovery procedure if applicable 3. Document what you learned in <code>recovery-log.md</code> 4. Note any improvements for next time</p>
+<h3>Phase 3 Completion Checklist</h3>
+<ul><li>[ ] Deployment executed successfully</li><li>[ ] Deployment logged in <code>deployment-log.md</code></li><li>[ ] Validation confirmed in <code>deployment-validation.md</code></li><li>[ ] Handoff documented in <code>handoff-brief.md</code></li><li>[ ] (Optional) Recovery tested and documented</li><li>[ ] You could guide someone else through this</li></ul>
+<p>---</p>
+<h2>Project Completion & Reflection</h2>
+<p>Congratulations! You've completed the Universal Sonic Screwdriver course project.</p>
+<h3>Reflection Prompts</h3>
+<p>Before you finish, spend 10 minutes answering these:</p>
+<p>1. <strong>What surprised you most</strong> about the Sonic workflow? 2. <strong>What was the most important</strong> safety mechanism you learned? 3. <strong>Where would you feel confident</strong> acting independently vs. needing help? 4. <strong>What would you teach someone else</strong> about using Sonic? 5. <strong>What questions do you still have</strong>?</p>
+<h3>Next Steps</h3>
+<p>Now that you've completed the course:</p>
+<ul><li><strong>Troubleshooter</strong>: If you encountered issues, see <a href="../lessons/04-troubleshooting.md">Lesson 4 - Troubleshooting</a> (under development)</li><li><strong>Operator</strong>: You're ready to deploy Sonic to production hardware</li><li><strong>Developer</strong>: Explore <a href="../lessons/03-apply-rescue-and-handoff.md">lessons/03-apply-rescue-and-handoff.md</a> for extension points</li><li><strong>Continued Learning</strong>: Explore <code>docs/v1/howto/</code> and <code>docs/v1/specs/</code> for deeper dives</li></ul>
+<p>---</p>
+<h2>Submitting Your Project</h2>
+<p>Optional: Share your project for feedback:</p>
+<p>1. Create a folder <code>projects/my-first-sonic-deployment/</code> in your local workspace 2. Include all your documentation files 3. Share the path or link with your instructor/mentor 4. Get feedback on your approach, documentation, and understanding</p>
+<p>---</p>
+<h2>Project Resources</h2>
+<ul><li><strong>Lesson 2 reference</strong>: <a href="../lessons/02-layout-manifest-and-dry-run.md">Lesson 02 - Layout, Manifest, Dry-Run</a></li><li><strong>Lesson 3 reference</strong>: <a href="../lessons/03-apply-rescue-and-handoff.md">Lesson 03 - Apply, Rescue, Handoff</a></li><li><strong>CLI reference</strong>: <code>sonic plan --help</code>, <code>sonic --help</code></li><li><strong>Troubleshooting</strong>: <a href="../../docs/v1/howto/quickstart.md">Docs - Quickstart</a></li></ul>
+<p>---</p>
+<p><strong>Project Status</strong>: Ready to begin!</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

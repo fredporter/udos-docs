@@ -1,0 +1,61 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>learning-pathway/v2.1-convergence-dev-pathway.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / learning-pathway/v2.1-convergence-dev-pathway.md</span></header><main class="site-main"><h1>v2.1 Convergence Dev Pathway</h1>
+<p>Use this pathway to move from split v2.2-era specs to a single v2.1 execution lane with implementation-ready handoffs.</p>
+<h2>Scope</h2>
+<p>This pathway covers:</p>
+<ul><li>Wizard OK control-plane spec relabeling into v2.1</li><li>uCODE and script-system decision integration</li><li>Ubuntu workstation decision integration</li><li>ThinUI scaffold wiring and first themed boot render</li><li>full-operation <code>@dev</code> module with OK ASSIST MCP support</li><li>full-family launchability, quickstarts, and integration checks</li><li>archive and previous-version decommission readiness</li></ul>
+<h2>Stage 1: Normalize And Index Decisions</h2>
+<p>Owner: uDOS-dev</p>
+<p>Actions:</p>
+<p>1. verify all active decision docs are present under <code>@dev/inbox/decisions/</code> 2. map each decision to owning repo and target round 3. confirm no boundary drift against Core/Wizard/ThinUI/Themes ownership</p>
+<p>Outputs:</p>
+<ul><li>updated roadmap entries (<code>v2-family-roadmap.md</code>, <code>v2-roadmap-status.md</code>, <code>v2.1-rounds.md</code>)</li><li>convergence notes in request/submission lanes</li></ul>
+<h2>Stage 2: Wizard OK Package Relabel</h2>
+<p>Owner: uDOS-wizard</p>
+<p>Actions:</p>
+<p>1. relabel <code>@dev/udos-wizard-v2.2</code> lane to <code>@dev/udos-wizard-v2.1</code> 2. rename <code>WIZARD-OK-SPEC-v2.2.md</code> to <code>WIZARD-OK-SPEC-v2.1.md</code> 3. update internal version text and sample prompts</p>
+<p>Outputs:</p>
+<ul><li>v2.1-labeled Wizard OK package with unchanged boundary doctrine</li></ul>
+<h2>Stage 3: ThinUI Scaffold Baseline</h2>
+<p>Owner: uDOS-thinui</p>
+<p>Actions:</p>
+<p>1. verify scaffold contract in <code>src/contracts/state.ts</code> 2. add missing event/render/view/runtime loop files if absent 3. document runtime loop entrypoint and mock core bridge</p>
+<p>Outputs:</p>
+<ul><li>minimal executable ThinUI runtime loop scaffold</li></ul>
+<h2>Stage 4: Adapter Wiring (Themes -> ThinUI)</h2>
+<p>Owner: uDOS-themes + uDOS-thinui</p>
+<p>Actions:</p>
+<p>1. implement <code>resolveThinUiTheme()</code> in themes thinui adapter lane 2. consume resolver in ThinUI render path (<code>renderThinUiState()</code>) 3. inject loader/font/token hooks from adapter resolver</p>
+<p>Outputs:</p>
+<ul><li>first adapter-driven boot render in ThinUI</li><li>documented fallback behavior for missing themes</li></ul>
+<h2>Stage 5: First Visible Boot Slice</h2>
+<p>Owner: uDOS-thinui</p>
+<p>Actions:</p>
+<p>1. render <code>thinui-c64</code> boot-loader view through runtime loop 2. verify keyboard-safe and low-resource mode behavior 3. record sample output and test entrypoint</p>
+<p>Outputs:</p>
+<ul><li>reproducible first themed boot screen</li><li>release-note-ready artifact references</li></ul>
+<h2>Stage 6: Validation And Promotion Prep</h2>
+<p>Owner: uDOS-dev</p>
+<p>Actions:</p>
+<p>1. run round validation checks 2. collect repo outputs and acceptance notes 3. stage promotion notes and release binder handoff</p>
+<p>Outputs:</p>
+<ul><li>release gate package is staged with validation evidence</li></ul>
+<h2>Stage 7: <code>@dev</code> Operations Module (OK ASSIST MCP)</h2>
+<p>Owner: uDOS-dev</p>
+<p>Actions:</p>
+<p>1. stand up the operational <code>@dev</code> module surface for v2.1 2. wire OK ASSIST MCP support for planning, validation, and promotion workflows 3. document guardrails, approval rules, and boundary ownership</p>
+<p>Outputs:</p>
+<ul><li>usable <code>@dev</code> operations lane with OK ASSIST MCP integration</li></ul>
+<h2>Stage 8: Full Family Operations Completion</h2>
+<p>Owner: family</p>
+<p>Actions:</p>
+<p>1. verify launchable quickstarts for Core and Shell TUI 2. verify API, MCP, plugin/extension, container, and modular capability surfaces 3. verify uHOME console plus Alpine and sonic-screwdriver Thin GUI launch paths</p>
+<p>Outputs:</p>
+<ul><li>full operation matrix for v2.1 is passing</li></ul>
+<h2>Stage 9: Archive Decommission Gate</h2>
+<p>Owner: uDOS-dev</p>
+<p>Actions:</p>
+<p>1. audit active runtime dependencies against archived and previous-version folders 2. mark each archive lane as keep, freeze, export, or decommission 3. stage cleanup order and rollback notes</p>
+<p>Outputs:</p>
+<ul><li><code>#binder/dev-v2-1-release-and-archive-gate</code> ready for promotion cycle</li></ul>
+<h2>Boundary Guardrails</h2>
+<ul><li>Core owns semantics and runtime truth</li><li>ThinUI owns local GUI runtime loop</li><li>Themes own visual adapters and token maps</li><li>Wizard owns managed network/provider orchestration</li><li>Ubuntu lane owns workstation/base-image scope, not semantic contracts</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

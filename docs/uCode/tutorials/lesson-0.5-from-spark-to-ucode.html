@@ -1,0 +1,172 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>tutorials/lesson-0.5-from-spark-to-ucode.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / tutorials/lesson-0.5-from-spark-to-ucode.md</span></header><main class="site-main"><p>--- title: "Level 0.5: From Spark to uCode" status: draft last_updated: 2026-05-26T19:55:01+10:00 category: course tags: [course, uconnect] description: "<strong>Course:</strong> uDos Orientation (Bridge Module)" ---</p>
+<h1>Level 0.5: From Spark to uCode</h1>
+<p><strong>Course:</strong> uDos Orientation (Bridge Module) <strong>Time:</strong> 30–45 minutes <strong>Difficulty:</strong> Beginner (no coding required) <strong>Output:</strong> A GitHub Spark that you understand well enough to build as a <code>udo</code> command</p>
+<p>---</p>
+<h2>What You'll Learn</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ul><li>Create a <strong>GitHub Spark</strong> using natural language (no coding!)</li><li>Understand how a spark's data model maps to <strong>markdown files</strong></li><li>Write a simple <strong>shell script</strong> that does what your spark does</li><li>Explain how sparks become <strong>uCode commands</strong></li></ul>
+<p>---</p>
+<h2>Prerequisites</h2>
+<ul><li>A <strong>GitHub account</strong> (free)</li><li>Completed <strong>Lesson 1</strong> (you know markdown, frontmatter, and tasks)</li><li>Curiosity (required)</li></ul>
+<p>---</p>
+<h2>Part 1: What's a Spark?</h2>
+<p>A <strong>GitHub Spark</strong> is a micro-app you build with natural language. You describe what you want, and AI generates it. No coding required.</p>
+<p><strong>Examples of sparks:</strong></p>
+<ul><li>"A to-do list that saves my tasks"</li><li>"A habit tracker that shows my weekly progress"</li><li>"A reading log that stores book notes"</li></ul>
+<p>Sparks are:</p>
+<ul><li><strong>Visual</strong> – they run in your browser as a PWA</li><li><strong>AI-generated</strong> – you describe, AI builds</li><li><strong>Portable</strong> – you can export the code</li><li><strong>Free</strong> – no server, no database, no cost</li></ul>
+<p>---</p>
+<h2>Part 2: Your First Spark</h2>
+<h3>Step 1: Open GitHub Spark</h3>
+<p>1. Go to <a href="https://github.com/spark">https://github.com/spark</a> 2. Sign in with your GitHub account 3. Click <strong>"New Spark"</strong></p>
+<h3>Step 2: Describe Your App</h3>
+<p>In the prompt box, type:</p>
+<pre><code>Create a simple to-do list that stores tasks in markdown format.
+Each task should have: a title, a due date, and a done/not-done status.
+Show me a list of all tasks, and let me mark them as done.</code></pre>
+<p>Click <strong>Generate</strong> (or press Enter).</p>
+<h3>Step 3: See What You Get</h3>
+<p>GitHub Spark will generate a working app. It will have:</p>
+<ul><li>A text input to add tasks</li><li>A list showing all tasks</li><li>Checkboxes to mark tasks as done</li><li>A way to delete tasks</li></ul>
+<p><strong>Try it out:</strong> 1. Add a few tasks 2. Mark one as done 3. Delete one</p>
+<h3>Step 4: Peek Inside</h3>
+<p>Click <strong>"View Code"</strong> (or the code icon). You'll see:</p>
+<pre><code>// This is React – don&#x27;t worry if it looks unfamiliar!
+function TodoApp() {
+  const [tasks, setTasks] = React.useState([]);
+  
+  function addTask(title) {
+    setTasks([...tasks, {
+      id: Date.now(),
+      title: title,
+      done: false,
+      createdAt: new Date().toISOString()
+    }]);
+  }
+  // ...
+}</code></pre>
+<p><strong>You don't need to understand React.</strong> Just notice:</p>
+<ul><li>Tasks have an <code>id</code>, <code>title</code>, <code>done</code> status, and <code>createdAt</code> date</li><li>This is a <strong>data model</strong> – the same structure you'd use in uCode</li></ul>
+<p>---</p>
+<h2>Part 3: The Same Thing in uCode</h2>
+<p>Your spark stores tasks in the browser's memory. When you refresh, they're gone.</p>
+<p><strong>uCode stores tasks in markdown files.</strong> They persist forever.</p>
+<h3>The uCode Way</h3>
+<pre><code># Add a task
+udo task add &quot;Finish the grimoire&quot; --due 2026-05-15
+
+# List all tasks
+udo task list
+
+# Mark as done
+udo task done 1
+
+# Output: ~/vault/user/tasks/2026-05-10-finish-the-grimoire.md</code></pre>
+<h3>Compare and Contrast</h3>
+<p>| Feature | Spark | uCode | |---------|-------|-------| | <strong>Interface</strong> | Visual UI (browser) | Terminal commands | | <strong>Storage</strong> | Browser memory (volatile) | Markdown files (permanent) | | <strong>Data format</strong> | JSON (in code) | Markdown + frontmatter | | <strong>Portability</strong> | PWA (runs in browser) | Anywhere (files are files) | | <strong>AI role</strong> | Generates the app | You write commands | | <strong>Learning curve</strong> | None (describe in English) | Low (learn <code>udo</code> commands) |</p>
+<p>---</p>
+<h2>Part 4: Bridge Project – From Spark to Shell Script</h2>
+<p>Let's build a <strong>shell script</strong> that does what your spark does – using markdown files.</p>
+<h3>Step 1: Create a Task Directory</h3>
+<pre><code>cd ~/vault/user/@toybox
+mkdir -p tasks
+cd tasks</code></pre>
+<h3>Step 2: Create a Task File</h3>
+<pre><code>cat &gt; my-first-task.md &lt;&lt; &#x27;EOF&#x27;
+---
+title: Finish the grimoire
+due: 2026-05-15
+status: pending
+created: 2026-05-10
+---
+
+# Finish the grimoire
+
+A task to complete Lesson 1 of the uDos course.
+
+- [ ] Write the introduction
+- [ ] Add frontmatter
+- [ ] Link to related notes
+EOF</code></pre>
+<h3>Step 3: Write a Script to List Tasks</h3>
+<pre><code>cat &gt; ~/vault/user/@toybox/bin/list-tasks.sh &lt;&lt; &#x27;EOF&#x27;
+#!/bin/bash
+# list-tasks.sh – List all tasks in the toybox
+echo &quot;=== Your Tasks ===&quot;
+for file in ~/vault/user/@toybox/tasks/*.md; do
+  title=$(head -1 &quot;$file&quot; | sed &#x27;s/^# //&#x27;)
+  status=$(grep &quot;^status:&quot; &quot;$file&quot; | sed &#x27;s/status: //&#x27;)
+  due=$(grep &quot;^due:&quot; &quot;$file&quot; | sed &#x27;s/due: //&#x27;)
+  echo &quot;  $title [$status] (due: $due)&quot;
+done
+EOF
+chmod +x ~/vault/user/@toybox/bin/list-tasks.sh</code></pre>
+<h3>Step 4: Run Your Script</h3>
+<pre><code>~/vault/user/@toybox/bin/list-tasks.sh</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>=== Your Tasks ===
+  Finish the grimoire [pending] (due: 2026-05-15)</code></pre>
+<p><strong>Congratulations!</strong> You just built a <code>udo</code>-like command using shell scripting and markdown.</p>
+<p>---</p>
+<h2>Part 5: How Sparks Become uCode Commands</h2>
+<p>When a community member shares a spark, a maintainer can turn it into a real <code>udo</code> command:</p>
+<pre><code>graph LR
+    A[Spark Idea] --&gt; B[Issue: Spark Showcase]
+    B --&gt; C[Maintainer reviews]
+    C --&gt; D[Issue: Spark Adoption]
+    D --&gt; E[Contributor builds]
+    E --&gt; F[udo command released]</code></pre>
+<h3>Real Example: From Spark to <code>udo habit</code></h3>
+<pre><code># Step 1: Community member creates a spark
+Spark: &quot;A habit tracker that stores data in markdown&quot;
+
+# Step 2: They share it as a Spark Showcase issue
+Issue: &quot;[SPARK] Habit Tracker – tracks daily habits in markdown&quot;
+
+# Step 3: Maintainer creates an Adoption issue
+Issue: &quot;[ADOPT] Turn habit tracker into `udo habit`&quot;
+
+# Step 4: Contributor builds it
+Command: `udo habit add &quot;meditate&quot; --daily`
+Storage: ~/vault/user/habits/meditate.md
+
+# Step 5: Released in uCode v1.7.0</code></pre>
+<p>---</p>
+<h2>What You've Learned</h2>
+<ul><li>✅ <strong>GitHub Spark</strong> lets you build micro-apps with natural language</li><li>✅ Sparks have a <strong>data model</strong> (title, status, dates) – same as uCode</li><li>✅ uCode stores data in <strong>markdown files</strong> – permanent and portable</li><li>✅ You can write a <strong>shell script</strong> that mimics a <code>udo</code> command</li><li>✅ Sparks can become <strong>real uCode commands</strong> through community contribution</li></ul>
+<p>---</p>
+<h2>Your Challenge</h2>
+<p>Choose one of these paths:</p>
+<h3>Path A – Spark Explorer</h3>
+<p>Create a <strong>new spark</strong> that solves a problem you have. Export the code. Identify the data model. Write a shell script that does the same thing with markdown files.</p>
+<h3>Path B – Spark Sharer</h3>
+<p>Take your spark from Part 2 and <strong>share it</strong> as a Spark Showcase issue in the <a href="https://github.com/uDosGo/Connect/issues/new?template=spark-showcase.md">uDosGo community repo</a>. Tag it with <code>[SPARK]</code>.</p>
+<h3>Path C – uCode Builder</h3>
+<p>Take the shell script from Part 4 and <strong>extend it</strong>:</p>
+<ul><li>Add a <code>mark-done.sh</code> script that changes <code>status: pending</code> to <code>status: done</code></li><li>Add a <code>delete-task.sh</code> script that moves tasks to <code>.compost</code></li><li>Make it feel like a real <code>udo</code> command</li></ul>
+<p>---</p>
+<h2>Next Up</h2>
+<p><strong>Lesson 2: Local-First Development</strong> – You'll run a local server that reads your vault and turns it into a live API. Your contacts will become JSON. Your tasks will become a REST endpoint.</p>
+<p>But first, play with sparks. Build something fun. Share it with the community.</p>
+<pre><code>┌─────────────────────────────────────────────────────────────────────┐
+│                                                                     │
+│   ╔═════════════════════════════════════════════════════════════╗   │
+│   ║                                                             ║   │
+│   ║   LEVEL 0.5 COMPLETE!                                       ║   │
+│   ║                                                             ║   │
+│   ║   You have learned:                                         ║   │
+│   ║   ✓ What a GitHub Spark is                                  ║   │
+│   ║   ✓ How sparks store data (vs uCode markdown)               ║   │
+│   ║   ✓ How to write a shell script that mimics udo             ║   │
+│   ║   ✓ How sparks become uCode commands                        ║   │
+│   ║                                                             ║   │
+│   ║   Spark is magic. uCode is power.                           ║   │
+│   ║   Start with magic, stay for power.                         ║   │
+│   ║                                                             ║   │
+│   ║   PRESS [SPACE] TO CONTINUE TO LESSON 2                     ║   │
+│   ║                                                             ║   │
+│   ╚═════════════════════════════════════════════════════════════╝   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+<p>---</p>
+<p><strong>Ready for Lesson 2, or want to build more sparks?</strong> 🔧</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

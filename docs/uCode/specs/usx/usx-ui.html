@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/usx/usx-ui.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / specs/usx/usx-ui.md</span></header><main class="site-main"><p>--- title: "USX UI Specification — v1.0" status: draft last_updated: 2026-05-17T22:11:35+10:00 category: specification tags: [specification, surface, ucode1, usx] description: "> <strong>UI components, authoring blocks, and grid layouts.</strong> Merged from OBF components, UI blocks, and grid spec." ---</p>
+<h1>USX UI Specification — v1.0</h1>
+<blockquote><strong>UI components, authoring blocks, and grid layouts.</strong> Merged from OBF components, UI blocks, and grid spec.</blockquote>
+<h2>Overview</h2>
+<p>USX UI defines markdown-first, text-authored components for static rendering and terminal-preview workflows. All UI is defined inside <code> </code>`<code>usx-ui </code> fenced code blocks.</p>
+<h2>Component Definitions</h2>
+<h3>Button</h3>
+<pre><code>COMPONENT button
+  STYLE: &quot;px-4 py-2 bg-teletext text-black rounded hover:bg-green-400&quot;
+  VARIANTS:
+    primary: &quot;bg-teletext text-black&quot;
+    secondary: &quot;bg-gray-700 text-white&quot;
+    danger: &quot;bg-red-600 text-white&quot;
+  SIZE:
+    sm: &quot;px-2 py-1 text-sm&quot;
+    md: &quot;px-4 py-2 text-base&quot;
+    lg: &quot;px-6 py-3 text-lg&quot;</code></pre>
+<h3>Card</h3>
+<pre><code>COMPONENT card
+  STYLE: &quot;border border-teletext rounded-lg p-4 bg-gray-900&quot;
+  PARTS:
+    header: &quot;border-b border-gray-800 pb-2 mb-2 font-bold&quot;
+    body: &quot;text-gray-300&quot;
+    footer: &quot;border-t border-gray-800 pt-2 mt-2 text-xs text-gray-500&quot;</code></pre>
+<h3>Form</h3>
+<pre><code>COMPONENT form
+  STYLE: &quot;space-y-4&quot;
+  FIELD:
+    label: &quot;block text-sm font-medium mb-1&quot;
+    input: &quot;w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:border-teletext&quot;
+    error: &quot;text-red-400 text-xs mt-1&quot;</code></pre>
+<h2>Authoring Blocks</h2>
+<p>USX UI supports these authoring block patterns for markdown-first layout:</p>
+<h3>COLUMNS</h3>
+<pre><code>COLUMNS
+  COLUMN
+    Content for left column.
+  COLUMN
+    Content for right column.</code></pre>
+<h3>CARD</h3>
+<pre><code>CARD title=&quot;Getting Started&quot;
+  BODY
+    This is a card component.
+  FOOTER
+    Button: [Learn More](#)</code></pre>
+<h3>TABS</h3>
+<pre><code>TABS
+  TAB &quot;Overview&quot;
+    Intro copy.
+  TAB &quot;Details&quot;
+    More detail copy.</code></pre>
+<h3>ACCORDION</h3>
+<pre><code>ACCORDION
+  ITEM &quot;What is uDos?&quot;
+    Universal Device Operating Surface.
+  ITEM &quot;Is this local-first?&quot;
+    Yes. A1 is local-first and wireframe.</code></pre>
+<h3>GRID (UI Layout)</h3>
+<pre><code>GRID
+  ROWS
+    ████████
+    █░░░░░░█
+    ████████</code></pre>
+<h2>Grid Fence Syntax</h2>
+<p>For detailed grid layouts with cell addressing, use the <code> </code>`<code>usx-grid </code> fence:</p>
+<pre><code></code></pre>
+<p>…cell data…</p>
+<pre><code></code></pre>
+<h3>Options</h3>
+<p>| Option | Values | Default | |--------|--------|---------| | <code>size</code> | <code>WxH</code> cells | <code>12x12</code> (coordinate mode) or inferred (compact) | | <code>mode</code> | <code>teletext</code> \| <code>mono</code> \| <code>wireframe</code> | <code>teletext</code> | | <code>cell_size</code> | e.g. <code>2x6</code> chars | documentation only in VA1 parser | | <code>show_coords</code> | <code>true</code> \| <code>false</code> | <code>false</code> | | <code>editable</code> | <code>true</code> \| <code>false</code> | <code>true</code> | | <code>compact</code> | flag or <code>compact=true</code> | off |</p>
+<h3>Coordinate Format</h3>
+<p>Each token: <code>[x,y]<char></code> with zero-based indices.</p>
+<pre><code>[0,0]█ [0,1]█ [0,2]█</code></pre>
+<h3>Compact Format</h3>
+<p>Add <code>compact</code> to the header. One character per column; one row per line:</p>
+<pre><code>████████████
+█░░░░░░░░░░█
+█░░▒▒░░░░░░█</code></pre>
+<h3>Character Set</h3>
+<p>| Char | Notes | |------|-------| | <code>█</code> <code>▓</code> <code>▒</code> <code>░</code> | Blocks / shades | | <code>□</code> <code>■</code> | Boxes | | space | Empty (render may show <code>·</code> in terminal) |</p>
+<h2>CLI Commands</h2>
+<p>| Command | Description | |---------|-------------| | <code>udo usx render <file> [--mode]</code> | Terminal ANSI rendering | | <code>udo usx render <file> --format html</code> | HTML snippet output | | <code>udo usx export <file> --format ascii\|usx</code> | Plain text or fenced USX | | <code>udo usx validate <file></code> | Dimension and syntax check | | <code>udo usx edit <file></code> | Opens <code>$EDITOR</code>; creates minimal grid if missing |</p>
+<h2>File Conventions</h2>
+<ul><li>Embed in any <code>.md</code> file, or use a dedicated <code>.usx.md</code> / <code>.usx</code> file</li><li>Publish/build-safe behavior: <code> </code>`<code>usx-ui</code> authoring blocks are source artifacts, not transformed during <code>udo publish build</code></li></ul>
+<h2>See Also</h2>
+<ul><li><a href="usx-core.md">usx-core.md</a> — Core format and fence types</li><li><a href="usx-style.md">usx-style.md</a> — Style tokens and themes</li><li><a href="usx-grid.md">usx-grid.md</a> — Grid system and cell maths</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

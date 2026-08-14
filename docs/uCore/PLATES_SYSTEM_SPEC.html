@@ -1,0 +1,266 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PLATES_SYSTEM_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / PLATES_SYSTEM_SPEC.md</span></header><main class="site-main"><h1>uCore Plates System Specification</h1>
+<blockquote><strong>Version:</strong> 1.0</blockquote>
+<blockquote><strong>Status:</strong> Draft</blockquote>
+<blockquote><strong>Scope:</strong> Skills, Snacks, MCP Tools, Hivemind Patterns, Variables/Secrets, CSS/USX</blockquote>
+<blockquote><strong>Naming:</strong> "Plates" — canonical, versioned, recoverable blueprints (like printing plates)</blockquote>
+<h2>1. Philosophy</h2>
+<p>A <strong>Plate</strong> in uCore is a <strong>canonical, versioned, recoverable blueprint</strong> for any system component. Plates serve three purposes:</p>
+<p>1. <strong>Scaffolding</strong> — Generate new components from a known-good starting point 2. <strong>Validation</strong> — Detect drift between running state and canonical plate 3. <strong>DESTROY/REBUILD</strong> — On corruption/hallucination, salvage key items and restore from plate</p>
+<h2>2. Existing Standards We Leverage</h2>
+<p>| Domain | Plate Mechanism | Standard | |--------|----------------|----------| | <strong>Python Skills</strong> | <code>BaseSkill</code> + <code>SkillMeta</code> (Pydantic) | Pydantic <code>BaseModel</code> for schema enforcement | | <strong>Python Projects</strong> | <strong>Cookiecutter</strong> — <code>cookiecutter gh:ucore/skill-plate</code> | Cookiecutter (de facto Python standard) | | <strong>MCP Tools</strong> | <code>input_schema</code> dicts (JSON Schema) → <strong>OpenAPI/Swagger</strong> | <a href="https://spec.openapis.org/oas/v3.1.0">OpenAPI 3.1</a> | | <strong>MCP Registry</strong> | <strong>OpenAPI/Swagger spec</strong> auto-generated from <code>TOOL_HANDLERS</code> | OpenAPI 3.1 + MCP Specification | | <strong>CSS/USX</strong> | CSS Custom Properties (<code>--usx-<em></code>, <code>--pico-</em></code>) | CSS Variables (W3C standard) | | <strong>Snacks</strong> | <code>SnackMeta</code> (Pydantic) | Same pattern as <code>SkillMeta</code> | | <strong>Secrets/Variables</strong> | <code>.env.example</code> + <code>config/*.example.yaml</code> | 12-Factor App methodology | | <strong>Hivemind Patterns</strong> | YAML workflow definitions | n8n / Roundtable workflow format |</p>
+<h2>3. Plate Anatomy</h2>
+<p>Every plate has:</p>
+<pre><code># plate.yaml (canonical definition)
+plate:
+  id: &quot;skill.recover_port_conflict&quot;    # Unique identifier
+  version: &quot;1.0.0&quot;                     # SemVer
+  domain: &quot;skill&quot;                      # skill | snack | mcp | hivemind | secret | css
+  description: &quot;Detect and resolve port conflicts&quot;
+  schema:                              # Pydantic/JSON Schema validation
+    type: object
+    properties:
+      port: { type: integer, default: 8484 }
+  source: &quot;builtin&quot;                    # builtin | user | community
+  checksum: &quot;sha256-...&quot;               # For drift detection
+  dependencies: []                     # Other plates this depends on
+  destroy:                             # DESTROY/REBUILD protocol
+    salvage_keys: [&quot;port&quot;, &quot;timeout&quot;]  # What to preserve on corruption
+    rebuild_command: &quot;cookiecutter gh:ucore/skill-plate --no-input&quot;</code></pre>
+<h2>4. Plate Registry</h2>
+<p>Plates are stored in <code>plates/</code>:</p>
+<pre><code>plates/
+├── README.md
+├── destroy/                          # DESTROY/REBUILD plates
+│   ├── README.md
+│   ├── skill_recover_port_conflict.yaml
+│   ├── skill_diagnose_system.yaml
+│   └── ...
+├── skills/                           # Skill plates
+│   ├── skill_plate.py                # Cookiecutter template: skill scaffold
+│   └── ...
+├── snacks/                           # Snack plates
+├── mcp/                              # MCP tool plates
+├── hivemind/                         # Hivemind workflow plates
+├── secrets/                          # Variable/secret plates
+└── css/                              # CSS/USX theme plates</code></pre>
+<h2>5. OpenAPI/Swagger MCP Registry</h2>
+<p>The MCP tool registry (<code>TOOL_HANDLERS</code>) auto-generates an <strong>OpenAPI 3.1 spec</strong> at <code>/api/mcp/openapi.json</code>:</p>
+<pre><code>openapi: &quot;3.1.0&quot;
+info:
+  title: &quot;uCore MCP API&quot;
+  version: &quot;1.0.0&quot;
+  description: &quot;Auto-generated from TOOL_HANDLERS registry&quot;
+servers:
+  - url: &quot;http://localhost:8484&quot;
+    description: &quot;uCore Backend&quot;
+paths:
+  /api/mcp/discover:
+    get:
+      summary: &quot;List all available MCP tools&quot;
+      operationId: &quot;handle_mcp_discover&quot;
+      responses:
+        &quot;200&quot;:
+          description: &quot;Tool list&quot;
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: &quot;#/components/schemas/ToolDefinition&quot;
+  /api/mcp/call:
+    post:
+      summary: &quot;Call an MCP tool&quot;
+      operationId: &quot;handle_mcp_call&quot;
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: &quot;#/components/schemas/MCPCallRequest&quot;
+      responses:
+        &quot;200&quot;:
+          description: &quot;Tool response&quot;
+components:
+  schemas:
+    ToolDefinition:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        input_schema: { type: object }
+    MCPCallRequest:
+      type: object
+      properties:
+        name: { type: string }
+        arguments: { type: object }</code></pre>
+<p><strong>Benefits:</strong></p>
+<ul><li>Swagger UI at <code>/api/mcp/docs</code> for interactive testing</li><li>Auto-generated client SDKs for any language</li><li>MCP-compatible discovery endpoint</li><li>Versioned API surface for drift detection</li></ul>
+<h2>6. Cookiecutter for Skill Plates</h2>
+<p>Skill scaffolding uses Cookiecutter:</p>
+<pre><code># Generate a new skill from the canonical plate
+cookiecutter gh:ucore/skill-plate
+# Prompts: skill_id, description, category, params...
+
+# Or from a local plate
+cookiecutter plates/skills/skill_plate/</code></pre>
+<p>The Cookiecutter plate template:</p>
+<pre><code>skill_plate/
+├── cookiecutter.json                  # Prompts and defaults
+├── {{cookiecutter.skill_id}}/
+│   ├── __init__.py
+│   ├── {{cookiecutter.skill_id}}.py   # BaseSkill subclass
+│   ├── test_{{cookiecutter.skill_id}}.py
+│   └── plate.yaml                     # Auto-generated plate definition
+└── hooks/
+    ├── pre_gen_project.py             # Validate skill_id uniqueness
+    └── post_gen_project.py            # Register in registry, run tests</code></pre>
+<h2>7. Pydantic BaseModel for Plate Validation</h2>
+<p>Extend the existing <code>BaseSkill</code>/<code>SkillMeta</code> pattern for all plates:</p>
+<pre><code>from pydantic import BaseModel, Field
+from typing import Any, Literal
+from datetime import datetime
+
+
+class PlateMeta(BaseModel):
+    &quot;&quot;&quot;Canonical plate metadata — extends SkillMeta pattern.&quot;&quot;&quot;
+    id: str
+    version: str = Field(pattern=r&quot;^\d+\.\d+\.\d+$&quot;)
+    domain: Literal[&quot;skill&quot;, &quot;snack&quot;, &quot;mcp&quot;, &quot;hivemind&quot;, &quot;secret&quot;, &quot;css&quot;]
+    description: str = &quot;&quot;
+    schema: dict[str, Any] = {}
+    source: Literal[&quot;builtin&quot;, &quot;user&quot;, &quot;community&quot;] = &quot;builtin&quot;
+    checksum: str = &quot;&quot;
+    dependencies: list[str] = []
+    created: datetime = Field(default_factory=datetime.now)
+    updated: datetime = Field(default_factory=datetime.now)
+
+
+class DestroyRebuildConfig(BaseModel):
+    &quot;&quot;&quot;DESTROY/REBUILD protocol configuration.&quot;&quot;&quot;
+    salvage_keys: list[str] = []
+    rebuild_command: str = &quot;&quot;
+    backup_before_destroy: bool = True</code></pre>
+<h2>8. Plate Refresh Engine</h2>
+<p>Located at <code>backend/plate_refresh/</code>, the engine:</p>
+<p>1. <strong>Renders</strong> plates with context substitution (<code>$DATE</code>, <code>$VERSION</code>, etc.) 2. <strong>Validates</strong> output against Pydantic schema 3. <strong>Detects drift</strong> by comparing checksums 4. <strong>Salvages</strong> key state from corrupted instances before rebuild</p>
+<pre><code># Example usage
+from plate_refresh.refresh import render_plates, validate_plate
+
+# Render all plates
+render_plates({&quot;DATE&quot;: &quot;2026-06-30&quot;, &quot;VERSION&quot;: &quot;1.0.0&quot;})
+
+# Validate a specific plate
+report = validate_plate(&quot;skill.recover_port_conflict&quot;)
+if report[&quot;drift_detected&quot;]:
+    salvage_and_rebuild(report)</code></pre>
+<h2>9. DESTROY/REBUILD Protocol</h2>
+<p>When corruption or hallucination is detected:</p>
+<pre><code>1. DETECT   → Run integrity checks (mcp_guardrails, skill_audit)
+2. SALVAGE  → Extract key state from corrupted instance
+              - Skills: meta.id, meta.params, current state from state.py
+              - Snacks: snack_id, config values
+              - Secrets: variable names (NOT values — re-prompt user)
+              - CSS: custom property values
+3. BACKUP   → Full file backup to plates/.backups/&lt;domain&gt;/ before destruction
+4. ARCHIVE  → Compress essence into MCP-formatted SPOOL record
+              (gzip-compressed JSON in ~/.ucore/logs/plate_*.spool.json.gz)
+5. DESTROY  → Remove corrupted instance
+6. REBUILD  → Materialize from plate with salvaged state
+              - Skills: cookiecutter gh:ucore/skill-plate --no-input
+              - MCP: regenerate from OpenAPI spec
+7. VERIFY   → Run validation checks, report success/failure</code></pre>
+<h3>ARCHIVE/COMPOST/BACKUP → SPOOL Pipeline</h3>
+<p>The SPOOL archive is the key innovation that connects DESTROY/REBUILD to knowledge preservation. When a component is destroyed, its essence is compressed into a gzip'd JSON record that preserves:</p>
+<p>1. <strong>Plate metadata</strong> — id, version, domain, description, checksum 2. <strong>Salvaged state</strong> — keys preserved from corruption (config, params) 3. <strong>Lessons learned</strong> — from <code>plate.lessons</code> field (wisdom from failures) 4. <strong>Backup reference</strong> — path to full YAML backup 5. <strong>Rebuild output</strong> — stdout from rebuild command 6. <strong>Schema</strong> — the component's JSON schema</p>
+<p>This enables three critical use cases:</p>
+<p>| Use Case | How SPOOL Archives Help | |----------|------------------------| | <strong>Legacy/archival records</strong> | gzip-compressed JSON is tiny vs .git bloat. A year of archives fits in KB. | | <strong>Avoid re-developing deprecated skills</strong> | Search spool archives by plate_id to find previous implementations, schemas, and lessons. | | <strong>Learning from failures</strong> | Each archive includes <code>lessons[]</code> — wisdom captured from what went wrong and how it was fixed. |</p>
+<h4>SPOOL Archive Format</h4>
+<pre><code>{
+  &quot;event&quot;: &quot;plate.destroy&quot;,
+  &quot;timestamp&quot;: &quot;2026-06-30T22:00:00+00:00&quot;,
+  &quot;plate&quot;: {
+    &quot;id&quot;: &quot;skill.recover_port_conflict&quot;,
+    &quot;version&quot;: &quot;1.0.0&quot;,
+    &quot;domain&quot;: &quot;skill&quot;,
+    &quot;description&quot;: &quot;Detect and resolve port conflicts&quot;,
+    &quot;source&quot;: &quot;builtin&quot;,
+    &quot;checksum&quot;: &quot;sha256-...&quot;,
+    &quot;dependencies&quot;: []
+  },
+  &quot;salvaged&quot;: {
+    &quot;port&quot;: 8484,
+    &quot;timeout&quot;: 30
+  },
+  &quot;lessons&quot;: [
+    &quot;Always check port 8484 before starting backend&quot;,
+    &quot;Use SO_REUSEADDR to avoid EADDRINUSE on restart&quot;
+  ],
+  &quot;backup&quot;: &quot;plates/.backups/skill/skill.recover_port_conflict_20260630_220000.yaml&quot;,
+  &quot;rebuild_output&quot;: &quot;Rebuilding 8484 for ucore-backend... OK&quot;,
+  &quot;errors&quot;: [],
+  &quot;schema&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;port&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;default&quot;: 8484 }
+    }
+  }
+}</code></pre>
+<h4>CLI Commands</h4>
+<pre><code># List all SPOOL archives
+python -m plate_refresh.refresh --spool-list
+
+# Filter by domain
+python -m plate_refresh.refresh --spool-list --spool-domain skill
+
+# Read a specific archive
+python -m plate_refresh.refresh --spool-read ~/.ucore/logs/plate_skill.recover_port_conflict_20260630.spool.json.gz</code></pre>
+<h4>Plate Configuration</h4>
+<p>Each plate can configure its SPOOL behavior:</p>
+<pre><code>plate:
+  id: &quot;skill.recover_port_conflict&quot;
+  version: &quot;1.0.0&quot;
+  domain: &quot;skill&quot;
+  lessons:
+    - &quot;Always check port 8484 before starting backend&quot;
+    - &quot;Use SO_REUSEADDR to avoid EADDRINUSE on restart&quot;
+  destroy:
+    salvage_keys: [&quot;port&quot;, &quot;timeout&quot;]
+    rebuild_command: &quot;echo Rebuilding $port for $service_name&quot;
+    backup_before_destroy: true
+    spool_archive:
+      enabled: true
+      spool_dir: &quot;~/.ucore/logs&quot;
+      compress_metadata: true
+      include_source: false
+      include_lessons: true
+      max_spool_age_days: 365</code></pre>
+<h3>Agent Instructions (for .clinerules)</h3>
+<pre><code>## Plates System Rules
+
+1. Before modifying any component, check if a plate exists in `plates/`
+2. If no plate exists, create one before making changes
+3. On detecting corruption: run DESTROY/REBUILD protocol
+4. After successful modification, promote to plate:
+   - `plates/skills/` for new skills (via cookiecutter)
+   - `plates/mcp/` for new MCP tools
+   - Update version number on changes
+5. Never delete a plate — archive with version suffix</code></pre>
+<h2>10. Promotion Workflow</h2>
+<p>Users can promote working modifications to plates:</p>
+<pre><code>Working modification → Validate → Create/Update plate → Register in registry</code></pre>
+<pre><code># CLI example
+ucore plate promote --from backend/app/skills/builtin/my_skill.py \
+                    --to plates/skills/my_skill.yaml \
+                    --version 1.1.0</code></pre>
+<h2>11. Drift Detection</h2>
+<p>The <code>skill_audit</code> skill compares running instances against plates:</p>
+<pre><code>report = await run_skill_by_id(&quot;skill_audit&quot;, scope=&quot;all&quot;)
+# Returns:
+#   - matched: components that match their plate
+#   - drifted: components that differ (with diff)
+#   - missing: plates with no running instance
+#   - orphaned: instances with no plate</code></pre>
+<h2>12. Integration Points</h2>
+<p>| System | Plate Role | |--------|-----------| | <code>backend/app/skills/registry.py</code> | Auto-discovers skills; plates define canonical set | | <code>backend/app/skills/state.py</code> | Persists skill state; plates define default state shape | | <code>backend/app/api/mcp_guardrails.py</code> | Validates MCP layer against expected plate | | <code>backend/plate_refresh/refresh.py</code> | Renders plates to output | | <code>plates/destroy/</code> | DESTROY/REBUILD recovery plates | | <code>backend/app/api/mcp.py</code> | Auto-generates OpenAPI spec from TOOL_HANDLERS | | <code>.clinerules</code> | Agent instructions for plate workflow |</p>
+<h2>13. Future Work</h2>
+<ul><li>[ ] Plate version migration (auto-upgrade on version mismatch)</li><li>[ ] Community plate repository (shareable via git submodule)</li><li>[ ] Plate diff viewer (visual comparison of drift)</li><li>[ ] Auto-promote on successful test pass</li><li>[ ] OpenAPI/Swagger UI at <code>/api/mcp/docs</code></li><li>[ ] Cookiecutter plate for <code>gh:ucore/skill-plate</code></li><li>[ ] Pydantic <code>PlateMeta</code> → <code>BaseSkill</code> auto-generation</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

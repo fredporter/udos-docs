@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NANO_BANANA_UVECTOR_SUMMARY.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uVector / NANO_BANANA_UVECTOR_SUMMARY.md</span></header><main class="site-main"><h1>Nano-Banana-Pro-MCP and uVector — Updated Summary</h1>
+<p>This summary is scoped to the Nano-Banana-Pro-MCP vendor code and the uVector spec/evolution path. Other platform topics are intentionally excluded.</p>
+<h2>1. Nano-Banana-Pro-MCP (Vendor)</h2>
+<p>Source: github.com/fredporter/nano-banana-pro-mcp</p>
+<p>Role: MCP server wrapping Gemini image generation/edit APIs for agent workflows (via stdio tool calls).</p>
+<h3>Core Components</h3>
+<p>| File                    | Purpose                                                                                              | | ----------------------- | ---------------------------------------------------------------------------------------------------- | | <code>src/gemini.ts</code>         | Gemini client for generate/edit/describe image flows and base64 handling                             | | <code>src/mono-rules.ts</code>     | Mono Core validation and enforcement rules                                                           | | <code>src/styles.ts</code>         | Style presets (<code>mono_blueprint</code>, <code>mono_botanical</code>, <code>mono_chrome</code>, <code>mono_teletext</code>, <code>mono_editorial</code>) | | <code>src/prompt-builder.ts</code> | Prompt assembly: user intent + style + uGrid + Mono Core constraints                                 | | <code>src/tier.ts</code>           | Tier routing (Pro vs Flash), cost hints, batch window logic                                          | | <code>src/vault-config.ts</code>   | Vault config/memory/cache integration hooks                                                          | | <code>src/types.ts</code>          | API/tooling type contracts                                                                           |</p>
+<h3>MCP Tools</h3>
+<p>| Tool             | Description                                 | | ---------------- | ------------------------------------------- | | <code>list_styles</code>    | Return style IDs                            | | <code>generate_image</code> | Text-to-image with style/uGrid/tier options | | <code>compose_images</code> | Multi-image blending                        | | <code>edit_image</code>     | Iterative image edit/refine                 | | <code>describe_image</code> | Image analysis/captioning                   |</p>
+<h3>Vendor Characteristics</h3>
+<p>1. Mono Core linework discipline. 2. uGrid-aware prompt framing. 3. Vault-oriented cache/memory behavior. 4. Tiered cost/model routing.</p>
+<h2>2. uVector — Strategic Evolution</h2>
+<p>uVector evolves Nano-Banana-Pro-MCP into a broader uDOS image and vector engine with split-repo-aware integration.</p>
+<h3>Evolution Snapshot</h3>
+<p>| Aspect            | Nano-Banana-Pro-MCP           | uVector (current direction)                                     | | ----------------- | ----------------------------- | --------------------------------------------------------------- | | Scope             | Standalone Gemini MCP wrapper | Native image/vector subsystem for uDOS workflows                | | Primary output    | PNG/base64 workflows          | PNG plus vector/SVG-oriented pipeline design                    | | Mono rules        | Strong but tool-local         | Enforced as a platform contract                                 | | Vault integration | Optional per use              | Default integration target                                      | | Repo model        | Single vendor server          | Split-repo compatible (uCore host + external providers/plugins) |</p>
+<h3>New Configuration Alignment (Current)</h3>
+<p>uVector planning should align with the active split-repo host configuration:</p>
+<p>1. uCore is host shell and route assembly layer. 2. Extension ownership is manifest-driven. 3. External plugins are discovered via <code>UCORE_EXTENSION_MANIFEST_PATHS</code>. 4. CI now enforces:</p>
+<ul><li>extension manifest contract validation,</li><li>split-repo import/route smoke checks,</li><li>split-repo packaging layout validation.</li></ul>
+<p>This means uVector integration should be packaged/discoverable as an external module rather than added as new in-core route ownership.</p>
+<h3>uDOS Integration Targets</h3>
+<p>| Component        | uVector Role                                             | | ---------------- | -------------------------------------------------------- | | ProseUI          | Inline sprites, scene images, glyph production           | | GridUI           | Cell-aware image quantization and teletext/pixel mapping | | Character Editor | Bob/sprite sheet generation and frame extraction         | | Layer Editor     | Layer composition support and render outputs             | | Location Mapper  | Coordinate transforms and map asset generation           |</p>
+<h3>Mono Core Contract (Platform)</h3>
+<p>1. Line/glyph layer: pure <code>#000000</code> on transparent. 2. No gray anti-aliased halo in line layer. 3. Color overlays are separate passes/layers.</p>
+<h3>uGrid Mapping Contract</h3>
+<p>Canvas and composition should remain utility-grid-aware (`width_utiles x height_utiles`) so outputs map to downstream editors without manual offsets.</p>
+<h3>Asset Pipeline Direction</h3>
+<p>Prompt -> Generation -> Mono validation -> Vector/PNG outputs -> Editor pipelines (character/grid/layer) -> Vault cache and world assets.</p>
+<h3>Storage Direction</h3>
+<p>Vault paths remain the default target for generated assets and metadata, including cache/history and world-scoped outputs.</p>
+<h2>3. Practical Next Steps</h2>
+<p>1. Add explicit SVG/vector output support path in uVector runtime interface. 2. Formalize line/color layer separation pipeline. 3. Bind uVector outputs to canvas/editor coordinate contracts. 4. Package uVector as a manifest-discoverable external capability compatible with current uCore split-repo gates.</p>
+<h2>4. Key Implementation References</h2>
+<p>| Area               | Reference               | | ------------------ | ----------------------- | | Mono rules         | <code>src/mono-rules.ts</code>     | | Styles             | <code>src/styles.ts</code>         | | Prompt composition | <code>src/prompt-builder.ts</code> | | Tier/cost routing  | <code>src/tier.ts</code>           | | Vault hooks        | <code>src/vault-config.ts</code>   | | Gemini client      | <code>src/gemini.ts</code>         |</p>
+<p>This brief is updated for the current split-repo and manifest-driven configuration now active in uCore.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

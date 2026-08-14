@@ -1,0 +1,63 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>HANDOVER_CLINE_EXTENDED_WORK_2026-07-08.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / HANDOVER_CLINE_EXTENDED_WORK_2026-07-08.md</span></header><main class="site-main"><h1>Handover to Cline: Extended and Enhanced Coding Work</h1>
+<p>Date: 2026-07-08 Repository: uDosGo/uCode Baseline commit already pushed: <code>942b593</code> (main)</p>
+<h2>1. Current Baseline</h2>
+<p>Recent sprint work delivered and pushed includes:</p>
+<ul><li>Runtime bridge LENS registry wired for Repton, Elite, NetHack, Eamon.</li><li>NetHack and Eamon LENS extractor modules created.</li><li>Python 3.14 import path stabilized for runtime package loading in isolated venv (<code>.venv-amos-check</code>).</li><li>Sprint and DEV plan status updated to match validated code/test outcomes.</li></ul>
+<p>This handover captures what still needs extended/enhanced implementation from earlier sprints.</p>
+<h2>2. Still Required (Carry-Over Backlog)</h2>
+<h2>A. Shared Runtime Extraction (Phase 2 pending)</h2>
+<p>Source of truth: <code>docs/DEV_PLAN.md</code> marks <code>shared/</code> as pending.</p>
+<p>Required work:</p>
+<ul><li>Audit duplicated runtime utilities across <code>runtimes/basic/</code> and <code>runtimes/amos/</code>.</li><li>Extract stable common APIs into <code>shared/src/</code> with versioned interfaces.</li><li>Replace direct duplicated logic with imports from <code>shared/</code> in both runtimes.</li><li>Add tests that run against shared interfaces from both runtimes.</li></ul>
+<p>Acceptance criteria:</p>
+<ul><li>At least one concrete common subsystem moved into <code>shared/</code> (not only helpers).</li><li>Both <code>ucode1</code> and <code>ucode2</code> use shared package code in executable paths.</li><li>Runtime tests pass after extraction with no behavior regression.</li></ul>
+<h2>B. Program Scaffold-to-Playable Upgrades</h2>
+<p>Multiple programs were completed as scaffold/skeleton in prior sprints but still need gameplay-depth coding.</p>
+<h3>1) uConstruct (highest remaining design debt)</h3>
+<p>Current state: scaffold only; tile editor/resource model remains design-phase.</p>
+<p>Required work:</p>
+<ul><li>Implement tile placement/edit loop and map persistence format.</li><li>Implement resource definitions (tile types, costs, constraints).</li><li>Add in-program validation for map bounds and layer consistency.</li><li>Add minimal playable/editor workflow script and test harness.</li></ul>
+<p>Acceptance criteria:</p>
+<ul><li>User can create/edit/save/load a tile map.</li><li>Program roundtrip save/load retains all tile/layer metadata.</li></ul>
+<h3>2) NetHack (beyond research + 52-line skeleton)</h3>
+<p>Current state: research + skeleton + LENS extractor.</p>
+<p>Required work:</p>
+<ul><li>Implement core turn loop and dungeon movement rules.</li><li>Implement minimal combat and inventory interaction model.</li><li>Wire gameplay state addresses to extractor fields with real values.</li><li>Add deterministic tests for movement/combat transitions.</li></ul>
+<p>Acceptance criteria:</p>
+<ul><li>A playable dungeon floor loop exists (move, inspect, combat, inventory).</li><li><code>LENS CAPTURE nethack</code> returns non-trivial live state reflecting gameplay transitions.</li></ul>
+<h3>3) Eamon (beyond research + 63-line skeleton)</h3>
+<p>Current state: research + skeleton + LENS extractor.</p>
+<p>Required work:</p>
+<ul><li>Implement parser loop (<code>VERB NOUN</code>) with command normalization.</li><li>Implement room graph traversal and item interactions.</li><li>Implement basic combat and persistent player stats.</li><li>Bind runtime state to LENS extractor for player/room/inventory snapshots.</li></ul>
+<p>Acceptance criteria:</p>
+<ul><li>Playable command loop with navigation and interaction.</li><li><code>LENS CAPTURE eamon</code> reflects room/player changes during play.</li></ul>
+<h3>4) Knight Orc and Apple Panic enhancement pass</h3>
+<p>Current state: both exist as skeleton-level implementations; Apple Panic has core digging/trapping mechanics.</p>
+<p>Required work:</p>
+<ul><li>Knight Orc: strengthen narrative progression + state management.</li><li>Apple Panic: tune enemy behavior, scoring, and difficulty progression.</li><li>Add regression tests for core mechanics and game-over/win paths.</li></ul>
+<p>Acceptance criteria:</p>
+<ul><li>Both programs have repeatable play loops and verifiable progression states.</li></ul>
+<h2>C. Runtime Bridge Hardening</h2>
+<p>Recent fixes solved several split-module import issues; this should be completed as a full hardening pass.</p>
+<p>Required work:</p>
+<ul><li>Sweep all split modules for non-relative imports and unresolved symbol dependencies.</li><li>Remove duplicate codegen artifacts (duplicate decorators/duplicated methods) where still present.</li><li>Add import smoke tests for major runtime entrypoints under Python 3.12 and 3.14.</li></ul>
+<p>Acceptance criteria:</p>
+<ul><li><code>python -c "import ucode1, ucode2"</code> succeeds in supported venvs.</li><li>No import-path failures from split modules in CI.</li></ul>
+<h2>D. Integration and E2E Confidence</h2>
+<p>Required work:</p>
+<ul><li>Expand LENS integration tests beyond command-level success strings.</li><li>Add assertions for key presence and semantic value changes after simulated actions.</li><li>Add a small end-to-end workflow test: command dispatch -> state mutation -> capture snapshot.</li></ul>
+<p>Acceptance criteria:</p>
+<ul><li>LENS tests verify meaningful state evolution, not only command response text.</li></ul>
+<h2>3. Suggested Execution Order for Cline</h2>
+<p>1. Shared runtime extraction planning doc + first subsystem extraction. 2. Runtime bridge hardening sweep + import smoke tests. 3. uConstruct playable editor loop implementation. 4. NetHack core loop + tests + LENS live-state integration. 5. Eamon parser/room loop + tests + LENS live-state integration. 6. Knight Orc / Apple Panic enhancement pass. 7. Final integration test expansion and documentation refresh.</p>
+<h2>4. Operational Notes</h2>
+<ul><li>Use isolated venv for Python package validation; system Python is externally managed (PEP 668).</li><li>Keep commits scoped by subsystem to simplify rollback.</li><li>Unrelated working tree artifact observed previously: <code>gridsmith.code-workspace</code> deletion; do not accidentally mix unrelated workspace cleanup into feature commits.</li></ul>
+<h2>5. Quick Validation Commands</h2>
+<pre><code># Runtime imports (venv)
+python -c &quot;import ucode1, ucode2&quot;
+
+# Runtime LENS tests
+python -m pytest runtimes/basic/tests/test_lens_capture.py -q
+
+# Workspace tests (as needed)
+npm run test</code></pre></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

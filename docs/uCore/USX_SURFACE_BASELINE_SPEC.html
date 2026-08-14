@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>USX_SURFACE_BASELINE_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / USX_SURFACE_BASELINE_SPEC.md</span></header><main class="site-main"><h1>USX Surface Baseline Spec</h1>
+<p>Status: Active Last Updated: 2026-08-12</p>
+<h2>Purpose</h2>
+<p>This document defines the canonical base sizes, layout primitives, and component styling for USX surfaces in uCore.</p>
+<p>Use this document as the first comparison target when asked to:</p>
+<ul><li>review a surface for USX compliance</li><li>build a new surface in USX standard style</li></ul>
+<h2>Scope and Precedence</h2>
+<p>Precedence order: 1. This document 2. Token files in packages/usx-tokens/tokens/ 3. Shared primitives in packages/usx-tokens/usx-standard.css</p>
+<p>If there is a mismatch, token files and usx-standard.css are implementation truth and this doc must be updated.</p>
+<h2>Canonical Token Scales</h2>
+<h3>Spacing</h3>
+<p>From packages/usx-tokens/tokens/tokens-spacing.css:</p>
+<ul><li>--usx-spacing-xs: 4px</li><li>--usx-spacing-sm: 8px</li><li>--usx-spacing-md: 16px</li><li>--usx-spacing-lg: 24px</li><li>--usx-spacing-xl: 32px</li><li>--usx-spacing-2xl: 48px</li></ul>
+<h3>Typography</h3>
+<p>From packages/usx-tokens/tokens/tokens-typography.css:</p>
+<ul><li>--usx-font-size-xs: 0.75rem</li><li>--usx-font-size-sm: 0.875rem</li><li>--usx-font-size-base: 1rem</li><li>--usx-font-size-lg: 1.125rem</li><li>--usx-font-size-xl: 1.25rem</li><li>--usx-font-size-2xl: 1.5rem</li><li>--usx-font-size-3xl: 2rem</li></ul>
+<p>Font weights:</p>
+<ul><li>--usx-font-weight-normal: 400</li><li>--usx-font-weight-medium: 500</li><li>--usx-font-weight-semibold: 600</li><li>--usx-font-weight-bold: 700</li></ul>
+<p>Line heights:</p>
+<ul><li>--usx-line-height-none: 1</li><li>--usx-line-height-tight: 1.25</li><li>--usx-line-height-normal: 1.5</li><li>--usx-line-height-relaxed: 1.75</li></ul>
+<h3>Touch Targets and Controls</h3>
+<p>From packages/usx-tokens/tokens/tokens-touch.css and tokens-components.css:</p>
+<ul><li>--usx-touch-min: 48px</li><li>--usx-touch-min-sm: 40px</li><li>--usx-control-size-sm: 32px</li><li>--usx-control-size-md: 44px</li></ul>
+<h3>Radius and Borders</h3>
+<p>From packages/usx-tokens/tokens/tokens-components.css:</p>
+<ul><li>--usx-radius-sm: 0.25rem</li><li>--usx-radius-md: 0.5rem</li><li>--usx-radius-lg: 0.75rem</li><li>--usx-radius-xl: 1rem</li><li>--usx-radius-2xl: 1.5rem</li><li>--usx-radius-full: 9999px</li><li>--usx-border-width: 1px</li><li>--usx-border-width-thick: 2px</li></ul>
+<h3>Layout Widths</h3>
+<p>From packages/usx-tokens/tokens/tokens-components.css:</p>
+<ul><li>--usx-max-width: 1280px</li><li>--usx-prose-width: 72ch</li><li>--usx-grid-min-col-width: 280px</li><li>--usx-dropdown-min-width: 180px</li><li>--usx-breakpoint-md: 768px</li><li>--usx-breakpoint-lg: 1024px</li></ul>
+<h2>Surface Layout Baseline</h2>
+<p>Required primitives from packages/usx-tokens/usx-standard.css:</p>
+<ul><li>.surface</li><li>.surface__body</li><li>.surface__header</li><li>.surface__title</li><li>.surface__description</li><li>.surface__content</li><li>.surface__topbar</li><li>.surface--tab-nav-vertical</li></ul>
+<p>Required behavior:</p>
+<ul><li>Surface shells use flex column and min-height: 0 contexts.</li><li>Main scroll area is content, not the global page shell.</li><li>Surface sections use tokenized padding and borders.</li><li>Interactive controls satisfy minimum touch target requirements.</li></ul>
+<h2>Panel and Section Baseline</h2>
+<p>Use this structure for panelized surfaces:</p>
+<ul><li>surface panel block with title and description</li><li>stats row/grid for high-level counts</li><li>section blocks with section title and grouped controls/content</li></ul>
+<p>Recommended class-level pattern:</p>
+<ul><li>.surface__panel for internal grouped card sections</li><li>.surface__panel-title for section heading</li><li>.surface__panel-description for section subtitle/body context</li></ul>
+<h2>Card Baseline</h2>
+<p>Cards should use:</p>
+<ul><li>tokenized border, radius, background, padding</li><li>clear header row alignment</li><li>consistent vertical rhythm between title, description, meta, and actions</li><li>action row pinned predictably (avoid jumpy card heights)</li></ul>
+<p>Minimum standards:</p>
+<ul><li>no hardcoded px for spacing where token exists</li><li>no raw color literals in component CSS</li><li>no inline style with hardcoded visual values</li></ul>
+<h2>Controls Baseline</h2>
+<p>Form and action controls should use:</p>
+<ul><li>tokenized size, spacing, border, radius, color</li><li>unified control heights within the same toolbar row</li><li>clear focus state using tokenized border/shadow colors</li><li>icon-only actions only when paired with proper aria-label/title</li></ul>
+<h2>Color and Icon Rules</h2>
+<ul><li>Use only var(--usx-color-*) in component CSS.</li><li>Do not use --pico-* in new component-level styles.</li><li>Use UIcon with Material Symbols; do not use emoji as UI icons.</li></ul>
+<h2>Compliance Rubric</h2>
+<p>When reviewing USX compliance, evaluate in this order: 1. Token usage correctness 2. Layout primitive usage (.surface and panel patterns) 3. Spacing/typography scale adherence 4. Control sizing and accessibility minimums 5. Visual consistency (cards/sections/stats)</p>
+<p>A surface fails compliance if any of the following occur:</p>
+<ul><li>hardcoded color literal where USX token exists</li><li>hardcoded spacing/typography value where token exists</li><li>non-tokenized border/radius in standard UI blocks</li><li>touch targets below minimum without documented exception</li></ul>
+<h2>Build Workflow for New Surfaces</h2>
+<p>1. Start from surface primitives in usx-standard.css. 2. Compose with panel -> stats -> sections before custom ornamentation. 3. Apply only var(--usx-*) tokens in local CSS. 4. Keep responsive behavior aligned to --usx-breakpoint-md/lg. 5. Validate with typecheck and a visual pass at desktop and mobile widths.</p>
+<h2>Source References</h2>
+<ul><li>packages/usx-tokens/tokens/tokens-color.css</li><li>packages/usx-tokens/tokens/tokens-spacing.css</li><li>packages/usx-tokens/tokens/tokens-typography.css</li><li>packages/usx-tokens/tokens/tokens-touch.css</li><li>packages/usx-tokens/tokens/tokens-components.css</li><li>packages/usx-tokens/usx-standard.css</li></ul>
+<h2>PicoCSS Retirement (2026-08-12)</h2>
+<p>All <code>--pico-*</code> compatibility mappings have been removed from:</p>
+<ul><li><code>packages/usx-tokens/tokens/tokens-color.css</code></li><li><code>packages/usx-tokens/themes/dark.css</code></li><li><code>frontend-vue/src/styles/themes/dark.css</code></li></ul>
+<p>No surface Vue/TS code references <code>--pico-*</code> variables. USX tokens are the single source of truth.</p>
+<h2>Formal USX Surface Anatomy</h2>
+<p>Every USX surface follows this anatomy:</p>
+<pre><code>.surface
+  .surface__content (flex column, overflow-y: auto)
+    [optional] .surface__panel header block
+      .surface__panel-title (h3, base size, semibold)
+      .surface__panel-description (muted, sm size)
+    [optional] stats grid (4-column auto-fit, centered values)
+    [optional] section blocks (.surface__panel with section title)
+    main content area (flex: 1, min-height: 0)</code></pre>
+<h3>Panel Header Pattern</h3>
+<pre><code>&lt;section class=&quot;surface__panel&quot;&gt;
+  &lt;div class=&quot;[prefix]-header__row&quot;&gt;
+    &lt;h3 class=&quot;surface__panel-title&quot;&gt;Title&lt;/h3&gt;
+    &lt;span class=&quot;[prefix]-header__badge&quot;&gt;Context Badge&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;p class=&quot;surface__panel-description&quot;&gt;Description&lt;/p&gt;
+&lt;/section&gt;</code></pre>
+<h3>Stats Grid Pattern</h3>
+<pre><code>&lt;div class=&quot;[prefix]-stats&quot;&gt;
+  &lt;div class=&quot;[prefix]-stat&quot;&gt;
+    &lt;span class=&quot;[prefix]-stat__value&quot;&gt;42&lt;/span&gt;
+    &lt;span class=&quot;[prefix]-stat__label&quot;&gt;Label&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<p>CSS: <code>display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: var(--usx-spacing-md);</code></p>
+<h3>Section Block Pattern</h3>
+<pre><code>&lt;div class=&quot;browserui-section&quot;&gt;
+  &lt;h4 class=&quot;browserui-section__title&quot;&gt;SECTION NAME&lt;/h4&gt;
+  &lt;!-- content --&gt;
+&lt;/div&gt;</code></pre>
+<p>CSS uses <code>border-radius: var(--usx-radius-lg)</code>, subtle shadow, tokenized padding.</p>
+<h3>Spacing Defaults</h3>
+<ul><li>Surface content padding: <code>var(--usx-spacing-lg)</code> (24px) minimum</li><li>Section gap: <code>var(--usx-spacing-md)</code> (16px)</li><li>Panel padding: <code>var(--usx-spacing-md)</code> (16px)</li><li>Card padding: <code>var(--usx-spacing-md)</code> to <code>var(--usx-spacing-lg)</code></li></ul>
+<h3>Typography Hierarchy</h3>
+<ul><li>Hero heading: <code>var(--usx-font-size-3xl)</code> (2rem), <code>var(--usx-font-weight-bold)</code></li><li>Section title: <code>var(--usx-font-size-xl)</code> (1.25rem)</li><li>Panel title: <code>var(--usx-font-size-base)</code> (1rem), semibold</li><li>Body text: <code>var(--usx-font-size-sm)</code> (0.875rem)</li><li>Muted/secondary: <code>var(--usx-color-on-surface-muted)</code></li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

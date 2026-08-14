@@ -1,0 +1,113 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>EXTENSION_REGISTRY_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / EXTENSION_REGISTRY_SPEC.md</span></header><main class="site-main"><h1>Extension Registry Specification</h1>
+<h2>Overview</h2>
+<p>uCore's extension system allows capabilities to be discovered, loaded, and registered at runtime. This enables a clean repo split where workflow, knowledge, and domain plugins live in separate repositories while uCore remains the host platform core.</p>
+<h2>Terminology (Extension vs Plugin)</h2>
+<p>In this architecture, <strong>extension</strong> is the top-level runtime contract and <strong>plugin</strong> is one extension kind.</p>
+<p>1. <strong>Extension</strong></p>
+<p>and the extension registry.</p>
+<p>domain features (<code>plugin</code>). 2. <strong>Plugin</strong></p>
+<p><code>udos-*</code> repositories.</p>
+<ul><li>Any component discoverable/loadable by uCore via <code>ucore-extension.json</code></li><li>Can be required (<code>optional=false</code>) or optional (<code>optional=true</code>).</li><li>Can represent engine-like services (<code>workflow</code>, <code>knowledge</code>) or</li><li>A subtype of extension (<code>kind: plugin</code>).</li><li>Intended for optional domain capabilities, typically in dedicated</li><li>Usually capability-gated through preflight and readiness checks.</li></ul>
+<p>Practical classification used now:</p>
+<p>1. <code>uflow</code> and <code>uknowledge</code> are <strong>required extensions</strong> (not plugins). 2. <code>udos-*</code> repos are <strong>plugin extensions</strong>. 3. Surface projects such as Groovebox, HomeNest, and SonicScrewdriver can be treated as independent project surfaces that may consume uCore, but are not automatically extension manifests unless explicitly onboarded.</p>
+<h2>Design Principles</h2>
+<p>1. <strong>Lightweight</strong> — no plugin framework dependency. A dataclass manifest and a dict-backed registry. 2. <strong>Fail-fast for required capabilities</strong> — missing required extension prerequisites block execution and trigger repair guidance. 3. <strong>Discoverable</strong> — extensions declare themselves via a <code>ucore-extension.json</code> file placed in well-known locations. 4. <strong>Required means required</strong> — required extensions fail fast when missing.</p>
+<h2>Extension Manifest</h2>
+<p>Each extension ships a <code>ucore-extension.json</code> at its repo root:</p>
+<pre><code>{
+  &quot;id&quot;: &quot;uflow&quot;,
+  &quot;name&quot;: &quot;uFlow Workflow Engine&quot;,
+  &quot;kind&quot;: &quot;workflow&quot;,
+  &quot;version&quot;: &quot;0.1.0&quot;,
+  &quot;description&quot;: &quot;Workflow definitions, runs, logs, task orchestration&quot;,
+  &quot;optional&quot;: false,
+  &quot;api_prefix&quot;: &quot;/api/workflows&quot;,
+  &quot;entrypoint&quot;: &quot;uflow.setup&quot;,
+  &quot;route_registrar&quot;: &quot;uflow.routes.register_routes&quot;,
+  &quot;dependencies&quot;: [&quot;ucore-core&quot;]
+}</code></pre>
+<h3>Fields</h3>
+<p>| Field             | Required | Description                                                          | | ----------------- | -------- | -------------------------------------------------------------------- | | <code>id</code>              | yes      | Unique extension id (e.g. <code>uflow</code>, <code>udos-home</code>)                      | | <code>name</code>            | yes      | Human-readable name                                                  | | <code>kind</code>            | yes      | One of: <code>core</code>, <code>workflow</code>, <code>knowledge</code>, <code>plugin</code>, <code>surface</code>, <code>tool</code> | | <code>version</code>         | no       | Semver (default <code>0.1.0</code>)                                             | | <code>description</code>     | no       | Short description                                                    | | <code>optional</code>        | no       | If <code>false</code>, startup/route wiring must fail fast when missing         | | <code>api_prefix</code>      | no       | URL prefix for routes (<code>/api/workflows</code>, etc.)                       | | <code>entrypoint</code>      | no       | Dotted path to <code>setup(app)</code> callable                                 | | <code>route_registrar</code> | no       | Dotted path to <code>register_routes(app)</code> callable                       | | <code>dependencies</code>    | no       | List of extension IDs this one requires                              |</p>
+<h3>Contract Validation Rules</h3>
+<p>The manifest contract is strict and validated in code/CI:</p>
+<p>1. Allowed fields are locked to: <code>id</code>, <code>name</code>, <code>kind</code>, <code>version</code>, <code>description</code>, <code>entrypoint</code>, <code>dependencies</code>, <code>optional</code>, <code>api_prefix</code>, <code>route_registrar</code>. 2. Required fields: <code>id</code>, <code>name</code>, <code>kind</code>. 3. <code>kind</code> must be one of: <code>core</code>, <code>workflow</code>, <code>knowledge</code>, <code>plugin</code>, <code>surface</code>, <code>tool</code>. 4. <code>entrypoint</code> and <code>route_registrar</code> must be dotted paths. 5. <code>dependencies</code> must be a list of non-empty extension IDs, may not contain self, and may not contain unknown IDs. 6. Dependency cycles are invalid and fail validation.</p>
+<p>CI enforcement command:</p>
+<pre><code>python3 scripts/validate_extension_manifests.py</code></pre>
+<h3>Extension Kinds</h3>
+<p>| Kind        | Purpose                                  | | ----------- | ---------------------------------------- | | <code>core</code>      | uCore built-in — never externalised      | | <code>workflow</code>  | Workflow engine, task orchestration      | | <code>knowledge</code> | Knowledge bridge, search, indexing       | | <code>plugin</code>    | Optional udos-\* domain capability       | | <code>surface</code>   | UI surface served by uCore               | | <code>tool</code>      | Dev tool integration (docker, git, etc.) |</p>
+<h3>Distinction Matrix</h3>
+<p>| Scope Type                  | Typical Kind                               | Runtime Coupling to uCore                      | Naming Pattern   | Examples                                                             | | --------------------------- | ------------------------------------------ | ---------------------------------------------- | ---------------- | -------------------------------------------------------------------- | | Core companion extension    | <code>workflow</code>, <code>knowledge</code>, <code>tool</code>, <code>surface</code> | often required for active routes               | no strict prefix | <code>uflow</code>, <code>uknowledge</code>                                                | | Domain plugin extension     | <code>plugin</code>                                   | usually optional and preflight-gated           | <code>udos-*</code>         | <code>udos-identity</code>, <code>udos-google</code>, <code>udos-dreamscape</code>, <code>udos-publishing</code> | | Independent project/surface | n/a unless onboarded                       | may consume uCore but can evolve independently | project-specific | Groovebox, HomeNest, SonicScrewdriver                                |</p>
+<h2>Discovery</h2>
+<p>The registry scans these locations (in order):</p>
+<p>1. <code>backend/app/extensions/manifests/</code> — manifests bundled with uCore 2. <code>~/.ucore/extensions/</code> — user-installed extension manifests 3. Any extra paths passed to <code>registry.discover(paths=[...])</code> 4. Any paths listed in <code>UCORE_EXTENSION_MANIFEST_PATHS</code> (colon-separated)</p>
+<p>Built-in core extensions (<code>ucore-core</code>, <code>ucore-skills</code>, <code>ucore-surfaces</code>, <code>ucore-secrets</code>, <code>ucore-tools</code>) are registered programmatically at registry init and do not require manifest files.</p>
+<p>At route assembly time, uCore runs discovery before extension route registration, so newly added external manifests are picked up without adding in-core route ownership.</p>
+<h2>Loading Sequence</h2>
+<p>At startup, uCore calls:</p>
+<p>1. <code>registry.discover()</code> — scan for external manifests 2. <code>registry.load_all(app)</code> — import and call <code>setup(app)</code> on each extension 3. <code>registry.register_routes(app)</code> — wire in route registrars</p>
+<p>Extensions without an <code>entrypoint</code> are treated as "route-only". Route registration still must pass required-extension rules.</p>
+<h2>Capability Preflight Gate</h2>
+<p>Before executing capability actions, clients should call:</p>
+<ul><li><code>GET /api/extensions/status</code></li><li><code>GET /api/capabilities/{capability}/preflight</code></li></ul>
+<p>If preflight reports <code>ready=false</code> (or HTTP 412), execution must be blocked and repair steps shown to the user. Resume only after repair and a passing preflight rerun.</p>
+<h2>Compatibility Adapters</h2>
+<p>For extensions extracted to dedicated repos (uFlow, uKnowledge), uCore provides <strong>adapters</strong> in <code>app.extensions.adapters/</code>:</p>
+<pre><code>workflow_adapter.py:
+  import uflow.routes.register_routes
+  if import fails and extension is required -&gt; raise RuntimeError
+
+knowledge_adapter.py:
+  import uknowledge.routes.register_routes
+  if import fails and extension is required -&gt; raise RuntimeError
+
+ucode_runtime_adapter.py:
+  import runtime-owned Ceefax/BBCSDL registrars from external runtime package
+  if missing -&gt; raise RuntimeError
+  terminal runtime WS route can also be delegated via
+  UCORE_TERMINAL_RUNTIME_WS_HANDLER</code></pre>
+<p>Adapters may exist during extraction phases, but must not hide missing required prerequisites for active capability paths.</p>
+<h2>Wave 2 Status (Current)</h2>
+<p>parity checks.</p>
+<p>registration (including <code>search</code>, <code>workspaces</code>, and <code>documents</code> routes).</p>
+<p><code>app.extensions.adapters.ucode_runtime_adapter.register_routes(...)</code>.</p>
+<p>a single hardcoded location.</p>
+<p>runtime providers are hard failures.</p>
+<p><code>backend/app/ucode/ceefax.py</code>, <code>backend/app/ucode/bbcsdl.py</code>, and <code>backend/app/api/terminal_runtime.py</code>.</p>
+<ul><li>Workflow route registration: externalized to uFlow (hard-cut).</li><li>Knowledge route registration: externalized to uKnowledge (hard-cut).</li><li>In-core workflow and knowledge API modules were removed from uCore after</li><li>Active knowledge endpoints are served by external uKnowledge route</li><li>uCode runtime bridge registration in <code>app.api.routes</code> now goes through</li><li>BBCSDL bridge path uses <code>UCORE_BBCSDL_BRIDGE_PATH</code> configuration instead of</li><li>Runtime adapter behavior is strict external by default; missing external</li><li>Legacy in-core runtime modules were removed from uCore:</li></ul>
+<h2>Route Registration</h2>
+<p>The adapter pattern externalizes workflow and knowledge route registration. uCore still wires host-shell routes directly in <code>app.api.routes</code>, and then delegates extension-owned routes through the registry:</p>
+<pre><code># In routes.py:
+register_host_shell_routes(app)
+from app.extensions.registry import registry
+registry.register_routes(app)</code></pre>
+<p>This calls each extension's <code>route_registrar</code> for extension-owned paths (<code>/api/workflows/<em></code>, <code>/api/knowledge/</em></code>) so client contracts stay stable while host-shell routes remain in uCore.</p>
+<h2>Creating a udos- Plugin</h2>
+<p>1. Copy the <code>HomeNest/modules/home-ops/udos-home</code> module 2. Update <code>ucore-extension.json</code> with your plugin id/name 3. Create a Python package that exports <code>register_routes(app)</code> 4. Install alongside uCore — automatically discovered</p>
+<h2>Status Endpoint</h2>
+<pre><code>curl http://localhost:8484/api/extensions/status</code></pre>
+<p>Returns:</p>
+<pre><code>{
+  &quot;total&quot;: 7,
+  &quot;loaded&quot;: 7,
+  &quot;failed&quot;: 0,
+  &quot;errors&quot;: {},
+  &quot;extensions&quot;: [
+    {&quot;id&quot;: &quot;ucore-core&quot;, &quot;name&quot;: &quot;uCore Runtime Shell&quot;, &quot;kind&quot;: &quot;core&quot;, ...},
+    {&quot;id&quot;: &quot;uflow&quot;, &quot;name&quot;: &quot;uFlow Workflow Engine&quot;, &quot;kind&quot;: &quot;workflow&quot;, ...},
+    ...
+  ]
+}</code></pre>
+<h2>Migration Path</h2>
+<p>1. <strong>Phase 1 (done):</strong> Plugin contract + adapters in uCore 2. <strong>Phase 2 (done):</strong> Scaffold uFlow, uKnowledge, and HomeNest udos-home module manifests 3. <strong>Phase 3 (done):</strong> Workflow extraction/deletion waves with parity checks 4. <strong>Phase 4 (done):</strong> Knowledge extraction/deletion waves with parity checks 5. <strong>Phase 5 (active):</strong> CI/CD alignment, package publication, and split-repo install smoke tests 6. <strong>Phase 6 (done):</strong> Capability preflight gates enforced across S-pages 7. <strong>Phase 7 (planned):</strong> External plugin matrix execution (<code>udos-*</code> repo migration waves) 8. <strong>Phase 8 (planned):</strong> Dead settings and compatibility-note cleanup across docs/scripts 9. <strong>Phase 9 (planned):</strong> Release cutover with stop-the-line evidence bundle per wave</p>
+<h2>External Plugin Migration Matrix (Phase 7)</h2>
+<p>This matrix defines the first <code>udos-*</code> migration targets beyond <code>udos-home</code>. Each row must complete route ownership transfer, capability preflight parity, and wave evidence bundles before marking done.</p>
+<p>| Plugin ID         | Owner Repo            | Route Prefix        | Capability Scope                | Dependencies                         | Acceptance Gates                 | | ----------------- | --------------------- | ------------------- | ------------------------------- | ------------------------------------ | -------------------------------- | | <code>udos-home</code>       | HomeNest module       | <code>/api/home/*</code>       | Home operations + shell tasks   | <code>ucore-core</code>, <code>ucore-secrets</code>        | preflight + route parity + docs  | | <code>udos-budget</code>     | new <code>udos-budget</code>     | <code>/api/budget/*</code>     | Budget tracking + policy gates  | <code>ucore-core</code>, <code>ucore-secrets</code>        | preflight + route parity + tests | | <code>udos-identity</code>   | new <code>udos-identity</code>   | <code>/api/identity/*</code>   | Identity profile + auth helpers | <code>ucore-core</code>, <code>ucore-secrets</code>        | preflight + route parity + tests | | <code>udos-media</code>      | new <code>udos-media</code>      | <code>/api/media/*</code>      | Media ingest + transform hooks  | <code>ucore-core</code>, <code>ucore-tools</code>          | preflight + route parity + tests | | <code>udos-automation</code> | new <code>udos-automation</code> | <code>/api/automation/*</code> | Automation orchestration        | <code>ucore-core</code>, <code>uflow</code>, <code>ucore-tools</code> | preflight + route parity + tests |</p>
+<p>Wave execution guidance:</p>
+<p>1. Migrate one plugin per wave branch to keep rollback clean. 2. Add/update <code>ucore-extension.json</code> in plugin repo before enabling routes in uCore. 3. Keep endpoint contracts stable; only module ownership changes. 4. Require <code>scripts/validate_extension_manifests.py</code> pass before merge.</p>
+<p>Execution should prefer explicit repair flows over fallback behavior for required capability paths.</p>
+<h2>uVector Position (Current)</h2>
+<p><code>uVector</code> is currently best treated as an <strong>extension-class engine candidate</strong> aligned with uCode2/uCode3-era rendering workflows, not as a <code>udos-*</code> domain plugin.</p>
+<p>Evidence from <code>uVector</code> repository:</p>
+<p>1. <code>Cargo.toml</code> and crate metadata position it as <code>uvcore</code>, a universal vector conversion engine. 2. <code>src/lib.rs</code> explicitly describes SVG-to-multiple-target conversion, including grid/cell and ASCII/teletext outputs. 3. <code>docs/NANO_BANANA_UVECTOR_SUMMARY.md</code> describes likely integration with Gemini/Nano-Banana style image generation workflows.</p>
+<p>Current recommended interpretation:</p>
+<p>1. uVector aligns with future uCode2/uCode3 and grid-runtime rendering concerns. 2. uVector may also be consumed by Google/Nano-Banana image-generation flows as a conversion/post-processing engine. 3. uVector is a strong fit for vector/font asset conversion into bitmap/grid uCode-compatible formats. 4. Do not force immediate migration; document as extension-class and onboard via manifest when integration wave starts.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

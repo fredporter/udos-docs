@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FEED_SYSTEM_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / FEED_SYSTEM_SPEC.md</span></header><main class="site-main"><h1>Feed System Specification</h1>
+<blockquote><strong>Version:</strong> 1.0</blockquote>
+<blockquote><strong>Status:</strong> Active</blockquote>
+<blockquote><strong>Scope:</strong> Activity Pod, Feed MCP Server, FeedConsumer, Feed Panel, Nugget runtime</blockquote>
+<h2>1. Philosophy</h2>
+<p>The Feed System is the unified incoming data layer that captures all user activity (browser history, email, messages, alerts, search queries) and transforms it into actionable development context. It bridges the gap between external user activity and internal developer workflow.</p>
+<h2>2. Core Definitions</h2>
+<p>| Term | Definition | Storage | |------|------------|---------| | <strong>Feed</strong> | Incoming user activity stream | SQLite (Activity Pod) | | <strong>Pod</strong> | SQLite database package | <code>.db</code> file + schema | | <strong>Nugget</strong> | Runtime + files | Directory with scripts, configs, assets | | <strong>Seed</strong> | Initial data/structure | JSON schema, SQL DDL, or template | | <strong>Slate</strong> | Template system | Directory with manifests | | <strong>Spool</strong> | Feed in motion | In-memory + JSONL log |</p>
+<h2>3. Architecture</h2>
+<pre><code>User Activity Sources:
+  Browser (Chrome/Arc/Safari) → Email (Mail.app) → Messages (iMessage)
+  Alerts (Push) → Search Queries → Calendar Events → Clipboard History
+        ↓
+Feed Ingest Layer (FeedServer MCP)
+  - feed_ingest_activity: insert into Activity Pod
+  - feed_query: query by source, timeframe, importance
+  - feed_suggest_binders: AI-driven binder suggestions
+  - feed_link_task: link .tasker task to activity
+        ↓
+Feed Storage Layer (SQLite Pods)
+  - Activity Pod: user_activity, contacts, contexts
+  - Feedback: binder_suggestions, task_activity_links
+        ↓
+Feed Processing Layer (FeedConsumer)
+  - Bridges feed → Spool (audit trail)
+  - Keyword-based task trigger detection
+        ↓
+Developer Surface (FeedPanel)
+  - View incoming feed
+  - Link activities to tasks
+  - Review binder suggestions</code></pre>
+<h2>4. Pod Schema</h2>
+<p><strong>Location:</strong> <code>backend/schemas/activity.schema.sql</code> <strong>Database:</strong> <code>~/.ucore/pods/activity.db</code></p>
+<p>Tables:</p>
+<ul><li><code>user_activity</code> — core activity events (source, type, title, content, url, importance)</li><li><code>contacts</code> — synced from macOS Contacts.app</li><li><code>contexts</code> — grouped activities</li><li><code>binder_suggestions</code> — AI-generated binder suggestions</li><li><code>task_activity_links</code> — task-to-activity relationships</li></ul>
+<p>Indexes: timestamp, contact_id, source, (source, source_id)</p>
+<h2>5. Feed MCP Server</h2>
+<p><strong>Location:</strong> <code>backend/app/mcp/feed/feed_server.py</code> <strong>Class:</strong> <code>FeedServer</code></p>
+<p>Tools: | Tool | Method | Description | |------|--------|-------------| | <code>feed_ingest_activity</code> | <code>ingest_activity()</code> | Insert activity into Pod | | <code>feed_query</code> | <code>query_feed()</code> | Query by source, since, limit, importance_min | | <code>feed_suggest_binders</code> | <code>suggest_binders()</code> | Cluster unprocessed activities, return suggestions | | <code>feed_link_task</code> | <code>link_task_to_activity()</code> | Link task to activity, mark processed |</p>
+<h2>6. Feed API</h2>
+<p><strong>Location:</strong> <code>backend/app/api/feed_api.py</code></p>
+<p>Routes: | Method | Path | Handler | |--------|------|---------| | POST | <code>/api/feed/ingest</code> | <code>handle_feed_ingest</code> | | GET | <code>/api/feed/query</code> | <code>handle_feed_query</code> | | GET | <code>/api/feed/suggest</code> | <code>handle_feed_suggest</code> | | POST | <code>/api/feed/link</code> | <code>handle_feed_link</code> |</p>
+<h2>7. FeedConsumer</h2>
+<p><strong>Location:</strong> <code>backend/app/services/feed_consumer.py</code> <strong>Class:</strong> <code>FeedConsumer</code></p>
+<p>Bridges each ingested activity into the Spool for audit trail. Includes keyword-based task trigger detection (bug/crash → bug-report, tool/script → tool-suggestion, doc/guide → doc-suggestion).</p>
+<h2>8. Frontend Feed Store</h2>
+<p><strong>Location:</strong> <code>frontend-vue/src/stores/feed.ts</code> <strong>Store:</strong> <code>useFeedStore</code></p>
+<p>Provides:</p>
+<ul><li><code>fetchActivities(opts)</code> — query feed with source/since/limit/importanceMin</li><li><code>ingestActivity(payload)</code> — post a new activity</li><li><code>fetchSuggestions(minConfidence)</code> — get binder suggestions</li><li><code>linkToTask(taskId, activityId, linkType)</code> — link task to activity</li><li><code>filteredActivities</code> — reactive filter by source</li><li><code>pendingSuggestions</code> — filtered by min confidence</li></ul>
+<h2>9. Seed Data</h2>
+<p><strong>Location:</strong> <code>backend/seeds/feed-pod-seed.json</code></p>
+<p>Source configuration for:</p>
+<ul><li>Browser: Chrome, Arc, Safari history paths</li><li>Email: Mail.app MailData path</li><li>Messages: iMessage chat.db path</li><li>Contacts: AddressBook Sources path</li><li>Search, Alerts, Calendar, Clipboard sources</li></ul>
+<h2>10. Integration Points</h2>
+<p>| System | Connection | |--------|-----------| | <strong>Spool</strong> | FeedConsumer writes to spool on each ingest | | <strong>Tasker</strong> | <code>feed_link_task</code> creates <code>.tasker</code> link records | | <strong>Binder</strong> | <code>feed_suggest_binders</code> generates binder suggestions | | <strong>Slate</strong> | Templates include feed config in slate.yaml | | <strong>Dev Layer</strong> | Feed panel available in Developer Surface |</p>
+<h2>11. Implementation Status</h2>
+<ul><li>[x] Activity Pod schema (5 tables, 4 indexes)</li><li>[x] FeedServer with 4 MCP tools</li><li>[x] Feed API routes wired into routes.py</li><li>[x] FeedConsumer bridging feed → Spool</li><li>[x] Frontend Pinia feed store</li><li>[x] Seed data for macOS sources</li><li>[x] .clinerules updated with Feed System rules</li><li>[ ] FeedPanel.vue on Developer Surface (future)</li><li>[ ] Nugget runtime scripts (ingest_browser.py, ingest_email.py, etc.)</li><li>[ ] AI-powered binder suggestion engine (keyword-based placeholder in place)</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

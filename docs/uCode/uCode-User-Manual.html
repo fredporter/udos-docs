@@ -1,0 +1,726 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>uCode-User-Manual.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / uCode-User-Manual.md</span></header><main class="site-main"><h1>uCode User Manual</h1>
+<h2>BBC BASIC for SDL 2.0 and AMOS Sprite Programming</h2>
+<p><strong>Welcome to uCode. This manual will teach you to program in a language that has inspired generations of programmers. uCode is based on BBC BASIC, the language that powered the BBC Micro — the computer that taught a nation to code. But uCode is not just a museum piece. It has grown up. It now supports sprites, animation, GIFs, and even physics. And it does all of this while keeping the simple, elegant style that made BBC BASIC so beloved.</strong></p>
+<p>---</p>
+<h2>1. Introduction</h2>
+<h3>What is uCode?</h3>
+<p>uCode is a modern programming environment built on <strong>BBC BASIC for SDL 2.0 (BBCSDL)</strong> — an open-source re-implementation of the language that ran on the legendary BBC Micro. It gives you two capability profiles:</p>
+<ul><li><strong>uCode1 profile</strong> — Classic teletext graphics with MODE 7's 40×25 character grid, colours, flashing text, and the warm glow of Ceefax-style displays</li><li><strong>uCode2 profile</strong> — AMOS-inspired sprite and BOB commands for games, animations, and interactive programs</li></ul>
+<p>Both profiles run inside the same uCode runtime. You can start with a colourful text display and add animated sprites without learning a new language. The AMOS shim translates AMOS-style commands into BBCSDL's built-in libraries, so you get the best of both worlds.</p>
+<h3>The BBC Micro Legacy</h3>
+<p>The BBC Micro (1981) was designed by Acorn Computers for the BBC Computer Literacy Project. It taught a whole generation of British children — and adults — to program. BBC BASIC was its heart: simple, structured, and fast. It was the language of school computer rooms, of late-night coding sessions, and of the first games that bedroom coders ever wrote.</p>
+<p>uCode keeps that spirit alive. But it has grown up. MODE 7 now lives inside the modern BBCSDL engine. Sprites and BOBs — inspired by AMOS on the Commodore Amiga — give you the tools to build games. And the Vault keeps your programs, assets, and state organised.</p>
+<h3>Who This Manual is For</h3>
+<p>This manual is for <strong>everyone</strong>. If you have never programmed before, start at Section 2 and work through the examples one at a time. Type them in. Change them. Break them. Fix them. If you are an experienced programmer, you can jump to the sections that interest you — sprites, BOBs, the AMOS shim — and use the cheat sheet at the back as a quick reference.</p>
+<h3>How This Manual is Organised</h3>
+<p>| Section                | What You'll Learn                          | | ---------------------- | ------------------------------------------ | | 1. Introduction        | What uCode is and why it matters           | | 2. Getting Started     | Install, run your first program            | | 3. The Vault           | Where everything lives                     | | 4. BASIC Fundamentals  | Variables, loops, conditionals, procedures | | 5. Teletext Graphics   | MODE 7, colours, attributes                | | 6. Sprites             | Placing and animating sprites              | | 7. BOBs                | Animated GIF objects                       | | 8. The AMOS Shim       | AMOS-style commands                        | | 9. Working with Assets | Loading graphics and sound                 | | 10. LENS & SKIN        | Capturing and theming your output          | | 11. Snacks             | Self-contained programs with assets        | | 12. Advanced Features  | Physics, networking, 3D                    | | 13. Reference          | Command reference, library registry        | | Appendix A             | BBC BASIC vs AMOS comparison               | | Appendix B             | Cheat sheet                                |</p>
+<p>---</p>
+<h2>2. Getting Started</h2>
+<h3>Installing uCode</h3>
+<p>The uCode runtime installs with a single command:</p>
+<pre><code>curl -fsSL https://raw.githubusercontent.com/uDosGo/uCode/main/runtimes/basic/install.sh | bash</code></pre>
+<p>This installs:</p>
+<ul><li>The BBCSDL engine (<code>bbcsdl</code>)</li><li>The Python bridge that connects BBC BASIC to modern tools</li><li>The AMOS shim for sprite and BOB compatibility</li><li>The <code>ucode</code> command you use to run programs</li></ul>
+<p>Your programs will live in <code>~/Vault/programs/</code>, and your assets (sprites, sounds, maps) in <code>~/Vault/assets/</code>.</p>
+<h3>Your First Program</h3>
+<p>Open your text editor and type:</p>
+<pre><code>REM My first uCode program
+MODE 7
+COLOUR 2
+PRINT TAB(10,12); &quot;Hello, uCode!&quot;
+END</code></pre>
+<p>Save it as <code>~/Vault/programs/hello.ucode</code> and run it:</p>
+<pre><code>ucode run ~/Vault/programs/hello.ucode</code></pre>
+<p>You should see a black screen with green text saying "Hello, uCode!" positioned in the centre. Congratulations — you have just written and run your first uCode program.</p>
+<h3>What Just Happened?</h3>
+<p>Let's go through each line:</p>
+<ul><li><code>REM</code> — This is a comment. BBC BASIC ignores everything after REM on that line. Use it to explain what your program does.</li><li><code>MODE 7</code> — This switches the display to teletext mode: 40 columns wide, 25 rows of text. MODE 7 is the signature look of uCode1.</li><li><code>COLOUR 2</code> — Sets the text colour to green (colour 2 in BBC BASIC's palette). Numbers range from 0 (black) to 7 (white).</li><li><code>PRINT TAB(10,12); "Hello, uCode!"</code> — Prints text at column 10, row 12. The semicolon before the string tells BBC BASIC to print right after the tab position.</li><li><code>END</code> — Tells the program to stop.</li></ul>
+<p>In the original BBC Micro, you would have needed line numbers: <code>10 REM My first program</code>, <code>20 MODE 7</code>, and so on. uCode does not require line numbers unless you are writing traditional-style programs with <code>GOTO</code> or <code>GOSUB</code>. We recommend the modern, line-number-optional style for new programs.</p>
+<h3>Running Programs</h3>
+<pre><code>ucode run myprogram.ucode          # Run a program
+ucode run myprogram.ucode --debug  # Run with debug output
+ucode                               # Start the REPL interactive shell</code></pre>
+<h3>Saving Your Work</h3>
+<p>Programs live in <code>~/Vault/programs/</code>. You can organise them into subdirectories:</p>
+<pre><code>~/Vault/programs/
+├── hello.ucode
+├── games/
+│   ├── invaders.ucode
+│   └── platformer.ucode
+└── experiments/
+    └── test.ucode</code></pre>
+<h4>Exercise 2.1</h4>
+<p>Modify the hello program to print your name in a different colour, at a different position on the screen. Try COLOUR 1 (red), COLOUR 6 (cyan), or COLOUR 3 (yellow).</p>
+<p>---</p>
+<h2>3. The Vault</h2>
+<h3>Your Personal Workspace</h3>
+<p>The Vault is where all your uCode work lives. Think of it as your virtual desk — programs, art, sounds, and saved states are all kept here.</p>
+<pre><code>~/Vault/
+├── programs/          # Your .ucode program files
+│   ├── hello.ucode
+│   ├── calculator.ucode
+│   └── my-game/
+│       ├── main.ucode
+│       └── levels/
+├── snacks/            # Self-contained program bundles
+│   ├── adventure.snack
+│   └── puzzle.snack
+├── assets/            # Sprites, sounds, maps
+│   ├── sprites/
+│   │   ├── player.chr
+│   │   └── enemy.chr
+│   ├── bobs/
+│   │   └── explosion.gif
+│   ├── sounds/
+│   │   └── coin.wav
+│   └── maps/
+│       └── level1.json
+└── variables/         # Saved game state
+    └── savegame.json</code></pre>
+<h3>Vault Commands</h3>
+<pre><code>ucode vault list programs              # List your programs
+ucode vault list snacks                # List installed snacks
+ucode vault list assets                # List available assets
+ucode vault snapshot save my-save      # Save current variable state
+ucode vault snapshot restore my-save   # Restore saved state</code></pre>
+<h3>What is a Snack?</h3>
+<p>A <strong>Snack</strong> is a self-contained program that bundles its source code, sprites, sounds, and maps into a single directory. Snacks are portable — you can share them with friends or publish them to the community.</p>
+<pre><code>my-game.snack/
+├── main.ucode
+├── manifest.yaml          # Game name, author, engine version
+├── sprites/player.chr
+├── bobs/explosion.gif
+├── sounds/coin.wav
+└── maps/level1.json</code></pre>
+<p>Don't worry if this seems complicated right now. We will cover Snacks in detail in Section 11.</p>
+<h4>Exercise 3.1</h4>
+<p>Navigate to your Vault directory and list its contents. Create a new subdirectory for your experiments:</p>
+<pre><code>mkdir -p ~/Vault/programs/my-experiments</code></pre>
+<p>---</p>
+<h2>4. BASIC Fundamentals</h2>
+<p>This section covers the building blocks of every uCode program: variables, loops, decisions, and procedures. If you are new to programming, type in every example and experiment with the values.</p>
+<h3>Variables</h3>
+<p>BBC BASIC has three main types of variables:</p>
+<pre><code>name$ = &quot;Alice&quot;      REM String variable (ends with $)
+age% = 42            REM Integer variable (ends with %)
+price = 12.99        REM Float variable (no suffix)</code></pre>
+<p>The <code>$</code> and <code>%</code> suffixes tell BBC BASIC — and other programmers — what kind of data the variable holds. This naming convention comes from the BBC Micro, where memory was tight and type information helped the interpreter work faster.</p>
+<p>You can also use arrays:</p>
+<pre><code>DIM scores%(10)       REM Array of 11 integers (0 to 10)
+scores%(0) = 95
+scores%(1) = 87</code></pre>
+<h3>Input and Output</h3>
+<pre><code>INPUT &quot;What is your name? &quot;, name$
+PRINT &quot;Hello, &quot;; name$; &quot;!&quot;
+PRINT &quot;You are &quot;; age%; &quot; years young.&quot;</code></pre>
+<p>Notice the semicolons between items in the PRINT statement. They tell BBC BASIC to print each item immediately after the previous one with no extra space. Use commas for tabulated output:</p>
+<pre><code>PRINT &quot;Name&quot;, &quot;Score&quot;, &quot;Level&quot;
+PRINT name$, score%, level%</code></pre>
+<h3>Making Decisions</h3>
+<pre><code>IF score% &gt;= 50 THEN
+  PRINT &quot;You passed!&quot;
+ELSE
+  PRINT &quot;Keep trying.&quot;
+ENDIF</code></pre>
+<p>BBC BASIC uses <code>IF...THEN...ELSE...ENDIF</code> blocks. You can also write single-line conditionals:</p>
+<pre><code>IF lives% = 0 THEN PRINT &quot;Game Over&quot;</code></pre>
+<h3>Loops</h3>
+<p><strong>FOR...NEXT</strong> — When you know how many times to loop:</p>
+<pre><code>FOR i% = 1 TO 10
+  PRINT &quot;Count: &quot;; i%
+NEXT i%</code></pre>
+<p><strong>REPEAT...UNTIL</strong> — Loop until a condition is met:</p>
+<pre><code>REPEAT
+  INPUT &quot;Guess a number: &quot;, guess%
+UNTIL guess% = 42
+PRINT &quot;You got it!&quot;</code></pre>
+<p><strong>WHILE...ENDWHILE</strong> — Loop while a condition is true:</p>
+<pre><code>WHILE lives% &gt; 0
+  PRINT &quot;You have &quot;; lives%; &quot; lives left.&quot;
+  lives% = lives% - 1
+ENDWHILE</code></pre>
+<h3>Procedures and Functions</h3>
+<p>Procedures let you group related commands together. They make your programs easier to read and maintain.</p>
+<pre><code>REM Define a procedure
+DEF PROC_greet(name$)
+  PRINT &quot;Welcome, &quot;; name$; &quot;!&quot;
+ENDPROC
+
+REM Call the procedure
+PROC_greet(&quot;Alice&quot;)
+
+REM Define a function (returns a value)
+DEF FN_double(x)
+  = x * 2
+
+REM Use the function
+PRINT FN_double(21)    REM Prints 42</code></pre>
+<p>Procedures start with <code>DEF PROC_</code>, and functions with <code>DEF FN_</code>. Functions return a value using <code>=</code> on the first line after the definition.</p>
+<h3>A Complete Example</h3>
+<p>Let's put everything together into a simple guessing game:</p>
+<pre><code>REM Number Guessing Game
+MODE 7
+COLOUR 3
+
+REM Pick a random number
+target% = RND(100)
+
+PRINT TAB(10,10); &quot;GUESSING GAME&quot;
+PRINT TAB(10,12); &quot;I am thinking of a number&quot;
+PRINT TAB(10,13); &quot;between 1 and 100.&quot;
+
+REPEAT
+  PRINT
+  INPUT &quot;Your guess: &quot;, guess%
+  IF guess% &lt; target% THEN PRINT &quot;Higher!&quot;
+  IF guess% &gt; target% THEN PRINT &quot;Lower!&quot;
+UNTIL guess% = target%
+
+PRINT &quot;You got it! The number was &quot;; target%
+END</code></pre>
+<h4>Exercise 4.1</h4>
+<p>Modify the guessing game to count how many guesses the player took, and display the count when they win.</p>
+<p>---</p>
+<h2>5. Teletext Graphics (uCode1)</h2>
+<h3>MODE 7: The Heart of uCode1</h3>
+<p>MODE 7 is the soul of uCode1. It gives you a grid of 40 columns by 25 rows, where every character can have its own colour. This is identical to the Ceefax and Oracle teletext systems that millions of people used in the 1980s. It is distinctively British, distinctively retro, and beautifully simple.</p>
+<pre><code>MODE 7           REM Enter teletext mode
+COLOUR 2         REM Green text
+PRINT TAB(5,10); &quot;WELCOME TO uCode&quot;</code></pre>
+<h3>The Colour Palette</h3>
+<p>BBC BASIC MODE 7 uses 8 colours:</p>
+<p>| Number | Colour  | Use                | | ------ | ------- | ------------------ | | 0      | Black   | Background         | | 1      | Red     | Alerts, enemies    | | 2      | Green   | Success, health    | | 3      | Yellow  | Warnings, gold     | | 4      | Blue    | Water, sky         | | 5      | Magenta | Magic, power-ups   | | 6      | Cyan    | Information, water | | 7      | White   | Default text       |</p>
+<p>You can set both the foreground (text) colour and the background colour:</p>
+<pre><code>COLOUR 1          REM Red text
+COLOUR 128 + 4    REM Red text on blue background
+COLOUR 7          REM Back to white text</code></pre>
+<h3>Text Positioning with TAB</h3>
+<p><code>TAB(x,y)</code> places the cursor at column <code>x</code> and row <code>y</code> before printing:</p>
+<pre><code>PRINT TAB(10,5); &quot;Title&quot;
+PRINT TAB(5,7); &quot;Option 1&quot;
+PRINT TAB(5,8); &quot;Option 2&quot;
+PRINT TAB(5,9); &quot;Option 3&quot;</code></pre>
+<p>Column numbers go from 0 to 39. Row numbers go from 0 to 24.</p>
+<h3>Building a Menu Screen</h3>
+<pre><code>MODE 7
+COLOUR 3
+PRINT TAB(12,3); &quot;uCode ADVENTURE&quot;
+
+COLOUR 7
+PRINT TAB(5,6); &quot;1. Start New Game&quot;
+PRINT TAB(5,7); &quot;2. Load Saved Game&quot;
+PRINT TAB(5,8); &quot;3. Options&quot;
+PRINT TAB(5,9); &quot;4. Quit&quot;
+
+COLOUR 6
+PRINT TAB(5,12); &quot;Press a number to continue&quot;</code></pre>
+<h3>Drawing Borders</h3>
+<p>You can use the teletext graphics characters to draw boxes and borders:</p>
+<pre><code>MODE 7
+COLOUR 6
+
+REM Top border
+PRINT TAB(10,5); &quot;********************&quot;
+
+REM Sides
+FOR row% = 6 TO 15
+  PRINT TAB(10,row%); &quot;*&quot;
+  PRINT TAB(31,row%); &quot;*&quot;
+NEXT row%
+
+REM Bottom border
+PRINT TAB(10,16); &quot;********************&quot;
+
+COLOUR 7
+PRINT TAB(14,10); &quot;INSIDE THE BOX&quot;</code></pre>
+<h3>Clearing the Screen</h3>
+<pre><code>CLS               REM Clear the entire screen
+CLS 7             REM Clear and stay in MODE 7</code></pre>
+<h3>Teletext Animation</h3>
+<p>You can create simple animations by printing, waiting, and then printing over:</p>
+<pre><code>MODE 7
+FOR pos% = 0 TO 30
+  CLS
+  COLOUR 2
+  PRINT TAB(pos%,12); &quot;&gt;&gt;&gt;&quot;
+  WAIT 5          REM Wait 5/100ths of a second
+NEXT pos%</code></pre>
+<p>In the original BBC Micro, this would flicker. BBCSDL renders smoothly, so your animations will look clean.</p>
+<h4>Exercise 5.1</h4>
+<p>Create a program that draws a coloured box and places a title inside it. Use at least 3 different colours.</p>
+<h4>Exercise 5.2</h4>
+<p>Write a program that moves a character across the screen from left to right, then bounces it back.</p>
+<p>---</p>
+<h2>6. Sprites (uCode2)</h2>
+<p>Sprites are to uCode2 what MODE 7 is to uCode1. They bring your games to life. Sprite commands are inspired by AMOS, the classic Amiga BASIC that powered a generation of bedroom coders. But in uCode, they run on modern hardware — with a little help from the BBCSDL engine.</p>
+<h3>Loading and Displaying a Sprite</h3>
+<pre><code>INSTALL @lib$ + &quot;gfxlib&quot;
+PROC_gfx_init(640, 480, 32)
+
+REM Load a sprite (character file, width, height)
+player% = FN_load_sprite(&quot;player.chr&quot;, 24, 24)
+
+REM Place the sprite at coordinates (100, 200)
+PROC_sprite_place(player%, 100, 200)
+
+WAIT 500
+END</code></pre>
+<p>The sprite file (<code>player.chr</code>) should be in your Vault assets directory:</p>
+<pre><code>~/Vault/assets/sprites/player.chr</code></pre>
+<h3>Moving Sprites</h3>
+<pre><code>INSTALL @lib$ + &quot;gfxlib&quot;
+PROC_gfx_init(640, 480, 32)
+
+player% = FN_load_sprite(&quot;player.chr&quot;, 24, 24)
+x% = 100
+y% = 200
+
+REPEAT
+  PROC_sprite_place(player%, x%, y%)
+
+  REM Read keyboard
+  IF INKEY(-58) THEN y% = y% - 2   REM Up arrow
+  IF INKEY(-42) THEN y% = y% + 2   REM Down arrow
+  IF INKEY(-26) THEN x% = x% - 2   REM Left arrow
+  IF INKEY(-122) THEN x% = x% + 2  REM Right arrow
+
+  WAIT 2
+UNTIL INKEY(-1)   REM ESC to quit
+END</code></pre>
+<h3>Sprite Animation</h3>
+<p>Sprites can have multiple frames. Load a sprite sheet and cycle through frames:</p>
+<pre><code>INSTALL @lib$ + &quot;gfxlib&quot;
+PROC_gfx_init(640, 480, 32)
+
+sprite% = FN_load_sprite(&quot;runner.chr&quot;, 24, 24)
+
+frame% = 0
+REPEAT
+  PROC_sprite_animate(sprite%, frame%)
+  frame% = (frame% + 1) MOD 4   REM Cycle 0-3
+  WAIT 10
+UNTIL INKEY(-1)
+END</code></pre>
+<h3>Collision Detection</h3>
+<pre><code>IF FN_sprite_bob_collide(player%, enemy%) THEN
+  PRINT &quot;Crash!&quot;
+  SOUND 1, -15, 200, 10
+  lives% = lives% - 1
+ENDIF</code></pre>
+<p>Collision detection checks whether two sprites overlap. In uCode, collisions use rectangular bounding boxes — simple and fast.</p>
+<h3>The Sprite Bank</h3>
+<p>You can manage many sprites at once using a sprite bank:</p>
+<pre><code>INSTALL @lib$ + &quot;gfxlib&quot;
+PROC_gfx_init(640, 480, 32)
+
+DIM sprites%(10)
+
+REM Load 10 sprites into the bank
+FOR i% = 0 TO 9
+  sprites%(i%) = FN_load_sprite(&quot;enemy.chr&quot;, 24, 24)
+  PROC_sprite_place(sprites%(i%), RND(600), RND(440))
+NEXT i%
+
+WAIT 300
+END</code></pre>
+<h4>Exercise 6.1</h4>
+<p>Load a sprite and move it with the arrow keys. Add a second sprite that follows the first one around the screen.</p>
+<h4>Exercise 6.2</h4>
+<p>Create a program that shows 20 sprites bouncing off the edges of the screen.</p>
+<p>---</p>
+<h2>7. BOBs (uCode2)</h2>
+<h3>What is a BOB?</h3>
+<p>In AMOS terminology, a <strong>BOB</strong> (Blitter OBject) is a graphical object that floats above the background and can be animated with GIF files. Unlike sprites, which are typically simple pixel maps, BOBs can be full-colour animated GIFs with transparency.</p>
+<h3>Loading and Displaying a BOB</h3>
+<pre><code>INSTALL @lib$ + &quot;imglib&quot;
+
+REM Load an animated GIF
+bob% = FN_load_gif(&quot;explosion.gif&quot;)
+
+REM Place the BOB on screen
+PROC_bob_create(bob%, 200, 150)
+
+REM Animate: loop endlessly
+PROC_bob_animate(bob%, 0, -1)
+
+WAIT 500
+END</code></pre>
+<p>The parameters for <code>PROC_bob_animate</code> are:</p>
+<ul><li><code>bob%</code> — The bob identifier</li><li><code>0</code> — Start frame (0 = first frame)</li><li><code>-1</code> — End frame (-1 = loop forever)</li></ul>
+<h3>BOB Transparency</h3>
+<p>BOBs loaded from GIF files automatically preserve transparency. The background shows through wherever the GIF has transparent pixels.</p>
+<h3>Combining Sprites and BOBs</h3>
+<pre><code>INSTALL @lib$ + &quot;gfxlib&quot;
+INSTALL @lib$ + &quot;imglib&quot;
+PROC_gfx_init(640, 480, 32)
+
+REM Player sprite
+player% = FN_load_sprite(&quot;player.chr&quot;, 24, 24)
+
+REM Explosion BOB
+explosion% = FN_load_gif(&quot;explosion.gif&quot;)
+
+PROC_sprite_place(player%, 320, 240)
+
+REPEAT
+  REM Move player with keyboard
+  IF INKEY(-58) THEN y% = y% - 2
+  IF INKEY(-42) THEN y% = y% + 2
+  IF INKEY(-26) THEN x% = x% - 2
+  IF INKEY(-122) THEN x% = x% + 2
+
+  PROC_sprite_place(player%, x%, y%)
+
+  REM Check collision with enemy
+  IF FN_sprite_bob_collide(player%, enemy%) THEN
+    PROC_bob_create(explosion%, x%, y%)
+    PROC_bob_animate(explosion%, 0, -1)
+    WAIT 50
+    PROC_bob_remove(explosion%)
+  ENDIF
+
+  WAIT 2
+UNTIL INKEY(-1)
+END</code></pre>
+<h3>BOB Performance Tips</h3>
+<ul><li>Keep BOBs small — large animated GIFs use more memory and slow down the frame rate.</li><li>Remove BOBs when they are off-screen with <code>PROC_bob_remove</code>.</li><li>Pre-load BOBs at the start of your program rather than during gameplay.</li></ul>
+<h4>Exercise 7.1</h4>
+<p>Create a program with a sprite that you control. When you press the space bar, spawn an animated BOB at the sprite's position.</p>
+<p>---</p>
+<h2>8. The AMOS Shim</h2>
+<p>The AMOS shim is a compatibility layer that translates AMOS-style sprite and BOB commands into BBCSDL's native <code>gfxlib</code> and <code>imglib</code> libraries. If you are familiar with AMOS on the Commodore Amiga, these commands will feel like home.</p>
+<h3>Loading the Shim</h3>
+<pre><code>INSTALL &quot;amos_shim.bbc&quot;</code></pre>
+<p>This single line activates all the AMOS commands. You only need to do it once, at the top of your program.</p>
+<h3>AMOS Command Reference</h3>
+<h4>SPRITE — Place a Sprite</h4>
+<pre><code>SPRITE 1, 100, 200, 1</code></pre>
+<p>Places sprite number 1 at x=100, y=200, using image 1.</p>
+<h4>BOB — Place a BOB</h4>
+<pre><code>BOB 1, 300, 150, &quot;explosion.gif&quot;</code></pre>
+<p>Places BOB number 1 at x=300, y=150, using the GIF file.</p>
+<h4>MOVE — Animate Movement</h4>
+<pre><code>MOVE 1, 400, 300, 50</code></pre>
+<p>Moves sprite/BOB 1 smoothly to x=400, y=300 over 50 steps.</p>
+<h4>COLL — Collision Detection</h4>
+<pre><code>IF COLL(1, 2) THEN PRINT &quot;Objects 1 and 2 have collided!&quot;</code></pre>
+<p>Returns TRUE if objects 1 and 2 overlap.</p>
+<h4>SOUND — Play a Sound</h4>
+<pre><code>SOUND 1, 100, 200, 50</code></pre>
+<p>Plays sound on channel 1, frequency 100, duration 200, volume 50.</p>
+<h3>Complete AMOS Shim Example</h3>
+<pre><code>INSTALL &quot;amos_shim.bbc&quot;
+
+REM Place sprites
+SPRITE 1, 100, 100, 1
+SPRITE 2, 500, 400, 2
+
+REM Place an animated BOB
+BOB 1, 300, 250, &quot;fire.gif&quot;
+
+REPEAT
+  REM Move sprite 1 toward sprite 2
+  MOVE 1, 500, 400, 20
+
+  REM Check collision
+  IF COLL(1, 2) THEN
+    SOUND 1, 15, 200, 10
+    PRINT TAB(15,20); &quot;COLLISION!&quot;
+  ENDIF
+
+  WAIT VBL    REM Wait for vertical blank
+UNTIL 0
+END</code></pre>
+<h3>AMOS Shim vs Native Commands</h3>
+<p>Both styles work in uCode. The table below shows equivalent commands:</p>
+<p>| AMOS Shim                | Native BBCSDL                        | | ------------------------ | ------------------------------------ | | <code>SPRITE n, x, y, img</code>    | <code>FN_load_sprite + PROC_sprite_place</code> | | <code>BOB n, x, y, "file"</code>    | <code>FN_load_gif + PROC_bob_create</code>      | | <code>MOVE n, x, y, steps</code>    | Manual loop with position updates    | | <code>COLL(a, b)</code>             | <code>FN_sprite_bob_collide</code>              | | <code>SOUND ch, fq, dur, vol</code> | <code>SOUND</code> built-in                     |</p>
+<p>Choose whichever style you find more natural. The AMOS shim is great for quick prototyping and for programmers coming from AMOS. The native BBCSDL commands give you finer control.</p>
+<h4>Exercise 8.1</h4>
+<p>Rewrite the guessing game from Section 4 using the AMOS shim, adding a sprite that bounces around the screen while you play.</p>
+<p>---</p>
+<h2>9. Working with Assets</h2>
+<h3>The Asset Pipeline</h3>
+<p>Assets — sprites, BOBs, sounds, maps — live in your Vault:</p>
+<pre><code>~/Vault/assets/
+├── sprites/
+│   ├── player.chr
+│   ├── enemy.chr
+│   └── boss.chr
+├── bobs/
+│   ├── explosion.gif
+│   ├── sparkle.gif
+│   └── smoke.gif
+├── sounds/
+│   ├── coin.wav
+│   ├── jump.wav
+│   └── death.wav
+└── maps/
+    ├── level1.json
+    └── level2.json</code></pre>
+<h3>Loading Assets in uCode Programs</h3>
+<p>BBCSDL can load assets from your Vault using the <code>@lib$</code> path prefix:</p>
+<pre><code>REM Load a sprite from the Vault
+player% = FN_load_sprite(&quot;@vault$/assets/sprites/player.chr&quot;, 24, 24)
+
+REM Load a BOB
+explosion% = FN_load_gif(&quot;@vault$/assets/bobs/explosion.gif&quot;)
+
+REM Load a sound
+coin_sound% = FN_load_sound(&quot;@vault$/assets/sounds/coin.wav&quot;, 1)</code></pre>
+<p>The <code>@vault$</code> prefix points to your <code>~/Vault</code> directory. You can also use direct file paths.</p>
+<h3>Sound</h3>
+<p>BBCSDL handles sound through the <code>audiolib</code> library:</p>
+<pre><code>INSTALL @lib$ + &quot;audiolib&quot;
+
+REM Load a sound
+coin% = FN_load_sound(&quot;coin.wav&quot;, 1)
+
+REM Play it
+PROC_play_sound(coin%)
+
+REM Play with pan and volume
+PROC_play_sound_ex(coin%, 0.5, 1.0)   REM Centre, full volume</code></pre>
+<h3>Map Files</h3>
+<p>JSON maps can describe tile layouts for your games:</p>
+<pre><code>{
+  &quot;width&quot;: 40,
+  &quot;height&quot;: 25,
+  &quot;tiles&quot;: [
+    &quot;#####################&quot;,
+    &quot;#                   #&quot;,
+    &quot;#    @     $        #&quot;,
+    &quot;#                   #&quot;,
+    &quot;#####################&quot;
+  ]
+}</code></pre>
+<p>Load and parse a map in uCode:</p>
+<pre><code>REM BBCSDL includes JSON parsing
+map$ = FN_read_file(&quot;~/Vault/assets/maps/level1.json&quot;)
+data$ = FN_json_parse(map$)
+width% = FN_json_get_int(data$, &quot;width&quot;)
+height% = FN_json_get_int(data$, &quot;height&quot;)</code></pre>
+<h3>Organising Your Assets</h3>
+<p>A well-organised Vault makes game development much easier:</p>
+<p>1. <strong>Use consistent naming</strong> — <code>player_idle.chr</code>, <code>player_walk1.chr</code>, <code>player_walk2.chr</code> 2. <strong>Keep sprite sheets small</strong> — 24x24 pixels per frame is a good starting size 3. <strong>Prefer WAV for sounds</strong> — it is lossless and guaranteed to work 4. <strong>Version your maps</strong> — <code>level1_v2.json</code> lets you iterate without losing the original</p>
+<h4>Exercise 9.1</h4>
+<p>Organise your Vault with the directory structure shown above. Create a simple program that loads a sprite, a BOB, and plays a sound when they collide.</p>
+<p>---</p>
+<h2>10. LENS & SKIN</h2>
+<h3>What are LENS and SKIN?</h3>
+<p><strong>LENS</strong> captures the current state of your uCode program — what is on screen, where sprites are positioned, what sounds are playing. Think of it as taking a photograph of your running game.</p>
+<p><strong>SKIN</strong> applies a visual theme to your captured LENS data. You can change colours, swap character sets, or apply completely different visual styles without modifying your program.</p>
+<h3>Using LENS</h3>
+<pre><code># Capture the current state of a running program
+ucode lens capture my-game --output state.json</code></pre>
+<p>The state file contains all the information needed to recreate the current view:</p>
+<pre><code>{
+  &quot;mode&quot;: 7,
+  &quot;cursor&quot;: { &quot;x&quot;: 10, &quot;y&quot;: 5 },
+  &quot;sprites&quot;: [{ &quot;id&quot;: 1, &quot;x&quot;: 100, &quot;y&quot;: 200, &quot;frame&quot;: 3 }],
+  &quot;bobs&quot;: [{ &quot;id&quot;: 1, &quot;x&quot;: 300, &quot;y&quot;: 250, &quot;frame&quot;: 12 }],
+  &quot;cells&quot;: [
+    { &quot;row&quot;: 0, &quot;col&quot;: 0, &quot;char&quot;: &quot;H&quot;, &quot;fg&quot;: 2, &quot;bg&quot;: 0 },
+    { &quot;row&quot;: 0, &quot;col&quot;: 1, &quot;char&quot;: &quot;e&quot;, &quot;fg&quot;: 2, &quot;bg&quot;: 0 }
+  ]
+}</code></pre>
+<h3>Using SKIN</h3>
+<p>SKIN themes transform how your program looks without changing how it works:</p>
+<pre><code># List available themes
+ucode skin list
+
+# Apply a theme to a capture
+ucode skin apply state.json teletext --output themed.json
+
+# Apply a theme to a running program
+ucode skin apply my-game.snack dark_mode</code></pre>
+<h3>Built-in SKIN Themes</h3>
+<p>| Theme      | Description                            | | ---------- | -------------------------------------- | | <code>bbc</code>      | Classic BBC Micro 8-colour palette     | | <code>teletext</code> | 16-colour teletext-compatible display  | | <code>inverse</code>  | All-black monochrome for accessibility |</p>
+<p>The LENS/SKIN system is still being developed. Future uCode releases will add more themes and the ability to create custom themes.</p>
+<h3>Custom Themes</h3>
+<p>In a future uCode release, you will be able to define custom themes:</p>
+<pre><code># custom-theme.yaml (future format)
+name: &quot;pastel&quot;
+palette:
+  0: &quot;#FFE0E0&quot;
+  1: &quot;#E0FFE0&quot;
+  2: &quot;#E0E0FF&quot;</code></pre>
+<h4>Exercise 10.1</h4>
+<p>Run a teletext program, capture its state with LENS, and apply the <code>inverse</code> SKIN theme. Observe how the colours change without modifying your program.</p>
+<p>---</p>
+<h2>11. Snacks</h2>
+<h3>What is a Snack?</h3>
+<p>A <strong>Snack</strong> is a self-contained, portable program that bundles everything it needs into one directory. You can share snacks with friends, publish them online, or keep them as complete snapshots of your work.</p>
+<h3>Snack Structure</h3>
+<pre><code>my-game.snack/
+├── main.ucode            # Entry point (required)
+├── manifest.yaml         # Metadata (required)
+├── sprites/              # Sprite files
+│   ├── player.chr
+│   └── enemy.chr
+├── bobs/                 # Animated GIFs
+│   └── explosion.gif
+├── sounds/               # Audio files
+│   └── coin.wav
+└── maps/                 # Level data
+    └── level1.json</code></pre>
+<h3>manifest.yaml</h3>
+<pre><code>name: &quot;My Awesome Game&quot;
+author: &quot;your-username&quot;
+version: &quot;1.0.0&quot;
+description: &quot;A platform game about collecting coins.&quot;
+engine: &quot;bbcsdl-1.36a&quot;
+entry: &quot;main.ucode&quot;
+type: &quot;game&quot;</code></pre>
+<h3>Creating a Snack</h3>
+<pre><code>ucode snack create my-game --template game</code></pre>
+<p>This creates the directory structure and a template <code>main.ucode</code> file. Edit the files, then build:</p>
+<pre><code>ucode snack build my-game</code></pre>
+<h3>Publishing a Snack</h3>
+<pre><code>ucode snack publish my-game.snack</code></pre>
+<p>This creates a compressed <code>.snack</code> file that you can share. Other uCode users can install it with:</p>
+<pre><code>ucode snack install my-game.snack</code></pre>
+<h3>Running a Snack</h3>
+<pre><code>ucode snack run my-game</code></pre>
+<p>The runtime loads <code>main.ucode</code> from the snack directory, makes all assets available, and runs the program.</p>
+<h3>Snack Templates</h3>
+<p>| Template   | Description                                         | | ---------- | --------------------------------------------------- | | <code>game</code>     | Sprite-based game with keyboard input and collision | | <code>teletext</code> | MODE 7 text-based program (quiz, menu, adventure)   | | <code>empty</code>    | Minimal starter — just a main.ucode file            |</p>
+<h4>Exercise 11.1</h4>
+<p>Create a snack using the <code>teletext</code> template. Make it a simple quiz game with three questions. Build it, run it, and verify it works before sharing.</p>
+<p>---</p>
+<h2>12. Advanced Features</h2>
+<h3>Physics with Box2D</h3>
+<p>BBCSDL includes the Box2D physics library for realistic movement, gravity, and collisions:</p>
+<pre><code>INSTALL @lib$ + &quot;box2dlib&quot;
+
+REM Create a physics world with gravity
+world% = FN_b2_create_world(0, -9.8)
+
+REM Create a dynamic body (affected by gravity)
+body% = FN_b2_create_body(world%, 100, 200, &quot;dynamic&quot;)
+
+REM Create a static ground
+ground% = FN_b2_create_body(world%, 320, 450, &quot;static&quot;)
+
+REPEAT
+  PROC_b2_step(world%)
+  x% = FN_b2_get_x(body%)
+  y% = FN_b2_get_y(body%)
+  PROC_sprite_place(player%, x%, y%)
+  WAIT 2
+UNTIL INKEY(-1)</code></pre>
+<h3>Networking</h3>
+<p>BBCSDL can open network connections for multiplayer games:</p>
+<pre><code>INSTALL @lib$ + &quot;socklib&quot;
+
+REM Connect to a server
+socket% = FN_sock_connect(&quot;localhost&quot;, 9000)
+
+REM Send data
+PROC_sock_send(socket%, &quot;Hello from uCode!&quot;)
+
+REM Receive data
+message$ = FN_sock_receive(socket%)
+
+PROC_sock_close(socket%)</code></pre>
+<h3>3D Graphics (WebGL)</h3>
+<p>For advanced 3D projects, BBCSDL can use WebGL:</p>
+<pre><code>INSTALL @lib$ + &quot;ogllib&quot;
+INSTALL @lib$ + &quot;webgllib&quot;
+
+PROC_gl_init(800, 600)
+PROC_gl_clear(0.1, 0.2, 0.3, 1.0)
+
+REM Draw a triangle
+PROC_gl_begin(&quot;triangles&quot;)
+PROC_gl_vertex(-0.5, -0.5, 0.0)
+PROC_gl_vertex(0.5, -0.5, 0.0)
+PROC_gl_vertex(0.0, 0.5, 0.0)
+PROC_gl_end()</code></pre>
+<h3>LENS State Variables</h3>
+<p>The Variable Manager (Section 10) lets you capture and restore program state:</p>
+<pre><code>INSTALL @lib$ + &quot;listlib&quot;
+
+REM Register variables
+PROC_var_register(&quot;score&quot;, 0, &quot;integer&quot;)
+PROC_var_register(&quot;player_name&quot;, &quot;Alice&quot;, &quot;string&quot;)
+
+REM Save state
+PROC_var_snapshot(&quot;savegame.json&quot;)
+
+REM Load state
+PROC_var_restore(&quot;savegame.json&quot;)
+score% = FN_var_get(&quot;score&quot;)</code></pre>
+<p>---</p>
+<h2>13. Command Reference</h2>
+<h3>BBC BASIC Core Commands</h3>
+<p>| Command                    | Description                                    | | -------------------------- | ---------------------------------------------- | | <code>PRINT</code>                    | Output text to screen                          | | <code>INPUT</code>                    | Read user input                                | | <code>REM</code>                      | Comment (ignored by interpreter)               | | <code>MODE 7</code>                   | Enter teletext mode (40x25)                    | | <code>COLOUR n</code>                 | Set text colour (0-7, or 128+n for background) | | <code>COLOUR n, r, g, b</code>        | Set palette colour n to RGB values             | | <code>CLS</code>                      | Clear screen                                   | | <code>TAB(x,y)</code>                 | Move cursor to column x, row y                 | | <code>END</code>                      | Stop program execution                         | | <code>WAIT n</code>                   | Wait n/100ths of a second                      | | <code>SOUND ch, fq, dur, vol</code>   | Play a sound                                   | | <code>RND(n)</code>                   | Random integer from 1 to n                     | | <code>DIM array%(n)</code>            | Declare an array                               | | <code>IF...THEN...ELSE...ENDIF</code> | Conditional execution                          | | <code>FOR...NEXT</code>               | Counted loop                                   | | <code>REPEAT...UNTIL</code>           | Conditional loop                               | | <code>WHILE...ENDWHILE</code>         | Conditional loop                               | | <code>DEF PROC_...ENDPROC</code>      | Define a procedure                             | | <code>DEF FN_...= value</code>        | Define a function                              | | <code>INKEY(n)</code>                 | Check keyboard key                             | | <code>STR$()</code>                   | Convert number to string                       | | <code>VAL()</code>                    | Convert string to number                       | | <code>LEN()</code>                    | Length of string                               | | <code>MID$()</code>                   | Substring                                      | | <code>ASC()</code>                    | ASCII code of character                        | | <code>CHR$()</code>                   | Character from ASCII code                      |</p>
+<h3>Sprite Commands (gfxlib)</h3>
+<p>| Command                          | Description                         | | -------------------------------- | ----------------------------------- | | <code>PROC_gfx_init(w, h, depth)</code>     | Initialise graphics                 | | <code>FN_load_sprite(file$, w, h)</code>    | Load a sprite                       | | <code>PROC_sprite_place(id, x, y)</code>    | Place a sprite                      | | <code>PROC_sprite_animate(id, frame)</code> | Set sprite animation frame          | | <code>PROC_sprite_remove(id)</code>         | Remove a sprite                     | | <code>FN_sprite_bob_collide(a, b)</code>    | Check collision between two objects |</p>
+<h3>BOB Commands (imglib)</h3>
+<p>| Command                            | Description          | | ---------------------------------- | -------------------- | | <code>FN_load_gif(file$)</code>               | Load an animated GIF | | <code>PROC_bob_create(id, x, y)</code>        | Place a BOB          | | <code>PROC_bob_animate(id, start, end)</code> | Animate a BOB        | | <code>PROC_bob_remove(id)</code>              | Remove a BOB         |</p>
+<h3>AMOS Shim Commands</h3>
+<p>| Command               | Description             | | --------------------- | ----------------------- | | <code>SPRITE n, x, y, img</code> | Place a sprite          | | <code>BOB n, x, y, file$</code>  | Place a BOB             | | <code>MOVE n, x, y, steps</code> | Smooth movement         | | <code>COLL(a, b)</code>          | Collision check         | | <code>WAIT VBL</code>            | Wait for vertical blank |</p>
+<h3>CLI Commands</h3>
+<p>| Command                                       | Description           | | --------------------------------------------- | --------------------- | | <code>ucode run file.ucode</code>                        | Run a program         | | <code>ucode</code>                                       | Start the REPL        | | <code>ucode lens capture prog --output state.json</code> | Capture LENS state    | | <code>ucode skin apply state.json theme</code>           | Apply SKIN theme      | | <code>ucode skin list</code>                             | List available themes | | <code>ucode snack create name --template t</code>        | Create a new snack    | | <code>ucode snack build name</code>                      | Build a snack         | | <code>ucode snack publish name.snack</code>              | Publish a snack       | | <code>ucode vault list programs</code>                   | List programs         | | <code>ucode vault snapshot save name</code>              | Save game state       |</p>
+<h3>Keyboard Scan Codes</h3>
+<p>| Key         | INKEY Code         | | ----------- | ------------------ | | ESC         | -1                 | | Space       | -99                | | Up arrow    | -58                | | Down arrow  | -42                | | Left arrow  | -26                | | Right arrow | -122               | | Return      | -74                | | A-Z         | ASC(code) negative |</p>
+<h3>Library Registry</h3>
+<p>| Library         | File                      | Purpose            | | --------------- | ------------------------- | ------------------ | | <code>gfxlib</code>        | <code>@lib$ + "gfxlib"</code>        | Sprite graphics    | | <code>imglib</code>        | <code>@lib$ + "imglib"</code>        | GIF/BOB animation  | | <code>audiolib</code>      | <code>@lib$ + "audiolib"</code>      | Sound playback     | | <code>mode7lib</code>      | <code>@lib$ + "mode7lib"</code>      | Enhanced MODE 7    | | <code>stringlib</code>     | <code>@lib$ + "stringlib"</code>     | String utilities   | | <code>listlib</code>       | <code>@lib$ + "listlib"</code>       | Linked lists       | | <code>box2dlib</code>      | <code>@lib$ + "box2dlib"</code>      | 2D physics         | | <code>socklib</code>       | <code>@lib$ + "socklib"</code>       | Network sockets    | | <code>ogllib</code>        | <code>@lib$ + "ogllib"</code>        | OpenGL graphics    | | <code>webgllib</code>      | <code>@lib$ + "webgllib"</code>      | WebGL rendering    | | <code>amos_shim.bbc</code> | <code>INSTALL "amos_shim.bbc"</code> | AMOS compatibility |</p>
+<p>---</p>
+<h2>Appendix A: BBC BASIC vs AMOS Comparison</h2>
+<p>| Feature       | BBC BASIC (1981) | AMOS (1990)     | uCode (2026)          | | ------------- | ---------------- | --------------- | --------------------- | | Line numbers  | Required         | Optional        | Optional              | | Graphics mode | MODE 0-7         | Hi-res planar   | MODE 7 + OpenGL       | | Sprites       | None built-in    | SPRITE command  | Both styles           | | BOBs          | None             | BOB command     | Animated GIFs         | | Sound         | SOUND command    | SOUND command   | SOUND + WAV/OGG       | | Collision     | Manual           | COLL() function | Both styles           | | IDE           | Built-in ROM     | AMOS Editor     | Your editor + CLI     | | File format   | .BBC tokens      | .AMOS           | .ucode plain text     | | Physics       | No               | No              | Box2D library         | | Networking    | No               | No              | socklib library       | | 3D            | No               | No              | OpenGL/WebGL          | | Portable      | No               | Amiga only      | Mac, Linux, Windows   | | Assets        | Built-in         | IFF format      | Vault directories     | | State save    | No               | No              | LENS/SKIN + variables |</p>
+<p>---</p>
+<h2>Appendix B: uCode Cheat Sheet</h2>
+<h3>Quick Start</h3>
+<pre><code>curl .../install.sh | bash      # Install uCode
+ucode run hello.ucode            # Run a program
+ucode                            # Start REPL</code></pre>
+<h3>Program Skeleton</h3>
+<pre><code>REM My Program
+MODE 7
+CLS
+PRINT &quot;Hello!&quot;
+END</code></pre>
+<h3>Graphics Skeleton</h3>
+<pre><code>INSTALL @lib$ + &quot;gfxlib&quot;
+PROC_gfx_init(640, 480, 32)
+sprite% = FN_load_sprite(&quot;player.chr&quot;, 24, 24)
+PROC_sprite_place(sprite%, 320, 240)</code></pre>
+<h3>Game Loop</h3>
+<pre><code>REPEAT
+  REM Read input
+  REM Update positions
+  REM Draw sprites
+  REM Check collisions
+  WAIT 2
+UNTIL INKEY(-1)   REM ESC to quit</code></pre>
+<h3>File Paths</h3>
+<pre><code>~/.ucode/                          # Runtime install
+~/Vault/programs/                  # Your programs
+~/Vault/assets/sprites/            # Sprite files
+~/Vault/assets/bobs/               # BOB/GIF files
+~/Vault/assets/sounds/             # Sound files
+~/Vault/assets/maps/               # Level data</code></pre>
+<h3>Colour Reference</h3>
+<p>| 0     | 1   | 2     | 3      | 4    | 5       | 6    | 7     | | ----- | --- | ----- | ------ | ---- | ------- | ---- | ----- | | Black | Red | Green | Yellow | Blue | Magenta | Cyan | White |</p>
+<h3>Common Patterns</h3>
+<pre><code>REM Counted loop
+FOR i% = 1 TO 10 : PRINT i% : NEXT i%
+
+REM Conditional
+IF score% &gt; 100 THEN PRINT &quot;Winner!&quot;
+
+REM Random number
+dice% = RND(6)
+
+REM String manipulation
+name$ = &quot;Alice&quot;
+greeting$ = &quot;Hello, &quot; + name$
+
+REM Array
+DIM enemies%(100)
+enemies%(0) = 42</code></pre>
+<p>---</p>
+<p>_"The best way to learn is to type in the examples, change them, break them, and fix them. That is how we all started."_</p>
+<p><strong>uCode — BBC BASIC for SDL 2.0</strong></p>
+<p>_Part of the uDos open-source ecosystem. No cloud. No payment. No tracking._</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

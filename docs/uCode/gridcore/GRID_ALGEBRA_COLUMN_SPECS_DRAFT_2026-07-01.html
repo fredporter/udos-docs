@@ -1,0 +1,241 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>gridcore/GRID_ALGEBRA_COLUMN_SPECS_DRAFT_2026-07-01.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / gridcore/GRID_ALGEBRA_COLUMN_SPECS_DRAFT_2026-07-01.md</span></header><main class="site-main"><h1>Grid Algebra & Column Size Specs</h1>
+<blockquote><strong>Status:</strong> Draft</blockquote>
+<blockquote><strong>Date:</strong> 2026-07-01</blockquote>
+<blockquote><strong>Scope:</strong> Grid Algebra, Column Size Specs, View Transformation Pipeline, GridCoreUI, Prose UI</blockquote>
+<p>---</p>
+<h2>1. Philosophy</h2>
+<p>The Grid Algebra is the mathematical foundation that unifies all display modes in uCore. It defines:</p>
+<p>1. <strong>Column sizes</strong> — how character width relates to viewport dimensions 2. <strong>Grid buffers</strong> — the canonical data structure for character-based displays 3. <strong>Viewport transforms</strong> — how a grid buffer maps to different screen sizes 4. <strong>View transformations</strong> — how markdown content maps to different output formats</p>
+<h3>Two Display Families</h3>
+<p>| Family | Purpose | Examples | Rendering | |--------|---------|----------|-----------| | <strong>GridCore UI</strong> | Embeddable character-grid widgets | Terminal, Teletext, Grid Editor | <code><gridui-canvas></code> Web Component | | <strong>Prose UI</strong> | Text/content browsers | Web pages, Publishing, Docs | HTML + CSS layout |</p>
+<p>Both families share:</p>
+<ul><li>Google CDN fonts (Inter for prose, VT323/PressStart2P for grid)</li><li>USX design tokens for spacing and color</li><li>The Grid Algebra for dimension calculations</li></ul>
+<p>---</p>
+<h2>2. Column Size Specs</h2>
+<h3>2.1 Character-to-Column Relationship</h3>
+<p>The fundamental unit is the <strong>character cell</strong> — a monospace character at a given font size. Column width is measured in <code>ch</code> units (CSS <code>ch</code> = width of <code>0</code> character in the current font).</p>
+<p>| Token | Value | Description | |-------|-------|-------------| | <code>--usx-col-width-xs</code> | 40ch | Narrow single column | | <code>--usx-col-width-sm</code> | 35ch | Comfortable reading column | | <code>--usx-col-width-md</code> | 72ch | Standard prose width (existing) | | <code>--usx-col-width-lg</code> | 80ch | Wide reading column | | <code>--usx-col-gap</code> | 24px | Gap between columns |</p>
+<h3>2.2 Viewport Column Presets</h3>
+<p>| Viewport | Breakpoint | Columns | Column Width | Total Content Width | Use Case | |----------|-----------|---------|-------------|-------------------|----------| | <strong>XS</strong> | < 480px | 1 | 40ch (fluid) | 100% - 48px padding | Phone portrait | | <strong>SM</strong> | 480-768px | 1-2 | 35ch | 100% - 48px padding | Phone landscape, small tablet | | <strong>MD</strong> | 768-1024px | 2 | 35ch | ~700-900px | Tablet portrait | | <strong>LG</strong> | 1024-1440px | 2-3 | 35ch | ~960-1280px | Desktop | | <strong>XL</strong> | 1440-1920px | 3-4 | 35ch | ~1280-1600px | Large monitor | | <strong>XXL</strong> | 1920px+ | 4-6 | 30ch | ~1600-1920px | TV, projector, ultrawide |</p>
+<h3>2.3 Grid Character Presets</h3>
+<p>These define the character-cell grid dimensions for GridCore UIs:</p>
+<p>| Grid Mode | Cols | Rows | Aspect | Use Case | |-----------|------|------|--------|----------| | <strong>Teletext</strong> | 40 | 25 | 4:3 | Classic Ceefax/Teletext | | <strong>Teletext Wide</strong> | 48 | 36 | 4:3 | Extended teletext (backend default) | | <strong>Terminal</strong> | 80 | 24 | ~4:3 | Classic terminal | | <strong>Terminal Wide</strong> | 120 | 36 | 16:9 | Wide terminal | | <strong>GridCore Editor</strong> | 60 | 20 | 3:1 | Grid editing workspace | | <strong>GridCore Map</strong> | 60 | 20 | 3:1 | Map/grid view | | <strong>Mini</strong> | 28 | 28 | 1:1 | Square widget |</p>
+<h3>2.4 CSS Custom Properties</h3>
+<pre><code>:root {
+  /* Column width tokens */
+  --usx-col-width-xs: 40ch;
+  --usx-col-width-sm: 35ch;
+  --usx-col-width-md: 72ch;
+  --usx-col-width-lg: 80ch;
+  --usx-col-gap: 24px;
+
+  /* Column count per breakpoint */
+  --usx-cols-xs: 1;
+  --usx-cols-sm: 1;
+  --usx-cols-md: 2;
+  --usx-cols-lg: 3;
+  --usx-cols-xl: 4;
+  --usx-cols-xxl: 6;
+
+  /* Grid character presets */
+  --usx-grid-teletext: 40x25;
+  --usx-grid-teletext-wide: 48x36;
+  --usx-grid-terminal: 80x24;
+  --usx-grid-terminal-wide: 120x36;
+  --usx-grid-editor: 60x20;
+}</code></pre>
+<p>---</p>
+<h2>3. Grid Algebra</h2>
+<h3>3.1 Core Types</h3>
+<pre><code>/** A single cell in a grid buffer */
+interface GridCell {
+  char: string        // The character to display
+  fg: number          // Foreground colour index (0-7)
+  bg: number          // Background colour index (0-7)
+  bold?: boolean      // Bold flag
+  blink?: boolean     // Blink flag (teletext)
+  mosaic?: boolean    // Mosaic block graphic flag
+}
+
+/** A 2D grid buffer */
+type GridBuffer = GridCell[][]
+
+/** Viewport dimensions */
+interface Viewport {
+  cols: number        // Number of character columns
+  rows: number        // Number of character rows
+  cellWidth: number   // Pixel width of each cell
+  cellHeight: number  // Pixel height of each cell
+  font: string        // Font family name
+}
+
+/** Column specification for prose layouts */
+interface ColumnSpec {
+  count: number       // Number of columns
+  width: string       // CSS width value (e.g. &quot;35ch&quot;)
+  gap: string         // CSS gap value (e.g. &quot;24px&quot;)
+  breakpoint: number  // Min viewport width in px
+}</code></pre>
+<h3>3.2 Viewport Resolution</h3>
+<pre><code>/**
+ * Resolve the optimal column spec for a given viewport width.
+ */
+function resolveColumns(viewportWidth: number): ColumnSpec {
+  if (viewportWidth &gt;= 1920) return { count: 6, width: &#x27;30ch&#x27;, gap: &#x27;24px&#x27;, breakpoint: 1920 }
+  if (viewportWidth &gt;= 1440) return { count: 4, width: &#x27;35ch&#x27;, gap: &#x27;24px&#x27;, breakpoint: 1440 }
+  if (viewportWidth &gt;= 1024) return { count: 3, width: &#x27;35ch&#x27;, gap: &#x27;24px&#x27;, breakpoint: 1024 }
+  if (viewportWidth &gt;= 768)  return { count: 2, width: &#x27;35ch&#x27;, gap: &#x27;24px&#x27;, breakpoint: 768 }
+  if (viewportWidth &gt;= 480)  return { count: 2, width: &#x27;35ch&#x27;, gap: &#x27;16px&#x27;, breakpoint: 480 }
+  return { count: 1, width: &#x27;40ch&#x27;, gap: &#x27;0&#x27;, breakpoint: 0 }
+}
+
+/**
+ * Calculate pixel dimensions for a character grid viewport.
+ */
+function calcViewport(cols: number, rows: number, cellSize: number, font: string): Viewport {
+  return {
+    cols,
+    rows,
+    cellWidth: cellSize,
+    cellHeight: cellSize * 1.2, // typical character height-to-width ratio
+    font,
+  }
+}</code></pre>
+<h3>3.3 Grid Buffer Operations</h3>
+<pre><code>/** Create an empty grid buffer */
+function createBuffer(cols: number, rows: number): GridBuffer
+
+/** Write a string into the buffer at position */
+function writeString(
+  buf: GridBuffer,
+  col: number,
+  row: number,
+  text: string,
+  fg?: number,
+  bg?: number,
+  bold?: boolean
+): GridBuffer
+
+/** Fill a rectangular region */
+function fill(
+  buf: GridBuffer,
+  col: number,
+  row: number,
+  width: number,
+  height: number,
+  char: string,
+  fg?: number,
+  bg?: number
+): GridBuffer
+
+/** Scroll buffer up by n rows */
+function scroll(buf: GridBuffer, rows?: number): GridBuffer
+
+/** Clear the buffer */
+function clear(buf: GridBuffer): GridBuffer</code></pre>
+<h3>3.4 Viewport Transforms</h3>
+<pre><code>/** Scale a grid buffer to a new dimension (nearest-neighbour) */
+function scaleBuffer(buf: GridBuffer, newCols: number, newRows: number): GridBuffer
+
+/** Crop a grid buffer to a sub-region */
+function crop(buf: GridBuffer, col: number, row: number, width: number, height: number): GridBuffer
+
+/** Centre a grid buffer within a larger viewport */
+function centre(buf: GridBuffer, canvasCols: number, canvasRows: number): GridBuffer</code></pre>
+<p>---</p>
+<h2>4. View Transformation Pipeline</h2>
+<h3>4.1 Markdown → Multi-View Pipeline</h3>
+<pre><code>                    ┌──────────────────┐
+                    │   Markdown Source │
+                    └────────┬─────────┘
+                             │
+                    ┌────────▼─────────┐
+                    │  Parse Frontmatter│
+                    │  + Split on ---  │
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              │              │              │
+     ┌────────▼──────┐ ┌────▼──────┐ ┌─────▼──────┐
+     │  Prose View   │ │Slide View │ │Multi-Col   │
+     │ (standard     │ │(Marp)     │ │View        │
+     │  scroll)      │ │           │ │            │
+     └───────────────┘ └───────────┘ └────────────┘
+              │              │              │
+     ┌────────▼──────┐ ┌────▼──────┐ ┌─────▼──────┐
+     │  Web Pub      │ │Print/PDF  │ │GridCore    │
+     │  (responsive  │ │(stub)     │ │Embed       │
+     │   columns)    │ │           │ │            │
+     └───────────────┘ └───────────┘ └────────────┘</code></pre>
+<h3>4.2 Slide Separator Convention</h3>
+<ul><li><code>---</code> (horizontal rule) on its own line = <strong>slide separator</strong> in Marp mode</li><li><code>---</code> is <strong>removed</strong> from Prose rendering (invisible in scroll view)</li><li><code>---</code> is <strong>invisible marker</strong> for story/broken-up pages</li><li>Frontmatter (YAML between <code>---</code> delimiters at start) provides slide/page metadata</li></ul>
+<h3>4.3 Rendering Modes</h3>
+<p>| Mode | Renderer | Output | Notes | |------|----------|--------|-------| | <strong>prose</strong> | <code>useMarkdown.ts</code> (enhanced) | HTML | Standard scroll, <code>---</code> removed | | <strong>columns</strong> | <code>MultiColumnViewer.vue</code> | CSS columns | Content flows into columns | | <strong>slides</strong> | <code>@marp-team/marp-core</code> | HTML slides | <code>---</code> = slide break | | <strong>web-pub</strong> | <code>PublishViewer.vue</code> | HTML + CSS | Responsive columns, web fonts | | <strong>grid</strong> | <code><gridui-canvas></code> | Canvas/WebGL | Character grid rendering |</p>
+<p>---</p>
+<h2>5. GridCoreUI Embeddable Component</h2>
+<h3>5.1 Component Interface</h3>
+<pre><code>&lt;GridCoreUI
+  :buffer=&quot;gridBuffer&quot;
+  :cols=&quot;60&quot;
+  :rows=&quot;20&quot;
+  :cell-size=&quot;16&quot;
+  :font=&quot;&#x27;pressstart2p&#x27;&quot;
+  :mode=&quot;&#x27;edit&#x27; | &#x27;view&#x27; | &#x27;map&#x27;&quot;
+/&gt;</code></pre>
+<h3>5.2 Web Component (<code><gridui-canvas></code>)</h3>
+<p>Framework-agnostic custom element that:</p>
+<ul><li>Renders a character grid to a <code><canvas></code> element</li><li>Supports colour palette (8 foreground + 8 background)</li><li>Handles bold, blink, mosaic modes</li><li>Auto-scales to fit container</li><li>Emits <code>cell-click</code> and <code>cell-hover</code> events</li></ul>
+<h3>5.3 Colour Palette</h3>
+<p>| Index | Name | Hex (Dark) | Hex (Light) | |-------|------|-----------|------------| | 0 | Black | <code>#000000</code> | <code>#000000</code> | | 1 | Red | <code>#e6193c</code> | <code>#cc0000</code> | | 2 | Green | <code>#3fb950</code> | <code>#00aa00</code> | | 3 | Yellow | <code>#f2cc60</code> | <code>#cccc00</code> | | 4 | Blue | <code>#58a6ff</code> | <code>#0000cc</code> | | 5 | Magenta | <code>#bc8cff</code> | <code>#cc00cc</code> | | 6 | Cyan | <code>#39c5cf</code> | <code>#00cccc</code> | | 7 | White | <code>#c9d1d9</code> | <code>#ffffff</code> |</p>
+<p>---</p>
+<h2>6. USX CSS Extensions</h2>
+<h3>6.1 New Tokens</h3>
+<pre><code>:root {
+  /* Column widths */
+  --usx-col-width-xs: 40ch;
+  --usx-col-width-sm: 35ch;
+  --usx-col-width-md: 72ch;
+  --usx-col-width-lg: 80ch;
+  --usx-col-gap: 24px;
+
+  /* Prose width variants */
+  --usx-prose-width-sm: 40ch;
+  --usx-prose-width-md: 72ch;
+  --usx-prose-width-lg: 80ch;
+}</code></pre>
+<h3>6.2 Column Classes</h3>
+<pre><code>/* Multi-column layout */
+.usx-columns { column-gap: var(--usx-col-gap); }
+.usx-columns-1 { columns: 1; }
+.usx-columns-2 { columns: 2; }
+.usx-columns-3 { columns: 3; }
+.usx-columns-4 { columns: 4; }
+.usx-columns-6 { columns: 6; }
+
+/* Responsive columns */
+.usx-columns--responsive {
+  columns: 1;
+}
+@media (min-width: 480px) { .usx-columns--responsive { columns: var(--usx-cols-sm); } }
+@media (min-width: 768px) { .usx-columns--responsive { columns: var(--usx-cols-md); } }
+@media (min-width: 1024px) { .usx-columns--responsive { columns: var(--usx-cols-lg); } }
+@media (min-width: 1440px) { .usx-columns--responsive { columns: var(--usx-cols-xl); } }
+@media (min-width: 1920px) { .usx-columns--responsive { columns: var(--usx-cols-xxl); } }</code></pre>
+<h3>6.3 Prose Width Variants</h3>
+<pre><code>.usx-prose--sm { max-width: var(--usx-prose-width-sm); }
+.usx-prose--md { max-width: var(--usx-prose-width-md); }
+.usx-prose--lg { max-width: var(--usx-prose-width-lg); }</code></pre>
+<p>---</p>
+<h2>7. Implementation Roadmap</h2>
+<h3>Phase 1: Spec + CSS Primitives (NOW)</h3>
+<ul><li>[x] This spec document</li><li>[ ] Add column tokens to <code>usx-standard.css</code></li><li>[ ] Add column classes to <code>usx-standard.css</code></li><li>[ ] Add prose width variants</li></ul>
+<h3>Phase 2: Grid Algebra Package</h3>
+<ul><li>[ ] Create <code>frontend-vue/src/grid-core/algebra.ts</code></li><li>[ ] Create <code>frontend-vue/src/grid-core/viewport.ts</code></li><li>[ ] Create <code>frontend-vue/src/grid-core/buffer.ts</code></li><li>[ ] Create <code>frontend-vue/src/grid-core/types.ts</code></li><li>[ ] Create <code>frontend-vue/src/grid-core/index.ts</code></li></ul>
+<h3>Phase 3: GridCoreUI Web Component</h3>
+<ul><li>[ ] Create <code><gridui-canvas></code> custom element</li><li>[ ] Fix cell spacing (no gaps between tiles)</li><li>[ ] Implement colour palette</li><li>[ ] Implement bold/blink/mosaic modes</li><li>[ ] Implement auto-scale to container</li></ul>
+<h3>Phase 4: Markdown Enhancement</h3>
+<ul><li>[ ] Update <code>useMarkdown.ts</code> to strip <code>---</code> in prose mode</li><li>[ ] Add Marp slide rendering pipeline</li><li>[ ] Create <code>MultiColumnViewer.vue</code></li><li>[ ] Create <code>SlideViewer.vue</code></li><li>[ ] Create <code>PublishViewer.vue</code></li></ul>
+<h3>Phase 5: GridCoreUI Vue Component</h3>
+<ul><li>[ ] Create <code>GridCoreUI.vue</code> wrapper</li><li>[ ] Integrate with grid algebra</li><li>[ ] Support mode switching (edit/view/map)</li></ul>
+<h3>Phase 6: Prose UI Viewers</h3>
+<ul><li>[ ] Create <code>ProseViewer.vue</code></li><li>[ ] Wire up to existing surfaces</li><li>[ ] Add web publishing layout</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

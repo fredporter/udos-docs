@@ -1,0 +1,156 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>GRIDUI_RENDERING_CONTRACT.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / GRIDUI_RENDERING_CONTRACT.md</span></header><main class="site-main"><h1>GridUI Rendering Contract — uCode Runtime Target</h1>
+<p><strong>Date</strong>: 2026-07-02 <strong>Status</strong>: v2 — Per-cell char-width, fixed grid, multiple render modes <strong>Purpose</strong>: Defines the pixel-exact rendering contract. The uCode backend runtime produces <code>GridBuffer</code> objects; the frontend renders them. The grid is a <strong>fixed 24×24 pixel cell matrix</strong> — character widths are per-cell, enabling mixed rendering modes on the same grid line.</p>
+<p>---</p>
+<h2>Architecture</h2>
+<pre><code>GridAlgebra (fixed 24×24 cells)     ← grid-core/types.ts, buffer.ts, algebra.ts
+  └── GridBuffer: GridCell[][]       ← cols × rows, each cell is 24×24 CSS px
+       └── GridCell {
+             char: string            ← G0 char code (teletext) or Unicode
+             fg, bg: number          ← palette indices 0-7
+             bold?, blink?, mosaic?  ← formatting flags
+             width?: number          ← render width in CSS px (optional)
+           }
+            ↓
+GridUICanvasElement.setBuffer(buf)   ← Web Component
+  ├── Background: fillRect → full 24×24 cell (zero gaps)
+  ├── Mode: font (Press Start 2P)    ← fillText, square, natural
+  ├── Mode: teletext (MODE7GX3)      ← fillText clipped, char-width=26px
+  └── Mode: block (fillRect)         ← solid fills for graphic chars</code></pre>
+<h2>Core Principle: Fixed Grid, Variable Char Width</h2>
+<pre><code>┌─────────────────────────────────────────────────┐
+│  Grid is always: cols × cellSize CSS pixels      │
+│  e.g. 40 × 20px = 800 × 500                      │
+│                                                   │
+│  Each cell background: 20 × 20 px (gapless)       │
+│  Each char renders at: cell.width || defaultCharW │
+│                                                   │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+│  │ background│  │ background│  │ background│       │
+│  │   [==]    │  │ [MODE7GX3]│  │ [Press2P] │       │
+│  │  charW=26 │  │ charW=26  │  │ charW=20  │       │
+│  └──────────┘  └──────────┘  └──────────┘        │
+│  Same grid cell size (20×20), different char width │
+└─────────────────────────────────────────────────┘</code></pre>
+<h2>Surface Layout</h2>
+<h3>UCodeSurface (route: <code>/ucode</code>)</h3>
+<p>| Tab | Cols | Rows | Cell | Font | Char W | Viewport | Notes | |-----|------|------|------|------|--------|----------|-------| | <strong>Terminal</strong> | 40 | 25 | 20px | <code>pressstart2p</code> | 20px | 800×500 | Square, natural | | <strong>Teletext</strong> | 40 | 25 | 20px | <code>mode7gx3</code> | 26px | 800×500 | Wider chars, clipped | | <strong>Grid</strong> (editor) | 24 | 24 | 24px | <code>mode7gx3</code> | 24px | 576×576 | 1× retro base | | <strong>Grid</strong> (layer) | 40 | 25 | 12px | <code>mode7gx3</code> | 12px | 480×300 | Miniature overview | | <strong>Layer</strong> | 40 | 25 | 20px | <code>mode7gx3</code> | 26px | 800×500 | Match teletext |</p>
+<h3>Standalone Routes</h3>
+<p>| Route | Cols | Rows | Cell | Font | Char W | Viewport | |-------|------|------|------|------|--------|----------| | <code>/terminal</code> | 40 | 25 | 20px | <code>pressstart2p</code> | 20px | 800×500 | | <code>/teletext</code> | 40 | 25 | 20px | <code>mode7gx3</code> | 26px | 800×500 |</p>
+<h2>Pixel-Perfect Rendering Guarantees</h2>
+<h3>Cell Dimensions (fixed)</h3>
+<pre><code>canvas CSS width  = cols × cellSize          (exact, e.g. 800px)
+canvas CSS height = rows × cellSize          (exact, e.g. 500px)
+canvas pixel w/h  = CSS dims × devicePixelRatio</code></pre>
+<h3>Zero-Gap Background</h3>
+<p>Each cell background fills the full cell with 1px overlap:</p>
+<pre><code>ctx.fillRect(x, y, cellW + 1, cellH + 1)</code></pre>
+<p>No gap, padding, or margin between adjacent cell backgrounds — ever.</p>
+<h3>Variable Char Width</h3>
+<pre><code>// Per-cell width overrides default
+const chW = cell.width ? Math.round(cell.width * dpr) : defaultCharW
+
+// Character centered within its width inside the fixed cell
+const cx = x + (cellW - chW) / 2 + chW / 2
+ctx.fillText(cell.char, cx, y + cellH / 2)</code></pre>
+<p>| Scenario | Cell | Char Width | Overflow | Clipped | |----------|------|-----------|----------|---------| | Square font (pressstart2p) | 20px | 20px (= cell) | None | No | | Teletext (MODE7GX3) | 20px | <strong>26px</strong> | +3px each side | Yes | | Per-cell override | 20px | cell.width | Varies | Yes |</p>
+<h3>Font Sizing (derived from char-width)</h3>
+<pre><code>fontScale = defaultCharW / cellW    (in physical pixels)
+fontSize  = cellSize × fontScale × dpr</code></pre>
+<p>| Font | Config | Scale | Font Size | Glyph Fill | |------|--------|-------|-----------|------------| | <code>pressstart2p</code> | char-width=20 | 1.0× | 40px @2x | ~50% (natural) | | <code>mode7gx3</code> | char-width=26 | <strong>1.3×</strong> | 52px @2x | <strong>101%</strong> ✅ | | <code>mode7gx3</code> (fallback) | char-width=24 | 1.0× | 40px @2x | ~78% |</p>
+<h3>Colour Palette</h3>
+<p>The 8-colour unified palette (<code>PALETTE_DARK</code>) from <code>grid-core/palette.ts</code>:<｜end▁of▁thinking｜></p>
+<p><｜｜DSML｜｜tool_calls> <｜｜DSML｜｜invoke name="read_file"> <｜｜DSML｜｜parameter name="filePath" string="true">/Users/fredbook/Code/uCore/docs/GRIDUI_RENDERING_CONTRACT.md | Index | Dark Theme | Purpose | |-------|-----------|---------| | 0 | <code>#000000</code> | Background/black | | 1 | <code>#dc3545</code> | Red/error | | 2 | <code>#198754</code> | Green/success | | 3 | <code>#ffc107</code> | Yellow/warning | | 4 | <code>#0d6efd</code> | Blue/info | | 5 | <code>#6f42c1</code> | Purple/accent | | 6 | <code>#0dcaf0</code> | Cyan/info-alt | | 7 | <code>#f8f9fa</code> | Foreground/white |</p>
+<h2>Container Behavior</h2>
+<h3>Grid Sizing</h3>
+<ul><li>The <code><gridui-canvas></code> custom element sizes itself intrinsically to <code>cols × cellSize</code> CSS pixels.</li><li>The host element sets <code>style.width</code> and <code>style.height</code> to match.</li><li>The viewport (<code>.ucode-viewport</code>) is a flex container with <code>overflow: auto</code>.</li><li>If the grid is <strong>smaller</strong> than the viewport → centered via flexbox.</li><li>If the grid is <strong>larger</strong> than the viewport → scrollbars appear.</li></ul>
+<h3>Retina/DPR Handling</h3>
+<ul><li>Canvas pixel dimensions = CSS dimensions × <code>devicePixelRatio</code></li><li>The <code><canvas></code> element's <code>width</code>/<code>height</code> attributes are set in physical pixels.</li><li>CSS <code>width</code>/<code>height</code> on the canvas use CSS pixel values (matching grid dimensions).</li><li>This ensures crisp rendering on Retina displays.</li></ul>
+<h2>Rendering Component Architecture</h2>
+<pre><code>UCodeSurface.vue                    ← Tab UI, demo data loading
+  ├── canvasCache (Map&lt;tabId, Element&gt;)  ← State preservation across tab switches
+  └── gridui-canvas (Web Component)      ← Renders each tab&#x27;s grid
+
+grid-core/gridui-canvas.ts          ← Canvas 2D renderer (PRIMARY)
+  └── GridUICanvasElement            ← Custom Element
+       ├── _fitCanvas()              ← Sets canvas to cols×cellSize
+       ├── _render()                 ← Draws each cell as fillRect + fillText
+       ├── setBuffer(buf)            ← Public API for buffer updates
+       └── Supports blink, bold, mosaic modes
+
+vendor/gridui-canvas/GridUICanvasElement.ts  ← CSS Grid span renderer (ALTERNATE)
+  └── Used by standalone /terminal route (TerminalSurface.vue)</code></pre>
+<h2>Grid Buffer Type (Canonical)</h2>
+<pre><code>interface GridCell {
+  char: string        // The character to display (single glyph)
+  fg: number          // Foreground colour index (0-7)
+  bg: number          // Background colour index (0-7)
+  bold?: boolean      // Bold flag
+  blink?: boolean     // Blink flag (teletext)
+  mosaic?: boolean    // Mosaic block graphic flag
+  /** Render width in CSS pixels within the fixed cell.
+   *  Defaults to char-width attribute (26 for teletext, 20 for terminal).
+   *  Enables mixing square fonts, teletext, and sprites on same grid line. */
+  width?: number
+}
+
+type GridBuffer = GridCell[][]  // [row][col], y × x</code></pre>
+<p><strong>Source</strong>: <code>frontend-vue/src/grid-core/types.ts</code></p>
+<h3>Render Modes (per cell, on the same grid line)</h3>
+<p>| Mode | How | Cell example | |------|-----|-------------| | <strong>Square font</strong> | <code>fillText</code> at cell size | <code>pressstart2p</code> — 20px char in 20px cell | | <strong>Teletext</strong> | <code>fillText</code> clipped, wider char | <code>mode7gx3</code> — 26px char in 20px cell | | <strong>Block graphic</strong> | <code>fillRect</code> full cell | <code>=</code>, <code>-</code>, <code>|</code>, <code>#</code>, <code>X</code> | | <strong>Sprite/emoji</strong> | <code>cell.width</code> + <code>cell.char</code> | Any width, any glyph | | <strong>Mosaic</strong> | 2×3 sub-cell blocks | Teletext G0 block graphics |</p>
+<h2>uCode Runtime Requirements</h2>
+<p>The uCode backend runtime must produce <code>GridBuffer</code> objects. The runtime should:</p>
+<p>1. <strong>Use any grid size</strong> — 40×25 is the current standard; aspect presets in algebra.ts 2. <strong>Colour indices 0-7</strong> from the unified palette (GitHub Dark / Bootstrap) 3. <strong>Per-cell char widths</strong> via <code>cell.width</code> — enables mixed rendering 4. <strong>Support <code>bold</code></strong> for double-stroke, <strong><code>blink</code></strong> for teletext flash 5. <strong>Support <code>mosaic</code></strong> for 2×3 block graphics 6. <strong>Single Unicode code point per cell</strong> — one character per GridCell</p>
+<h3>Canvas vs CSS Rendering Decision — uCode Runtime Analysis</h3>
+<h4>Comparison</h4>
+<p>| Factor | Canvas 2D (current) | CSS DOM (<code><span></code> per cell) | Hybrid | |--------|---------------------|---------------------------|--------| | <strong>Text crispness</strong> | <code>fillText</code> always anti-aliased | <code>-webkit-font-smoothing:none</code> = <strong>pixel-crisp</strong> ✅ | Canvas for graphics, CSS for text | | <strong>G0 bitmap quality</strong> | Via offscreen canvas + NN scaling = crisp | Via @font-face (Galax approach) = <strong>native crisp</strong> | CSS text + canvas overlay | | <strong>Performance (static)</strong> | Single element, GPU composited ✅ | 1000 spans = fine ✅ | Slightly more complex | | <strong>Performance (animated)</strong> | <code>setBuffer()</code> → <code>_render()</code> = direct pixel push ✅ | 1000 DOM updates = layout thrash ❌ | Canvas handles animation | | <strong>Per-pixel control</strong> | Full — blend modes, transforms, drawImage ✅ | None ❌ | Canvas overlay handles this | | <strong>Sprite overlay</strong> | <code>drawImage</code> = trivial ✅ | Absolute positioning = painful ❌ | Canvas overlay ✅ | | <strong>Text selection</strong> | None ❌ | Native browser selection ✅ | CSS layer handles this | | <strong>Accessibility</strong> | None ❌ | Screen readers see text ✅ | CSS layer handles this | | <strong>Hit-testing</strong> | Manual cell-from-coord math | Browser native (click on span) | Both available | | <strong>Scrolling</strong> | <code>ctx.scroll</code> or re-render | Native DOM scroll | Canvas in scroll container | | <strong>Implementation</strong> | 300-line Web Component ✅ | Template per cell, event delegation | Two layers, synced |</p>
+<h4>Recommendation: Canvas for Runtime, CSS for Viewing</h4>
+<p>The uCode runtime will produce two types of output:</p>
+<p>| Output type | Volume | Update rate | Best renderer | |-------------|--------|-------------|---------------| | <strong>Running BASIC/AMOS program</strong> | Streaming | Per-frame (e.g. 30fps) | <strong>Canvas</strong> — direct pixel buffer updates, no DOM churn | | <strong>Teletext page</strong> | Static/loaded | Once | <strong>CSS</strong> — pixel-crisp text, selectable, accessible | | <strong>Sprites / game graphics</strong> | Continuous | Per-frame | <strong>Canvas</strong> — drawImage, transforms | | <strong>Grid editor</strong> | Interactive | On click | <strong>Canvas</strong> — single buffer, instant redraw |</p>
+<p><strong>Decision</strong>: The uCore frontend keeps <strong>Canvas 2D</strong> as the primary renderer. The <code><gridui-canvas></code> Web Component is designed to be embedded in any framework (Vue, React, plain HTML). For the uCode runtime specifically:</p>
+<p>1. <strong>Canvas for active runtime output</strong> — BASIC programs, game loops, sprites, scrolling terminal. Single buffer, direct pixel push, no DOM overhead. 2. <strong>G0 bitmap cache</strong> — Pre-render MODE7GX3 characters to binary bitmaps (see planned enhancement below). This gives pixel-crisp teletext text on canvas, matching CSS quality. 3. <strong>CSS DOM for static viewing</strong> — Optional render mode where the grid is rendered as CSS <code><span></code> elements with <code>-webkit-font-smoothing: none</code> for maximum readability. Used for teletext page browsing, documentation, etc. 4. <strong>Hybrid as future path</strong> — CSS for text layer, canvas overlay for graphics. Requires position synchronization but gives the best of both worlds.</p>
+<h3>G0 Bitmap Renderer</h3>
+<p>The teletext view uses a <strong>G0 bitmap renderer</strong> instead of <code>fillText()</code>. This eliminates canvas anti-aliasing, matching galax.xyz CSS quality.</p>
+<p><strong>Pipeline:</strong></p>
+<pre><code>MODE7GX3 font
+  → Render char at 48×40 (4× G0 size) on offscreen canvas
+    → Read pixels, threshold at 50% alpha → binary (fg/bg)
+      → Downscale 4× to 12×10 → G0 glyph bitmap
+        → Cache (Uint8Array, 120 bytes per char, 96 chars = 11.5KB)
+          → Render: 2× nearest-neighbour → 24×20, center in 24×24 cell
+            → putImageData or per-pixel fillRect</code></pre>
+<p><strong>Mosaic blocks</strong> (2×3) are generated algorithmically from the 6-bit pattern in the character code — no font needed.</p>
+<p><strong>Result</strong>: Zero anti-aliasing. Pixel-crisp Ceefax text matching galax.xyz CSS quality, rendered at canvas framerates with no DOM overhead.</p>
+<h3>Viewport Size Reference (24×24 base cell)</h3>
+<pre><code>viewports:
+  terminal_80x24:
+    1x: &quot;1920×576&quot;   # 80×24 × 24px
+    2x: &quot;3840×1152&quot;  # 80×24 × 48px  ← sweet spot
+  
+  teletext_40x25:
+    1x: &quot;960×600&quot;    # 40×25 × 24px
+    2x: &quot;1920×1200&quot;  # 40×25 × 48px
+    3x: &quot;2880×1800&quot;  # 40×25 × 72px  ← teletext ideal
+  
+  world_square_80x80:
+    1x: &quot;1920×1920&quot;
+    2x: &quot;3840×3840&quot;
+  
+  world_classic_80x60:
+    1x: &quot;1920×1440&quot;
+    2x: &quot;3840×2880&quot;
+  
+  widescreen_128x72:
+    1x: &quot;3072×1728&quot;
+    2x: &quot;6144×3456&quot;</code></pre>
+<h2>Verification Checklist</h2>
+<ul><li>[ ] Canvas <code>width</code>/<code>height</code> = <code>cols × cellSize × dpr</code></li><li>[ ] Canvas CSS dimensions = <code>cols × cellSize</code></li><li>[ ] Host element dimensions match canvas</li><li>[ ] No gaps between adjacent cells (verify via <code>getImageData</code> pixel sampling)</li><li>[ ] Font renders centered in cell (check <code>textBaseline: 'middle'</code>)</li><li>[ ] Retina displays render at 2x without blur</li><li>[ ] Tab switching preserves buffer state</li><li>[ ] Grid larger than viewport → scrollable</li><li>[ ] Grid smaller than viewport → centered</li></ul>
+<h2>Key Design Decisions</h2>
+<p>1. <strong>Fixed 24×24 cells, variable char widths</strong> — The grid algebra is constant. Character width is a per-cell property (<code>GridCell.width</code>), enabling mixed rendering modes (square font, teletext, sprites) on the same grid line.</p>
+<p>2. <strong>Per-cell font sizing</strong>: <code>fontScale = defaultCharW / cellW</code> — the font size derives from the char width. This means <code>char-width=26</code> at 20px cells gives 1.3× scale, filling 101% of the cell width.</p>
+<p>3. <strong>MODE7GX3 for teletext</strong> — Downloaded from galax.xyz, based on ModeSeven (BBC Micro MODE 7). Loaded via @font-face from <code>public/fonts/</code>. Replaces VT323 which had narrow glyphs.</p>
+<p>4. <strong>All canvas, not CSS</strong> — The <code><gridui-canvas></code> Web Component renders to a single <code><canvas></code> element. CSS DOM rendering with <code>-webkit-font-smoothing: none</code> could give crisper text but loses the per-pixel control needed for sprite/mosaic overlay.</p>
+<p>5. <strong>Per-cell mosaic blocks</strong> — The G0 2×3 mosaic system (6 sub-cells, each on/off via 6-bit code) is supported via the <code>mosaic</code> flag on <code>GridCell</code>.</p>
+<p>6. <strong>G0 bitmap renderer (planned)</strong> — Pre-render MODE7GX3 chars to 12×10 bitmaps via offscreen canvas, threshold to binary, render with nearest-neighbour scaling for pixel-crisp output matching galax.xyz quality.</p>
+<h2>Playwright Audit Results (2026-07-02)</h2>
+<p>| Tab | Expected | Actual | Canvas Pixels | Char Fill | Gaps | |-----|----------|--------|---------------|-----------|------| | Terminal (40×25, 20px, press2p) | 800×500 | 800×500 ✅ | 1600×1000 | ~50% (natural) | 0 bg gaps | | Teletext (40×25, 20px, mode7gx3) | 800×500 | 800×500 ✅ | 1600×1000 | <strong>101%</strong> ✅ | 0 bg, 10 narrow-char | | Grid editor (24×24, 24px) | 576×576 | 576×576 ✅ | 1152×1152 | 100% (block) | 0 | | Grid layer (40×25, 12px) | 480×300 | 480×300 ✅ | 960×600 | — | — |</p>
+<p><strong>All tabs: zero background gaps. Teletext: 0/40 separator gaps (edge-to-edge).</strong></p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

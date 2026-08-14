@@ -1,0 +1,250 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>gridcore/TERMINAL_BACKEND_UNIFICATION_PLAN.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / gridcore/TERMINAL_BACKEND_UNIFICATION_PLAN.md</span></header><main class="site-main"><h1>uCode Terminal ↔ Backend Unification Plan</h1>
+<p><strong>Date</strong>: 2026-07-12 <strong>Status</strong>: Planning — Phase A implementation in progress <strong>Sprint</strong>: sprint.2026-07-12 <strong>Scope</strong>: Wire the uCode Terminal (OK> prompt) to the live Python backend runtime (gridcore_adapter.py → SessionState → BBCSDL), unify command dispatch, and document the complete command surface.</p>
+<p>---</p>
+<h2>1. Architecture Overview</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────┐
+│                         BROWSER (Frontend)                           │
+│                                                                     │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────────────┐   │
+│  │ TerminalPanel │    │ TeletextPanel│    │ GridCanvas / Editor  │   │
+│  │  (80×24 or    │    │  (40×25)     │    │  (variable grid)    │   │
+│  │   40×25 grid) │    │              │    │                      │   │
+│  └──────┬───────┘    └──────┬───────┘    └──────────┬───────────┘   │
+│         │                   │                        │               │
+│         ▼                   ▼                        ▼               │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              @udos/viewport-renderer                          │   │
+│  │  TerminalWidget          TeletextWidget         GridEditor    │   │
+│  │  ─ attaches keyboard     ─ renders pages       ─ cell edits   │   │
+│  │  ─ DOM or Canvas view    ─ FASTEXT navigation  ─ layer mgmt   │   │
+│  └──────────────┬────────────────────────────────────────────────┘   │
+│                 │                                                    │
+│                 ▼                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              @udos/gridcore                                    │   │
+│  │  TerminalSurface         TeletextSurface       Grid (algebra) │   │
+│  │  ─ scrollback buffer    ─ page stack           ─ cells (x,y,z)│   │
+│  │  ─ input line           ─ page provider        ─ transforms    │   │
+│  │  ─ role colours         ─ mosaic blocks        ─ viewport calc │   │
+│  │                          ─ FASTEXT links                        │   │
+│  └──────────────┬────────────────────────────────────────────────┘   │
+│                 │                                                    │
+│                 ▼                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              RuntimeBridge                                     │   │
+│  │  ─ CommandDispatcher: (cmd) =&gt; { output, teletextPage? }      │   │
+│  │  ─ Event bus: command-output, teletext-navigate, error        │   │
+│  │  ─ Modes: in-process | websocket | (live python process)      │   │
+│  │                                                               │   │
+│  │  ★ Phase A adds: createProcessBridge() factory                │   │
+│  │    → spawns Python gridcore_adapter.py via stdin/stdout       │   │
+│  └──────────────┬──────────────────────────────────────────────┘   │
+│                 │  JSON-RPC 2.0 over stdin/stdout                   │
+│                 │  { &quot;method&quot;:&quot;dispatch&quot;,&quot;params&quot;:{&quot;command&quot;:&quot;X&quot;} } │
+│                 │  { &quot;result&quot;: { &quot;output&quot;:&quot;...&quot;,&quot;teletextPage&quot;:? }} │
+└─────────────────┼──────────────────────────────────────────────────┘
+                  │
+┌─────────────────┼──────────────────────────────────────────────────┐
+│                 ▼  PYTHON BACKEND (gridcore_adapter.py)            │
+│                                                                     │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              gridcore_adapter.py                               │   │
+│  │  ─ handle_request(): routes JSON-RPC methods                  │   │
+│  │  ─ dispatch_command(): maps command strings → results         │   │
+│  │  ─ load_teletext_page(n): loads/generates CEEFAX pages        │   │
+│  │  ─ serve_http(port): optional HTTP + WebSocket server         │   │
+│  └──────────────┬──────────────────────────────────────────────┘   │
+│                 │                                                    │
+│                 ▼                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              SessionState (singleton)                          │   │
+│  │  ─ grid: Grid(80, 24)           mutable cell grid             │   │
+│  │  ─ worlds: Dict[str, WorldEntry] world registry               │   │
+│  │  ─ program_lines: Dict[int, str]  loaded BASIC source         │   │
+│  │  ─ program_filename: str | None   current program name        │   │
+│  │  ─ active_world: str              selected world              │   │
+│  │                                                               │   │
+│  │  Methods: grid_set/get/render, world_create/list/switch,      │   │
+│  │           program_load/list/save/cat, renum                   │   │
+│  └──────────────┬──────────────────────────────────────────────┘   │
+│                 │                                                    │
+│                 ▼                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              LENS Registry (7 programs)                        │   │
+│  │  repton → repton_lens.py         elite → elite_lens.py        │   │
+│  │  nethack → nethack_lens.py       eamon → eamon_lens.py        │   │
+│  │  uconstruct → uconstruct_lens.py                               │   │
+│  │  knight-orc → knight_orc_lens.py                               │   │
+│  │  apple-panic → apple_panic_lens.py                             │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              BBCSDL Bridge (bbcsdl_bridge.py)                  │   │
+│  │  ─ BBCSDLProcess: spawn bbcsdl in headless mode               │   │
+│  │  ─ PROGRAM_LOAD / PROGRAM_RUN via stdin pipe                  │   │
+│  │  ─ Output capture via _read_loop thread                       │   │
+│  │  ★ Triggered by: OK&gt; RUN (after LOAD)                         │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+<p>---</p>
+<h2>2. Command Reference — Complete uCode Command Surface</h2>
+<p>The following 25 commands are available at the <code>OK></code> prompt. After Phase A, all dispatch through <code>gridcore_adapter.py</code> → <code>SessionState</code>.</p>
+<h3>2.1 Core Commands</h3>
+<p>| Command | Syntax | Description | Implemented | |---------|--------|-------------|:---:| | <code>HELP</code> | <code>HELP</code> or <code>?</code> | List all available commands | ✅ live | | <code>BEEP</code> | <code>BEEP</code> | Emit BEL character (ASCII 7) | ✅ live | | <code>QUIT</code> | <code>QUIT</code> | Signal session end | ✅ live |</p>
+<h3>2.2 Grid Commands</h3>
+<p>| Command | Syntax | Description | Implemented | |---------|--------|-------------|:---:| | <code>GRID</code> | <code>GRID [HELP]</code> | Show grid subcommands | ✅ live | | <code>GRID SET</code> | <code>GRID SET <col> <row> <char></code> | Set cell character at position | ✅ live | | <code>GRID GET</code> | <code>GRID GET <col> <row></code> | Get cell character at position | ✅ live | | <code>GRID SHOW</code> | <code>GRID SHOW</code> | ASCII render of current grid | ✅ live |</p>
+<h3>2.3 World Commands</h3>
+<p>| Command | Syntax | Description | Implemented | |---------|--------|-------------|:---:| | <code>WORLD</code> | <code>WORLD</code> or <code>WORLD LIST</code> | List all created worlds | ✅ live | | <code>WORLD NEW</code> | <code>WORLD NEW <name></code> | Create a new world (default 80×24) | ✅ live | | <code>WORLD CREATE</code> | <code>WORLD CREATE <name></code> | Alias for WORLD NEW | ✅ live | | <code>WORLD SWITCH</code> | <code>WORLD SWITCH <name></code> | Switch active world | ✅ live |</p>
+<h3>2.4 Program Commands (BBC BASIC)</h3>
+<p>| Command | Syntax | Description | Implemented | |---------|--------|-------------|:---:| | <code>CAT</code> | <code>CAT</code> or <code>DIR</code> | List available programs under <code>programs/</code> | ✅ live | | <code>LOAD</code> | <code>LOAD <filename></code> or <code>LOAD "<file>"</code> | Load a .bbc program into memory | ✅ live | | <code>LIST</code> | <code>LIST [start[-end]]</code> | List loaded program lines | ✅ live | | <code>RUN</code> | <code>RUN</code> | Execute loaded program via BBCSDL | ✅ live¹ | | <code>SAVE</code> | <code>SAVE [filename]</code> | Save program lines to file | ✅ live | | <code>NEW</code> | <code>NEW</code> | Clear program memory | ✅ live | | <code>RENUM</code> | <code>RENUM [start [step]]</code> | Renumber program lines | ✅ live |</p>
+<p>¹ <code>RUN</code> requires <code>bbcsdl</code> binary in <code>runtimes/basic/bbcsdl/</code>. Falls back to error message if not found.</p>
+<h3>2.5 Teletext / CEEFAX Commands</h3>
+<p>| Command | Syntax | Description | Implemented | |---------|--------|-------------|:---:| | <code>CEEFAX</code> | <code>CEEFAX</code> | Open Teletext at page 100 (Main Index) | ✅ live | | <code>CEEFAX N</code> | <code>CEEFAX <page></code> | Navigate to specific page (100–899) | ✅ live |</p>
+<p><strong>Known pages:</strong></p>
+<ul><li>100 — Main Index</li><li>400 — Vault Configuration</li><li>888 — Help & About</li></ul>
+<h3>2.6 Vault Commands</h3>
+<p>| Command | Syntax | Description | Implemented | |---------|--------|-------------|:---:| | <code>VAULT</code> | <code>VAULT</code> | Show vault key list | ✅ live | | <code>VAULT <key></code> | <code>VAULT ollama_endpoint</code> | Look up a vault key | ✅ live |</p>
+<h3>2.7 Ecosystem Commands</h3>
+<p>| Command | Syntax | Description | Implemented | |---------|--------|-------------|:---:| | <code>LAYER</code> | <code>LAYER [LIST]</code> | List grid layers | ✅ live | | <code>MAP</code> | <code>MAP [LIST]</code> | List loaded maps | ✅ live | | <code>UVOX</code> | <code>UVOX</code> | UVox spatial algebra engine status | ✅ live | | <code>SKIN</code> | <code>SKIN</code> | List available visual themes | ✅ live | | <code>LENS</code> | <code>LENS [HELP]</code> | List registered LENS programs | ✅ live | | <code>LENS LIST</code> | <code>LENS LIST</code> | Enumerate LENS extractor programs | ✅ live | | <code>LENS CAPTURE</code> | <code>LENS CAPTURE <program></code> | Capture game state snapshot | ✅ live | | <code>LENS RESTORE</code> | <code>LENS RESTORE <program></code> | Restore game state | ✅ live |</p>
+<h3>2.8 GridSmith Commands (informational)</h3>
+<p>| Command | Syntax | Description | Implemented | |---------|--------|-------------|:---:| | <code>GRIDSMITH</code> | <code>GRIDSMITH [HELP]</code> | GridSmith agent tool reference | ✅ live | | <code>GRIDSMITH TOOLS LIST</code> | — | List all 16 GridSmith tools | ✅ live |</p>
+<p>---</p>
+<h2>3. Phase Plan</h2>
+<h3>Phase A — Live Runtime IPC ✅ (in progress)</h3>
+<p><strong>Goal</strong>: Replace the mock <code>defaultDispatcher</code> with a live Python subprocess bridge.</p>
+<p><strong>Tasks:</strong></p>
+<p>| ID | Task | File | Status | |----|------|------|:---:| | A.1 | Add <code>createProcessBridge()</code> factory to RuntimeBridge | <code>packages/gridcore/src/bridge/runtime-bridge.ts</code> | ✅ | | A.2 | Add <code>stopProcessBridge()</code> lifecycle method | <code>packages/gridcore/src/bridge/runtime-bridge.ts</code> | ✅ | | A.3 | Verify Python dispatch works (HELP, LENS LIST, CAT, etc.) | <code>runtimes/basic/bridge/gridcore_adapter.py</code> | ☐ | | A.4 | Create live Python bridge demo page | <code>packages/viewport-renderer/demo/index.html</code> | ✅ | | A.5 | Build IIFE bundles for browser demo | <code>packages/gridcore/dist/</code>, <code>packages/viewport-renderer/dist/</code> | ☐ | | A.6 | End-to-end manual test (OK> HELP → live Python response) | Manual | ☐ | | A.7 | Unit test PythonProcessBridge with mock subprocess | <code>packages/gridcore/test/</code> | ☐ |</p>
+<p><strong>Validation</strong>: Type <code>HELP</code> at the terminal, receive the live Python backend's response (which differs from the mock — the Python backend returns "Commands: HELP BEEP RENUM GRID LAYER MAP WORLD VAULT CEEFAX UVOX SKIN LENS QUIT LOAD LIST RUN SAVE NEW CAT DIR").</p>
+<h3>Phase B — Frontend Surface Integration</h3>
+<p><strong>Goal</strong>: Replace the demo page's inline grid rendering with proper ViewportRenderer widgets, and integrate into the uCore frontend surface.</p>
+<p><strong>Tasks:</strong></p>
+<p>| ID | Task | File | Status | |----|------|------|:---:| | B.1 | Wire TerminalWidget to createProcessBridge auto-start | <code>TerminalWidget.ts</code> | ☐ | | B.2 | Add to demo page: bridge status indicator, auto-fallback to mock | <code>demo/index.html</code> | ☐ | | B.3 | Extract demo into reusable <code>ucode-terminal</code> page module | New file | ☐ | | B.4 | Replace uCore's UCodeSurface TerminalPanel with TerminalWidget | <code>uCore frontend</code> | ☐ | | B.5 | Replace uCore's TeletextGrid with TeletextWidget | <code>uCore frontend</code> | ☐ | | B.6 | Verify render parity: terminal font, teletext flash, mosaic | Visual | ☐ |</p>
+<h3>Phase C — Program Execution Loop</h3>
+<p><strong>Goal</strong>: Full <code>LOAD → LIST → RUN</code> cycle through the Terminal, with program output appearing inline.</p>
+<p><strong>Tasks:</strong></p>
+<p>| ID | Task | File | Status | |----|------|------|:---:| | C.1 | Wire BBCSDL stderr/stdout capture to SessionState output buffer | <code>bbcsdl_bridge.py</code>, <code>gridcore_adapter.py</code> | ☐ | | C.2 | Stream program output line-by-line through bridge events | <code>gridcore_adapter.py</code>, <code>runtime-bridge.ts</code> | ☐ | | C.3 | Add <code>RUN</code> output rendering to TerminalSurface (live stream mode) | <code>terminal-surface.ts</code> | ☐ | | C.4 | Test with each of 7 programs (LOAD → RUN → verify output) | Manual | ☐ | | C.5 | Add <code>PROGRAM</code> command group (STOP, CONT, STEP — if BBCSDL supports) | <code>gridcore_adapter.py</code> | ☐ |</p>
+<h3>Phase D — GridBuffer Round-Trip</h3>
+<p><strong>Goal</strong>: When a program runs and modifies a Grid, the GridBuffer is streamed back to the frontend viewport for live visual rendering.</p>
+<p><strong>Tasks:</strong></p>
+<p>| ID | Task | File | Status | |----|------|------|:---:| | D.1 | Define <code>grid_update</code> JSON-RPC method on adapter | <code>gridcore_adapter.py</code> | ☐ | | D.2 | Emit <code>grid-update</code> events from RuntimeBridge | <code>runtime-bridge.ts</code> | ☐ | | D.3 | Wire GridEditor widget to <code>grid-update</code> events | <code>viewport-renderer</code> | ☐ | | D.4 | Implement program → LENS-capture → GridBuffer projection | <code>lens.py</code>, adapter | ☐ | | D.5 | Test: <code>LOAD eamon</code>, <code>RUN</code>, see dungeon map in grid editor | Manual | ☐ |</p>
+<h3>Phase E — Teletext Data Sources</h3>
+<p><strong>Goal</strong>: Wire Vault, doc-sites, and User Feeds into the Teletext page provider with real data (not hardcoded).</p>
+<p><strong>Tasks:</strong></p>
+<p>| ID | Task | File | Status | |----|------|------|:---:| | E.1 | Load vault.yaml at runtime and generate page 400 dynamically | <code>gridcore_adapter.py</code> | ✅ | | E.2 | Add Markdown → Teletext page converter for doc-sites (page 500+) | New module | ☐ | | E.3 | Create course catalogue page 300 from <code>seeds/course-registry.json</code> | <code>gridcore_adapter.py</code> | ☐ | | E.4 | Add User Feed mappers (RSS/Atom → Teletext pages) | New module | ☐ | | E.5 | Add CEEFAX page file format: <code>runtimes/basic/ceefax/pages/<n>.json</code> | Pages dir | ☐ |</p>
+<p>---</p>
+<h2>4. Integration Wiring Diagram</h2>
+<pre><code>User types &quot;HELP&quot; in browser
+    │
+    ▼
+TerminalSurface.typeChar() → submit() → onCommand handler
+    │
+    ▼
+RuntimeBridge.sendCommand(&quot;HELP&quot;)
+    │
+    ▼
+CommandDispatcher(&quot;HELP&quot;)  ←─ set via setDispatcher() or constructor
+    │
+    ├─ [mock mode]    → defaultDispatcher() → { output: &quot;Commands: HELP...&quot; }
+    │                    emitted as command-output event
+    │
+    └─ [live mode]    → PythonProcessBridge.dispatchCommand(&quot;HELP&quot;)
+                         │
+                         ▼
+                      Write to stdin: {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;dispatch&quot;,
+                                         &quot;params&quot;:{&quot;command&quot;:&quot;HELP&quot;},&quot;id&quot;:&quot;1&quot;}
+                         │
+                         ▼  (Python subprocess)
+                      gridcore_adapter.handle_request()
+                         │
+                         ▼
+                      dispatch_command(&quot;HELP&quot;)
+                         │
+                         ▼
+                      Returns {&quot;output&quot;: &quot;Commands: HELP BEEP...LOAD LIST RUN...&quot;}
+                         │
+                         ▼
+                      Write to stdout: {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:&quot;1&quot;,&quot;result&quot;:{...}}
+                         │
+                         ▼  (TypeScript)
+                      PythonProcessBridge.handleStdout() → parse JSON
+                         │
+                         ▼
+                      resolve({ output: &quot;Commands: HELP BEEP...LOAD LIST...&quot; })
+                         │
+                         ▼
+                      RuntimeBridge sends result to emit(&#x27;command-output&#x27;, ...)
+                         │
+                         ▼
+                      TerminalSurface.writeLine() → redraw() → grid changed
+                         │
+                         ▼
+                      TerminalWidget.onDisplayChange → DOMViewport.render()
+                         │
+                         ▼
+                      Browser shows: &quot;Commands: HELP BEEP RENUM...&quot;</code></pre>
+<h3>Teletext Navigation Wire Path</h3>
+<pre><code>User types &quot;CEEFAX 400&quot;
+    │
+    ▼
+dispatch_command(&quot;CEEFAX 400&quot;)
+    │
+    ▼
+Returns {&quot;output&quot;: &quot;Loading page 400...&quot;, &quot;teletextPage&quot;: 400}
+    │
+    ▼
+RuntimeBridge.sendCommand() sees teletextPage
+    │
+    ▼
+emit(&#x27;teletext-navigate&#x27;, 400)
+    │
+    ▼
+teletextSurface.navigateTo(400)
+    │
+    ▼
+TeletextPageProvider → load_teletext_page(400) → vault.yaml → TeletextPage
+    │
+    ▼
+TeletextSurface writes page content to grid cells
+    │
+    ▼
+TeletextWidget.onDisplayChange → DOMViewport.render()
+    │
+    ▼
+CEEFAX page 400 visible in browser</code></pre>
+<p>---</p>
+<h2>5. File Inventory</h2>
+<h3>Source files being modified/created</h3>
+<pre><code>packages/gridcore/src/
+  bridge/
+    runtime-bridge.ts          ★ Phase A: add createProcessBridge(), stopProcessBridge()
+    python-process-bridge.ts   ★ Phase A: stabilize, add readiness check, error recovery
+  terminal/
+    terminal-surface.ts          Phase C: add live output streaming mode
+  index.ts                       Re-export createProcessBridge
+
+packages/viewport-renderer/src/
+  widgets/
+    TerminalWidget.ts            Phase B: add auto-bridge-start
+    TeletextWidget.ts            Phase B: add page-load-from-backend flag
+  demo/
+    index.html                   ★ Phase A/B: live bridge demo page
+
+runtimes/basic/bridge/
+  gridcore_adapter.py            ★ Phase A-D: command dispatch, grid_state method, RUN output
+  session_state.py               Phase C: program execution buffer
+  bbcsdl_bridge.py               Phase C: output capture → SessionState
+
+runtimes/basic/ceefax/
+  pages/                         Phase E: JSON page files for teletext</code></pre>
+<p>---</p>
+<h2>6. Test Strategy</h2>
+<p>| Layer | What | Tool | When | |-------|------|------|------| | Unit | PythonProcessBridge spawn/mock | vitest (with mock child_process) | Phase A | | Unit | gridcore_adapter dispatch_command (all 25 commands) | pytest | Phase A | | Unit | SessionState grid/world/program ops | pytest | Phase A | | Integration | RuntimeBridge → live Python → HELP response | vitest + subprocess | Phase A | | Integration | TerminalSurface → RuntimeBridge → Python → output rendering | vitest + jsdom | Phase B | | E2E | Demo page: type HELP, see live Python response | Playwright | Phase B | | E2E | LOAD → LIST → RUN → see program output | Playwright | Phase C | | E2E | CEEFAX 400 → Vault page renders | Playwright | Phase E |</p>
+<p>---</p>
+<h2>7. Documentation Deliverables</h2>
+<p>| Document | Path | Status | |----------|------|:---:| | Terminal ↔ Backend Unification Plan (this file) | <code>docs/gridcore/TERMINAL_BACKEND_UNIFICATION_PLAN.md</code> | ✅ | | uCode Command Reference (OK> prompt) | <code>docs/gridcore/OK_PROMPT_COMMAND_REFERENCE.md</code> | ☐ | | Python Bridge Protocol Specification | <code>docs/gridcore/PYTHON_BRIDGE_PROTOCOL.md</code> | ☐ | | Updated GridUI Rendering Contract | <code>docs/GRIDUI_RENDERING_CONTRACT.md</code> | Phase B | | Developer Quick Start (run the terminal demo) | <code>docs/basic/QUICK_START.md</code> (update) | Phase B |</p>
+<p>---</p>
+<h2>8. Risk Register</h2>
+<p>| Risk | Impact | Mitigation | |------|--------|------------| | <strong>Python venv mismatch</strong> — bridge spawns wrong Python version | Bridge won't start | Detect Python version at startup; fall back to mock | | <strong>BBCSDL binary not found</strong> — <code>RUN</code> fails | Broken program execution | Graceful error: "BBCSDL not installed" | | <strong>Large program output floods terminal</strong> — e.g., infinite loop | Browser tab freeze | Timeout (30s default), output line cap (500 lines) | | <strong>SessionState is singleton</strong> — multiple browser tabs share state | State confusion | Per-session keying (future); document as known limitation | | <strong>GridBuffer serialization overhead</strong> — 80×24 grid at 30fps | Performance drop | Delta-encoding, diff-only updates (Phase D) |</p>
+<p>---</p>
+<h2>9. Success Criteria</h2>
+<p>1. User opens demo page, clicks "Start Live Python Bridge", types <code>HELP</code> — receives live Python dispatch response 2. <code>CEEFAX 400</code> navigates to Vault page with real data from <code>config/vault.yaml</code> 3. <code>CAT</code> lists the 7 programs under <code>programs/</code> 4. <code>LOAD repton/src/repton.bbc</code> loads and <code>LIST</code> shows source 5. <code>LENS LIST</code> enumerates all 7 registered LENS extractors 6. <code>GRID SET 5 5 X</code> and <code>GRID GET 5 5</code> work with persistent SessionState 7. All existing tests continue to pass (307+) with no regressions 8. Bridge gracefully falls back to mock dispatcher if Python process crashes</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

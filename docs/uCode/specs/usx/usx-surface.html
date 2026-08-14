@@ -1,0 +1,96 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/usx/usx-surface.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / specs/usx/usx-surface.md</span></header><main class="site-main"><p>--- title: "USX Surface Specification — v1.0" status: draft last_updated: 2026-05-17T22:11:35+10:00 category: specification tags: [specification, surface, ucode1, usx] description: "> <strong>Surface definitions, ASCII blocks, and story format.</strong> Merged from USXD spec, USXD ASCII blocks, USXD-GO, and USX..." ---</p>
+<h1>USX Surface Specification — v1.0</h1>
+<blockquote><strong>Surface definitions, ASCII blocks, and story format.</strong> Merged from USXD spec, USXD ASCII blocks, USXD-GO, and USXD story format.</blockquote>
+<h2>Overview</h2>
+<p>USX Surface defines interactive surfaces — text/ASCII blocks that can be rendered in terminal or exported through tooling. Surfaces use the <code> </code>`<code>usx-surface </code> fence.</p>
+<h2>Surface Definition</h2>
+<pre><code>SURFACE name=&quot;dashboard&quot; version=&quot;1.0.0&quot;
+
+STYLE
+  background: #000000
+  ink: #00FF00
+  typography: &quot;ui-monospace, monospace&quot;
+
+REGIONS
+  header: &quot;uDos Dashboard&quot;
+  status: &quot;Ready&quot;</code></pre>
+<h2>Four-Layer IO Model (USX-GO)</h2>
+<p>USX surfaces align to a four-layer architecture:</p>
+<p>| Layer | Purpose | Status | |-------|---------|--------| | <strong>CHASIS</strong> | Core layout/runtime and serialization | <code>v1.0</code> | | <strong>WIDGET</strong> | Reusable UI components | <code>v1.0</code> | | <strong>SKIN</strong> | Visual styling and tokens | <code>v1.0</code> | | <strong>LENS</strong> | Future gameplay/filter overlays | Planned |</p>
+<h3>Open Box Compatible USX JSON</h3>
+<p>USX blocks are self-describing, portable, and schema-addressable:</p>
+<pre><code>{
+  &quot;open_box&quot;: {
+    &quot;id&quot;: &quot;dashboard&quot;,
+    &quot;type&quot;: &quot;application/vnd.usx.surface&quot;,
+    &quot;usx_version&quot;: &quot;1.0.0&quot;
+  },
+  &quot;chassis&quot;: {
+    &quot;layout&quot;: &quot;grid&quot;,
+    &quot;columns&quot;: 12,
+    &quot;rows&quot;: 12
+  },
+  &quot;widgets&quot;: [
+    { &quot;type&quot;: &quot;header&quot;, &quot;content&quot;: &quot;uDos Dashboard&quot; },
+    { &quot;type&quot;: &quot;status&quot;, &quot;content&quot;: &quot;Ready&quot; }
+  ]
+}</code></pre>
+<h2>Story Format</h2>
+<p>Story is a <strong>linear step-form surface</strong> with presentation-slide styling:</p>
+<ul><li>typeform-like progression and pacing</li><li>keyboard-first controls (<code>Enter</code> as primary action)</li><li>one focal decision per panel</li><li>shared semantics across browser, ThinUI, and TUI adapters</li></ul>
+<h3>Core Principles</h3>
+<p>| Principle | Baseline rule | |-----------|---------------| | Linear navigation | Start -> Step 1 -> ... -> End | | Enter to continue | Primary action is <code>Enter</code> on every step | | Input density | Prefer one primary field per panel | | Progress visibility | Show <code>Step X/Y</code> or progress bar | | Surface separation | Core owns semantics; themes own presentation |</p>
+<h3>Story Panel Anatomy</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│ Story Title                                Step 2 / 7       │
+│ Optional subtitle / helper text                             │
+├─────────────────────────────────────────────────────────────┤
+│ Presentation block / prompt / instructions                  │
+│ Primary interaction area                                    │
+├─────────────────────────────────────────────────────────────┤
+│ [ Back ]                                      [ Continue ]  │
+│ Hint: Enter = continue                                      │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<h3>Panel Taxonomy</h3>
+<p>| Kind | Purpose | |------|---------| | <code>story-intro</code> | Opening frame before input | | <code>story-input</code> | Single or grouped text input | | <code>story-choice</code> | Single or multi-select | | <code>story-scale</code> | Numeric scale (typically 1-5) | | <code>story-rating-stars</code> | Star rating (typically 1-5) | | <code>story-summary</code> | Review answers before submit | | <code>story-confirm</code> | Explicit confirmation/submit | | <code>story-slide</code> | Presentation-only step | | <code>story-slide-input</code> | Hybrid presentation + input | | <code>story-end</code> | Completion state |</p>
+<h3>Step Types</h3>
+<p>| Type | Purpose | Control model | |------|---------|---------------| | <code>presentation</code> | Read-mostly framing content | Enter to continue | | <code>input</code> | Text/textarea capture | One primary field | | <code>single_choice</code> | One option | Radio semantics | | <code>multi_choice</code> | Multiple options | Checkbox semantics (<code>Space</code> toggle) | | <code>stars</code> | 1..N star rating | <code>Left/Right</code> then <code>Enter</code> | | <code>scale</code> | Numeric range | <code>Left/Right</code> then <code>Enter</code> |</p>
+<h3>Story JSON Contract</h3>
+<pre><code>{
+  &quot;open_box&quot;: {
+    &quot;id&quot;: &quot;onboarding-story&quot;,
+    &quot;type&quot;: &quot;application/vnd.usx.story&quot;,
+    &quot;usx_version&quot;: &quot;1.0.0&quot;
+  },
+  &quot;story&quot;: {
+    &quot;title&quot;: &quot;Welcome to uDos&quot;,
+    &quot;steps&quot;: [
+      { &quot;type&quot;: &quot;presentation&quot;, &quot;content&quot;: &quot;# Welcome&quot;, &quot;next_action&quot;: &quot;enter&quot; },
+      { &quot;type&quot;: &quot;input&quot;, &quot;label&quot;: &quot;Workspace name&quot;, &quot;field&quot;: &quot;text&quot;, &quot;required&quot;: true },
+      { &quot;type&quot;: &quot;multi_choice&quot;, &quot;label&quot;: &quot;Select features&quot;, &quot;options&quot;: [] },
+      { &quot;type&quot;: &quot;stars&quot;, &quot;label&quot;: &quot;How familiar are you?&quot;, &quot;max&quot;: 5, &quot;value&quot;: 4 },
+      { &quot;type&quot;: &quot;scale&quot;, &quot;label&quot;: &quot;Rate CLI experience&quot;, &quot;min&quot;: 1, &quot;max&quot;: 5, &quot;value&quot;: 4 },
+      { &quot;type&quot;: &quot;single_choice&quot;, &quot;label&quot;: &quot;Launch dashboard?&quot;, &quot;options&quot;: [] }
+    ],
+    &quot;navigation&quot;: {
+      &quot;back&quot;: true,
+      &quot;cancel&quot;: true,
+      &quot;progress&quot;: &quot;visible&quot;,
+      &quot;enter_to_continue&quot;: true
+    }
+  }
+}</code></pre>
+<h3>Progress Styles</h3>
+<ul><li>numeric: <code>Step 2 / 6</code> (default)</li><li>bar: <code>[######------------] 2 / 6</code></li><li>labeled sequence: <code>Feedback · Rating · Comment · Confirm</code></li></ul>
+<h3>Theme Abstraction</h3>
+<p>Story semantics remain fixed while adapters theme output:</p>
+<ul><li>Typeform (minimal)</li><li>Marp (presentation-forward)</li><li>Teletext (retro terminal)</li><li>ThinUI (low-resource web)</li></ul>
+<p>Themes change chrome/tokens only, not step meaning.</p>
+<h3>Good Defaults</h3>
+<ul><li>one primary action per panel</li><li>visible progress</li><li>explicit back navigation where allowed</li><li>inline validation</li><li>explicit completion state</li></ul>
+<h3>Anti-Patterns</h3>
+<ul><li>giant multi-decision survey pages</li><li>hidden progress</li><li>ambiguous completion state</li><li>heavy presentation content that hides the next action</li></ul>
+<h2>CLI Commands</h2>
+<p>| Command | Description | |---------|-------------| | <code>udo usx serve</code> | Serve surface as HTTP endpoint | | <code>udo usx export</code> | Export surface to HTML | | <code>udo usx validate <file></code> | Validate surface syntax | | <code>udo usx list</code> | List available surfaces | | <code>udo usx apply <name></code> | Apply a surface theme |</p>
+<h2>See Also</h2>
+<ul><li><a href="usx-core.md">usx-core.md</a> — Core format and fence types</li><li><a href="usx-ui.md">usx-ui.md</a> — UI components and authoring blocks</li><li><a href="usx-style.md">usx-style.md</a> — Style tokens and themes</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

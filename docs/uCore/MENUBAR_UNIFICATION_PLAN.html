@@ -1,0 +1,89 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MENUBAR_UNIFICATION_PLAN.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / MENUBAR_UNIFICATION_PLAN.md</span></header><main class="site-main"><h1>macOS Menu Bar Unification Plan</h1>
+<p><strong>Date:</strong> 2026-06-27 <strong>Status:</strong> ✅ Complete <strong>Goal:</strong> Single unified, modular macOS menu bar app replacing <code>popcorn.py</code> and <code>snackbar_menu.py</code></p>
+<p>---</p>
+<h2>Current State Analysis</h2>
+<h3><code>popcorn.py</code> (Ollama/UI Hub Manager)</h3>
+<ul><li><strong>Icon:</strong> 🍿 Popcorn emoji</li><li><strong>Features:</strong></li><li>Ollama status checking (running/installed/stopped)</li><li>Ollama controls: Start, Stop, Restart</li><li>UI Hub health check and heal</li><li>Backend daemon management</li><li>S190 fallback page</li><li>Lockfile: <code>~/.ucore/ucore-popcorn.pid</code></li></ul>
+<h3><code>snackbar_menu.py</code> (Clipboard/Snacks/Surfaces)</h3>
+<ul><li><strong>Icon:</strong> 🍔 Hamburger emoji</li><li><strong>Features:</strong></li><li>Clipboard buffer with floating NSPanel</li><li>Global shortcut (Ctrl+Cmd+V) for clipboard panel</li><li>Snacks from <code>/api/snacks/system</code> endpoint</li><li>Surfaces menu (8 predefined surfaces)</li><li>Start at login toggle</li><li>Backend/frontend restart</li><li>Lockfile: <code>~/.ucore/ucore-menu.pid</code></li></ul>
+<h3><code>unified_menu.py</code> (Legacy - 1255 lines)</h3>
+<ul><li><strong>Status:</strong> Legacy - being replaced by modular architecture</li><li><strong>Issues:</strong> Too large, duplicate code, hard to maintain</li></ul>
+<h3><code>unified_menu_simple.py</code> (Simplified Version - 541 lines)</h3>
+<ul><li><strong>Icon:</strong> 🍿 Popcorn emoji</li><li><strong>Features:</strong></li><li>UI Hub status and access</li><li>Quick access to SnackMachine surface</li><li>Clipboard buffer (essential)</li><li>Backend status</li><li>Start at login toggle</li><li><strong>Status:</strong> ✅ Properly modularized (2026-06-28)</li><li><strong>Architecture:</strong></li><li><code>api_helpers.py</code> - HTTP requests and status checks</li><li><code>status_icon.py</code> - Status icon management</li><li><code>lockfile.py</code> - Lockfile management</li><li><code>launchd_integration.py</code> - Launchd integration (delegates to launchd_manager)</li><li><code>app_delegate.py</code> - App delegate and menu creation</li><li><code>unified_menu_simple.py</code> - Main entry point (reduced to ~200 lines)</li></ul>
+<p>---</p>
+<h2>Duplication Matrix</h2>
+<p>| Feature              | popcorn.py | snackbar_menu.py | unified_menu.py         | | -------------------- | ---------- | ---------------- | ----------------------- | | Backend health check | ✓          | ✓                | ✓                       | | UI Hub status/heal   | ✓          | ✓                | ✓                       | | Ollama management    | ✓          | ✗                | Partial (plugin exists) | | Clipboard buffer     | ✗          | ✓                | Partial (plugin exists) | | Clipboard panel      | ✗          | ✓                | Missing                 | | Global shortcut      | ✗          | ✓                | Partial                 | | Snacks registry      | ✗          | ✓                | ✓                       | | Surfaces menu        | ✓          | ✓                | ✓                       | | Start at login       | ✗          | ✓                | ✓                       | | Lockfile mgmt        | ✓          | ✓                | ✓                       |</p>
+<p>---</p>
+<h2>Unification Strategy</h2>
+<h3>Phase 1: Complete <code>unified_menu.py</code> Implementation</h3>
+<h4>1.1 Clipboard Panel Implementation</h4>
+<p>Port the clipboard NSPanel from <code>snackbar_menu.py</code>:</p>
+<ul><li><code>ClipboardSearchField</code> class</li><li><code>ClipboardTableView</code> class</li><li><code>_ensure_clipboard_panel()</code> method</li><li><code>showClipboardPopover_</code>, <code>hideClipboardPopover_</code>, <code>refreshClipboardPopover_</code></li><li><code>pasteSelectedClipboardItem_</code>, <code>pinSelectedClipboardItem_</code>, <code>deleteSelectedClipboardItem_</code></li><li><code>searchClipboard_</code> with osascript chooser</li></ul>
+<h4>1.2 Action Handler Integration</h4>
+<p>Merge action handlers from both files:</p>
+<ul><li><code>openUIHub_</code> - with auto-start from popcorn</li><li><code>healthCheck_</code> - merge both implementations</li><li><code>healUIHub_</code> - use popcorn's robust implementation</li><li><code>openS190Diagnostics_</code> - port from popcorn</li><li><code>ollamaAction_</code> - connect to ollama_snack</li><li><code>openSurface_</code> - connect to surface_snack</li><li><code>restartBackend_</code> - use unified implementation</li><li><code>restartFrontend_</code> - use unified implementation</li><li><code>toggleStartAtLogin_</code> - use snackbar's implementation</li><li><code>quitApp_</code> - merge lockfile cleanup</li></ul>
+<h3>Phase 2: Configuration Consolidation</h3>
+<h4>2.1 Single Lockfile</h4>
+<ul><li>Use: <code>~/.ucore/ucore-menu.pid</code></li><li>Remove: <code>ucore-popcorn.pid</code></li></ul>
+<h4>2.2 Launchd Integration</h4>
+<ul><li>Update <code>install_macos_menu.py</code> to point to <code>unified_menu.py</code></li><li>Label: <code>com.udos.ucore-menu</code> (already correct)</li><li>KeepAlive: <code>false</code> (menu should not respawn automatically)</li></ul>
+<h3>Phase 3: Snack Plugin Refinement</h3>
+<h4>3.1 Ollama Snack</h4>
+<ul><li>Add <code>_refresh_status()</code> call during menu refresh</li><li>Connect to delegate for UI updates</li><li>Handle disable flag (<code>~/.ucore/ollama_disabled</code>)</li></ul>
+<h4>3.2 Clipboard Snack</h4>
+<ul><li>Add <code>_ensure_clipboard_panel()</code> integration</li><li>Connect panel actions to snack methods</li></ul>
+<h4>3.3 Surface Snack</h4>
+<ul><li>Already has auto-start logic</li><li>Merge surface definitions from both files</li></ul>
+<h4>3.4 System Snack</h4>
+<ul><li>Add NSAlert dialogs for user feedback</li><li>Connect to menu delegate for UI updates</li></ul>
+<p>---</p>
+<h2>File Changes Required</h2>
+<h3>Files to Modify</h3>
+<p>1. <strong><code>backend/app/menu/unified_menu.py</code></strong> - ✅ Complete implementation (clipboard panel, global shortcut, action handlers) 2. <strong><code>backend/app/menu/install_macos_menu.py</code></strong> - ✅ Updated MENU_SCRIPT path to <code>unified_menu.py</code> 3. <strong><code>backend/app/menu/snacks/ollama_snack.py</code></strong> - Add <code>_refresh_status()</code> integration with menu delegate 4. <strong><code>backend/app/menu/snacks/clipboard_snack.py</code></strong> - Add panel integration and NSPanel delegation</p>
+<h3>Files Removed</h3>
+<p>1. <strong><code>backend/app/ui/popcorn.py</code></strong> - ✅ Removed (merged into unified_menu.py) 2. <strong><code>backend/app/menu/snackbar_menu.py</code></strong> - ✅ Removed (merged into unified_menu.py)</p>
+<h3>Files to Keep</h3>
+<p>1. <strong><code>backend/snackmachine/registry.py</code></strong> - Core registry (keep) 2. <strong><code>backend/app/menu/snacks/*.py</code></strong> - Plugin modules (keep)</p>
+<p>---</p>
+<h2>Implementation Checklist</h2>
+<ul><li>[x] Port clipboard NSPanel to unified_menu.py</li><li>[x] Port global shortcut registration</li><li>[x] Merge UI Hub auto-start logic</li><li>[x] Connect ollama_snack to menu refresh</li><li>[x] Connect clipboard_snack panel methods (integrated in unified_menu.py)</li><li>[x] Update install_macos_menu.py</li><li>Test unified menu on macOS before removing final deprecated wrappers</li><li>[x] Remove old files</li><li>[x] Update documentation</li></ul>
+<p>---</p>
+<h2>Technical Notes</h2>
+<h3>Icon Decision</h3>
+<ul><li><strong>Keep:</strong> 🍿 Popcorn emoji (more distinctive, already in unified_menu)</li><li><strong>Alternative:</strong> 🍔 Hamburger (matches snackbar theme)</li></ul>
+<h3>Menu Structure (Proposed)</h3>
+<pre><code>🍿 uCore Menu
+├── UI Hub Status (🟢/🔴)
+│   ├── Open UI Hub (o)
+│   ├── Health Check (h)
+│   ├── Heal UI Hub (r)
+│   └── Open S190 Diagnostics (d)
+├── Ollama Status (🏖️/○)
+│   ├── Start/Stop/Restart
+│   └── Installed Models
+├── Clipboard Buffer (📋)
+│   ├── Open Clipboard Panel (Ctrl+Cmd+V)
+│   ├── Search... (f)
+│   ├── Capture Current Clipboard
+│   ├── Saved Items
+│   ├── Recent Items
+│   ├── Clear History
+│   └── Clear All
+├── Snacks by Category
+│   └── [Dynamic from registry]
+├── Surfaces (🖥️)
+│   └── [Dynamic from API]
+├── Services (⚙️)
+│   ├── Backend Status
+│   ├── Restart Backend
+│   ├── Restart Frontend
+│   └── Start at Login (✓/ )
+└── Quit (q)</code></pre>
+<h3>Key Integration Points</h3>
+<p>1. <strong>API Endpoints:</strong> Both use same <code>UCORE_URL</code> (localhost:8484) 2. <strong>UI Hub URL:</strong> Both use <code>localhost:5173</code> 3. <strong>Lockfile:</strong> Consolidate to single location 4. <strong>Logging:</strong> Use unified logger name <code>ucore-menu</code></p>
+<p>---</p>
+<h2>Completion Summary</h2>
+<h3>Completed Changes</h3>
+<ul><li>✅ <code>backend/app/menu/unified_menu.py</code> - Full implementation with clipboard panel, global shortcut, all action handlers</li><li>✅ <code>backend/app/menu/install_macos_menu.py</code> - Updated to point to <code>unified_menu.py</code></li><li>✅ <code>backend/app/ui/popcorn.py</code> - Deprecated with redirect stub</li><li>✅ <code>backend/app/menu/snackbar_menu.py</code> - Deprecated with redirect stub</li><li>✅ <code>docs/REMNANTS_AND_DUPLICATION_AUDIT.md</code> - Updated to reflect unified menu as canonical</li></ul>
+<h3>Next Steps</h3>
+<p>1. Test unified menu on macOS to verify all functionality 2. Verify clipboard panel NSPanel works correctly 3. Verify global shortcut (Ctrl+Cmd+V) opens clipboard panel 4. Verify Ollama status refresh works 5. Remove deprecated files after testing (optional)</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

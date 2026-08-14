@@ -1,0 +1,275 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>INTEGRATION_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uVector / INTEGRATION_SPEC.md</span></header><main class="site-main"><h1>uVector — Integration with ProseUI, GridUI, and Character/Layer/Grid Editors</h1>
+<p>See also: <code>docs/NANO_BANANA_UVECTOR_SUMMARY.md</code> for the vendor/uVector summary aligned to the current split-repo manifest configuration.</p>
+<blockquote><strong>Status:</strong> Draft</blockquote>
+<blockquote><strong>Last Updated:</strong> 2026-06-13</blockquote>
+<blockquote><strong>Version:</strong> 1.0.0</blockquote>
+<h2>Overview</h2>
+<p>uVector serves as the <strong>image intelligence and vector rendering engine</strong> for uDOS's multi-paradigm UI system. It bridges three distinct interface modalities:</p>
+<p>| UI Mode      | Primary Use                                            | uVector Role                                                   | | ------------ | ------------------------------------------------------ | -------------------------------------------------------------- | | <strong>ProseUI</strong>  | Document editing, narrative flows, rich text           | Renders inline sprites/bobs, fonts, scene descriptions         | | <strong>GridUI</strong>   | Teletext/ASCII views, terminal interfaces, pixel grids | Converts Mono outputs to character-cell graphics               | | <strong>CanvasUI</strong> | Vector graphics, layered compositions, maps            | Handles SVG layer stacking, coordinate mapping, virtual layers |</p>
+<p>---</p>
+<h2>1. ProseUI Integration — Narrative + Visual Assets</h2>
+<h3>Core Concept</h3>
+<p>ProseUI treats the interface as a <strong>living document</strong> — paragraphs, dialogue blocks, and scene descriptions interleaved with visual assets.</p>
+<h3>uVector Contributions</h3>
+<p>| ProseUI Element         | uVector Rendering Pipeline                                                                               | | ----------------------- | -------------------------------------------------------------------------------------------------------- | | <strong>Inline sprites/bobs</strong> | Generated Mono outputs → converted to character-aligned sprites → injected as <code>::before</code> pseudo-elements | | <strong>Font rendering</strong>      | Text prompts for glyph sets → uVector generates bitmap font sheets → mapped to character codes           | | <strong>Scene illustrations</strong> | <code>generate_image</code> with <code>tier: "platinum"</code> → SVG layer → anchored to prose blocks                          | | <strong>Icons (bobs)</strong>        | Small Mono style generations → 16×16 or 32×32 SVG bobs → used as bullet points or inline icons           |</p>
+<h3>Technical Flow</h3>
+<pre><code>// ProseUI component requesting an inline bob
+&lt;ProseBlock&gt;
+  &lt;InlineBob prompt=&quot;heart icon&quot; style=&quot;mono_chrome&quot; size=&quot;16x16&quot; /&gt;
+  &lt;TextBlock&gt;The character feels a warm glow.&lt;/TextBlock&gt;
+&lt;/ProseBlock&gt;
+
+// uVector generates → caches in vault → returns SVG data URL
+// Result: [♥] The character feels a warm glow.</code></pre>
+<h3>Character Cell Mapping (for Sprites)</h3>
+<pre><code>Mono output (512×512) → uGrid analysis → extract 8×8 or 16×16 cells → map to ProseUI character positions
+Each cell becomes a &quot;sprite&quot; that can be referenced by character name in prose</code></pre>
+<p>---</p>
+<h2>2. GridUI — Teletext + ASCII Support</h2>
+<h3>Core Concept</h3>
+<p>GridUI renders the interface as a <strong>character cell grid</strong> (inspired by teletext, PETSCII, ANSI art). Every screen position is a character cell with foreground/background attributes.</p>
+<h3>uVector Grid Rendering Pipeline</h3>
+<p>| GridUI Feature            | uVector Mechanism                                                                              | | ------------------------- | ---------------------------------------------------------------------------------------------- | | <strong>Teletext mode</strong>         | <code>style_preset: "mono_teletext"</code> → enforces 6×10 pixel block rendering (PAL teletext standard)  | | <strong>ASCII conversion</strong>      | <code>describe_image</code> → returns character approximations (dithering maps to <code>@%#*+:-.</code> )            | | <strong>Cell attributes</strong>       | Mono line layer → foreground (ink) / background (transparent) → mapped to terminal color codes | | <strong>Grid-aware generation</strong> | <code>ugrid</code> parameter → canvas divided into utiles → each utile rendered as independent cell       |</p>
+<h3>Teletext-Specific Generation</h3>
+<pre><code>// Generate a teletext-style weather map
+await generate_image({
+  prompt: &quot;UK weather map with isobars&quot;,
+  style_preset: &quot;mono_teletext&quot;,
+  ugrid: { width_utiles: 40, height_utiles: 25, positioning: &quot;full frame&quot; },
+});
+
+// Output: 40×25 character grid, each cell = 6×10 pixels (teletext block)
+// Each cell can hold 1 of 96 characters + foreground/background colors</code></pre>
+<h3>ASCII Art Dithering Pipeline</h3>
+<pre><code>Gemini output (PNG) → uVector quantizer → 2bpp (black/white) → map to ASCII density
+• Darkest regions → &quot;@&quot; or &quot;#&quot;
+• Mid regions → &quot;%&quot;, &quot;*&quot;, &quot;+&quot;, &quot;-&quot;
+• Light regions → &quot;:&quot;, &quot;.&quot;
+• Whitespace → &quot; &quot;</code></pre>
+<h3>Character Editor Integration</h3>
+<pre><code>GridUI cell (position X,Y) ←→ Character Editor sprite definition
+- Each cell can reference a uVector-generated bob
+- Bobs are stored in vault/.udos/sprites/{id}.svg
+- Character Editor edits the bob → GridUI updates all instances</code></pre>
+<p>---</p>
+<h2>3. Character Editor — Sprites and Bobs</h2>
+<h3>Core Concept</h3>
+<p>The Character Editor manages <strong>reusable visual assets</strong> (sprites, bobs, fonts) that can be placed across ProseUI, GridUI, and CanvasUI.</p>
+<h3>uVector Asset Pipeline</h3>
+<p>| Asset Type | Definition                      | uVector Generation                                 | Storage                       | | ---------- | ------------------------------- | -------------------------------------------------- | ----------------------------- | | <strong>Sprite</strong> | Multi-frame character animation | <code>compose_images</code> → generates 4–8 frame walk cycles | <code>vault/.udos/sprites/{name}/</code> | | <strong>Bob</strong>    | Single static icon/object       | <code>generate_image</code> with specific <code>ugrid</code> cell        | <code>vault/.udos/bobs/{name}.svg</code> | | <strong>Font</strong>   | Complete character set          | <code>generate_image</code> for each glyph (A–Z, 0–9)         | <code>vault/.udos/fonts/{name}/</code>   |</p>
+<h3>Character Editor Workflow</h3>
+<pre><code>1. Designer describes character: &quot;8-bit warrior with red cape, pixel art style&quot;
+2. uVector generates sprite sheet (4 frames facing down)
+3. Character Editor displays frames, allows cell-by-cell editing
+4. Each frame exported as Mono-compliant SVG (black ink only)
+5. Color overlay applied in editor (separate layer per uDOS spec)</code></pre>
+<h3>Bob Library Structure</h3>
+<pre><code># vault/.udos/bobs/inventory.yaml
+- id: health_potion
+  prompt: &quot;red potion with heart label, mono_chrome&quot;
+  variants: [full, half, empty]
+  default_size: &quot;16x16&quot;
+
+- id: treasure_chest
+  prompt: &quot;wooden chest with gold trim, mono_blueprint&quot;
+  states: [closed, open]
+  animations: [idle, open_sequence]</code></pre>
+<h3>Font Generation Pipeline</h3>
+<pre><code>// Generate a complete bitmap font
+for (const char of &quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789&quot;) {
+  const glyph = await generate_image({
+    prompt: `glyph &#x27;${char}&#x27;, monospace bitmap, 8x8 grid, mono_teletext`,
+    ugrid: { width_utiles: 1, height_utiles: 1, positioning: &quot;center&quot; },
+  });
+  // Store as vault/.udos/fonts/pixel/{char}.svg
+}</code></pre>
+<p>---</p>
+<h2>4. Grid Editor — Grids Made of Cells</h2>
+<h3>Core Concept</h3>
+<p>The Grid Editor manages <strong>tiled compositions</strong> — each grid is a 2D array of cells, where each cell can contain a sprite, bob, or character.</p>
+<h3>uVector Grid Mapping</h3>
+<p>| Grid Concept | uVector Implementation                                 | | ------------ | ------------------------------------------------------ | | <strong>Cell</strong>     | Single utile in <code>ugrid</code> system                         | | <strong>Grid</strong>     | Complete <code>ugrid</code> canvas (width_utiles × height_utiles) | | <strong>Layer</strong>    | One grid = one layer in the layer stack                | | <strong>Tile</strong>     | Bob or sprite assigned to a cell                       |</p>
+<h3>Grid Coordinate System</h3>
+<pre><code>uGrid specification:
+- width_utiles: 16
+- height_utiles: 16
+- positioning: &quot;character at (4,2) moves to (8,8)&quot;
+
+Maps directly to Grid Editor&#x27;s internal coordinate system:
+cellReference = (row * width_utiles) + column</code></pre>
+<h3>Cell-to-Asset Binding</h3>
+<pre><code>interface GridCell {
+  position: { x: number; y: number }; // in utiles
+  asset: {
+    type: &quot;sprite&quot; | &quot;bob&quot; | &quot;char&quot;;
+    id: string;
+    frame?: number; // for animated sprites
+  };
+  attributes: {
+    foreground: string; // ink color (#000000 usually)
+    background: string; // transparency or color
+    flip?: &quot;h&quot; | &quot;v&quot;;
+    rotate?: 0 | 90 | 180 | 270;
+  };
+}</code></pre>
+<h3>Grid Rendering Pipeline</h3>
+<pre><code>Grid Editor saves grid.json → uVector reads grid →
+For each cell, fetch SVG from vault → apply transformations →
+Compose into single SVG with cell-accurate positioning →
+Return to CanvasUI for display</code></pre>
+<p>---</p>
+<h2>5. Layer Editor — Stacks of Grids</h2>
+<h3>Core Concept</h3>
+<p>The Layer Editor manages <strong>multiple grids stacked vertically</strong> — like an onion skin or compositing system. Each layer is an independent grid that can be shown/hidden/reordered.</p>
+<h3>uVector Layer Composition</h3>
+<p>| Layer Operation      | uVector Processing                                             | | -------------------- | -------------------------------------------------------------- | | <strong>Layer stack</strong>      | Each layer rendered sequentially → alpha compositing           | | <strong>Virtual layers</strong>   | Metadata-only layers that don't render (for collision, events) | | <strong>Blend modes</strong>      | SVG <code>mix-blend-mode</code> applied per layer                         | | <strong>Layer transforms</strong> | Offset, scale, rotate applied before composition               |</p>
+<h3>Virtual Layer System</h3>
+<pre><code>// Physical layer (visible)
+layer 0: background grid (terrain)
+
+// Virtual layers (non-rendering, used for game logic)
+layer 1: collision map (where characters can walk)
+layer 2: event triggers (dialogue zones)
+layer 3: spawn points
+
+// Physical layer (visible)
+layer 4: character sprites
+
+// uVector renders only physical layers
+// Virtual layers exported as JSON for game engine</code></pre>
+<h3>Layer Composition Example</h3>
+<pre><code># vault/maps/dungeon/layers.yaml
+layers:
+  - name: &quot;floor&quot;
+    type: physical
+    grid: &quot;floor_grid.json&quot;
+    blend: &quot;normal&quot;
+
+  - name: &quot;collision&quot;
+    type: virtual
+    grid: &quot;collision_grid.json&quot;
+    # Not rendered, but collision data extracted
+
+  - name: &quot;decorations&quot;
+    type: physical
+    grid: &quot;decor_grid.json&quot;
+    blend: &quot;multiply&quot;
+
+  - name: &quot;characters&quot;
+    type: physical
+    grid: &quot;char_grid.json&quot;
+    blend: &quot;normal&quot;
+    offset_y: -8 # lift sprites slightly</code></pre>
+<h3>Layer Rendering Flow</h3>
+<pre><code>Layer Editor exports layer stack → uVector process:
+1. Render each physical layer independently (from bottom to top)
+2. Apply layer transforms and blend modes
+3. Composite into final SVG
+4. Extract virtual layer data to JSON
+5. Return { image: &quot;composite.svg&quot;, metadata: virtualLayers }</code></pre>
+<p>---</p>
+<h2>6. Location Mapping + Virtual Layers</h2>
+<h3>Core Concept</h3>
+<p>Locations in uDOS are <strong>composite spaces</strong> — combinations of physical layers (visual) and virtual layers (logic). uVector maps between visual coordinates and logical game space.</p>
+<h3>Location Asset Structure</h3>
+<pre><code># vault/locations/castle_courtyard.yaml
+location:
+  name: &quot;Castle Courtyard&quot;
+  size: { width_utiles: 32, height_utiles: 32 }
+
+  layers:
+    ground:
+      type: physical
+      grid: &quot;courtyard_floor.json&quot;
+
+    walls:
+      type: physical
+      grid: &quot;courtyard_walls.json&quot;
+      collision: true
+
+    objects:
+      type: physical
+      bob_map: # Maps grid cells to bobs
+        &quot;(5,5)&quot;: &quot;fountain&quot;
+        &quot;(12,8)&quot;: &quot;statue&quot;
+
+    events:
+      type: virtual
+      triggers:
+        - cell: &quot;(10,10)&quot;
+          action: &quot;start_battle&quot;
+        - cell: &quot;(20,20)&quot;
+          action: &quot;open_gate&quot;
+
+    pathfinding:
+      type: virtual
+      navigation_mesh: &quot;courtyard_nav.json&quot;</code></pre>
+<h3>Coordinate Transformation</h3>
+<pre><code>// Screen to Game Space (with uVector)
+screenPixel (x, y) → uGrid cell (col, row) → Virtual layer collision check
+→ Game engine receives cell coordinates for logic
+
+// Game Space to Screen (rendering)
+Game coordinate (col, row) → uGrid cell mapping →
+uVector renders character bob at cell center →
+CanvasUI displays in USXD centre region</code></pre>
+<h3>Import/Export Pipeline</h3>
+<pre><code>External assets:
+├── Fonts (.ttf, .woff2) → uVector converts to bitmap font sheets
+├── Sprites (.png, .gif) → uVector extracts frames → Mono conversion
+├── Game maps (Tiled .tmx) → Import → uVector grid conversion
+└── Story data (JSON, YAML) → Virtual layer generation
+
+All imports stored in vault/.udos/imports/{original_name}/
+Maintains original + uDOS Mono version</code></pre>
+<p>---</p>
+<h2>7. Complete Asset Pipeline Summary</h2>
+<pre><code>graph TD
+    A[User Prompt] --&gt; B[uVector Generation]
+    B --&gt; C{Mono Style?}
+    C --&gt;|Yes| D[Black ink on transparent]
+    C --&gt;|No| E[Color + overlays]
+    D --&gt; F[SVG Output]
+    E --&gt; F
+
+    F --&gt; G{Asset Type}
+    G --&gt; H[Bob / Icon]
+    G --&gt; I[Sprite / Animation]
+    G --&gt; J[Font Glyph]
+    G --&gt; K[Full Illustration]
+
+    H --&gt; L[Character Editor]
+    I --&gt; L
+    J --&gt; M[Font Library]
+    K --&gt; N[Location Map]
+
+    L --&gt; O[Grid Editor]
+    O --&gt; P[Layer Editor]
+    P --&gt; Q[Composite Scene]
+
+    M --&gt; Q
+    N --&gt; Q
+
+    Q --&gt; R[USXD Canvas Display]</code></pre>
+<p>---</p>
+<h2>Key Integration Points Summary</h2>
+<p>| Editor               | uVector Role                                 | Output Format                       | | -------------------- | -------------------------------------------- | ----------------------------------- | | <strong>ProseUI</strong>          | Inline bob rendering, scene illustrations    | SVG data URLs + text annotations    | | <strong>GridUI</strong>           | Cell-to-character mapping, teletext encoding | 8×8 or 16×16 cell grids             | | <strong>Character Editor</strong> | Sprite sheet generation, frame extraction    | Multi-layer SVG with frame metadata | | <strong>Grid Editor</strong>      | Grid composition, cell asset binding         | Grid JSON + SVG tileset             | | <strong>Layer Editor</strong>     | Layer stacking, blend modes, transforms      | Composite SVG + virtual layer JSON  | | <strong>Location Mapper</strong>  | Coordinate mapping, collision extraction     | Scene SVG + navigation mesh         |</p>
+<p>---</p>
+<h2>uDOS Vault Storage for Assets</h2>
+<pre><code>vault/
+├── .udos/
+│   ├── bobs/           # Single icons
+│   ├── sprites/        # Animated characters
+│   ├── fonts/          # Bitmap font sheets
+│   ├── grids/          # Grid definitions
+│   ├── layers/         # Layer stacks
+│   ├── locations/      # Complete maps
+│   ├── imports/        # External assets
+│   └── cache/          # Generated images (original)
+├── system/
+│   ├── config.md       # uVector defaults
+│   └── memory.md       # Generation history
+└── worlds/
+    └── [world_name]/   # Game/story-specific assets</code></pre>
+<p>---</p>
+<p><strong>uVector is not just an image generator — it's the visual foundation of uDOS's multi-paradigm interface, enabling seamless flow between prose, grids, characters, and layers while maintaining the Mono design language across all modalities.</strong></p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

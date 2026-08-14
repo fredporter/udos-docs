@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>USER_SETUP_VAULT_MCP_WORKSPACES.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / USER_SETUP_VAULT_MCP_WORKSPACES.md</span></header><main class="site-main"><h1>User Setup Guide: Vault Integration, MCP, and Workspace Switching</h1>
+<p>This guide provides steps for setting up and integrating Vault, MCP, and workspace switching with uCore.</p>
+<h2>Prerequisites</h2>
+<ul><li><strong>uCore Installation</strong>: Ensure uCore is installed and running. Refer to the main README for installation instructions.</li><li><strong>Vault directories</strong>: uCore reads <code>~/Vault</code> (master user vault), <code>~/Shared</code> (shared vaults), and <code>~/Public</code> (public vaults). Create them if missing.</li><li><strong>MCP Server</strong>: Ensure MCP servers (e.g., Firewatch) are installed and configured if needed. Refer to MCP documentation for setup.</li><li><strong>Zen Browser</strong>: Recommended UI shell for development and automation.</li><li><strong>Playwright</strong>: Automation driver for Zen Browser and other headless tasks.</li></ul>
+<h2>1. Vault Integration</h2>
+<h3>1.1. Vault Layout</h3>
+<p>uCore manages three vault layers:</p>
+<p>| Layer   | Path       | Purpose                       | |---------|------------|-------------------------------| | user    | <code>~/Vault</code>  | Master personal vault (one)   | | shared  | <code>~/Shared</code> | Shared team vaults            | | public  | <code>~/Public</code> | Public/published vaults       |</p>
+<h3>1.2. Running Vault Sync</h3>
+<p>You can trigger a manual index rebuild with:</p>
+<pre><code>cline --yolo &quot;Run Vault sync&quot;</code></pre>
+<p>This runs the <code>vault_sync</code> skill, which scans the three vault layers into the FTS5 index at <code>~/.ucore/indices/library.db</code>. Scheduled syncs run daily.</p>
+<h2>2. MCP Integration</h2>
+<h3>2.1. MCP Server Setup</h3>
+<p>MCP servers provide tools and resources that uCore can leverage. Ensure the necessary MCP servers are running and accessible locally.</p>
+<ul><li><strong>Firewatch MCP</strong>: For browser automation. Install globally (<code>npm install -g firewatch-mcp</code>) and configure in Cline settings. Refer to <code>docs/ZEN_PLAYWRIGHT_AUTOMATION_TOOLCHAIN.md</code> for detailed setup.</li><li><strong>Zapier MCP</strong>: For connecting to Zapier's ecosystem. Refer to Zapier MCP documentation for setup.</li></ul>
+<h3>2.2. Using MCP Tools</h3>
+<p>MCP tools are accessed via the Cline CLI or directly through API calls.</p>
+<ul><li><strong>Cline CLI</strong>:</li></ul>
+<pre><code>    cline --yolo &quot;Use Firewatch to navigate to http://localhost:5173 and click &#x27;Import&#x27;&quot;</code></pre>
+<ul><li><strong>API Calls</strong>: Refer to <code>backend/app/api/mcp/</code> for direct API endpoint usage.</li></ul>
+<h2>3. Workspace Switching</h2>
+<p>Additional workspaces (any folder under <code>~/Shared</code> or <code>~/Public</code>) can be registered through the vault API so they appear alongside the three built-in layers in the sidebar and knowledge tools.</p>
+<p>1.  <strong>List workspaces</strong>: <code>GET /api/knowledge/workspaces</code> 2.  <strong>Register a workspace</strong>: <code>POST /api/vault/workspaces</code> with <code>{name, path}</code> 3.  <strong>Rebuild the index</strong>: run the <code>vault_sync</code> skill after registering.</p>
+<h2>4. Integrating with Automation Tools</h2>
+<p>Use the existing skills (<code>vault_sync</code>, <code>tasker_sync</code>, <code>brain_sync</code>) directly instead of third-party sync tools. Workflow automation can call these through the MCP/skill API.</p>
+<h2>5. Scheduling Automation</h2>
+<p>Schedule the <code>vault_sync</code> skill with the maintenance scheduler (built-in) or a system scheduler:</p>
+<ul><li><strong>macOS/Linux</strong>: Use <code>cron</code> jobs or the built-in maintenance scheduler.</li><li><strong>Windows</strong>: Use Task Scheduler.</li></ul>
+<p>Example <code>cron</code> entry to run a daily index rebuild at 4:00 AM:</p>
+<pre><code>0 4 * * * /Users/you/Code/uCore/.venv/bin/python -m app.skills.builtin.vault_sync &gt;&gt; /var/log/ucore_vault_sync.log 2&gt;&amp;1</code></pre>
+<h2>6. Zen Browser and Playwright for Development</h2>
+<p>Zen Browser, recommended as the UI shell, works seamlessly with Playwright for automation.</p>
+<h3>6.1. Zen Browser Setup</h3>
+<p>1.  <strong>Install Zen Browser</strong>:</p>
+<p>2.  <strong>Install Playwright Browsers</strong>:</p>
+<ul><li>macOS: <code>brew install zen-browser</code></li><li>Linux: Download from zen-browser.com</li></ul>
+<pre><code>    npx playwright install firefox
+    # or for Python:
+    # playwright install firefox</code></pre>
+<h3>6.2. Playwright Automation</h3>
+<p>Playwright can be used to control Zen Browser for various development tasks:</p>
+<ul><li><strong>Navigation and Interaction</strong>: Automate browser actions like visiting pages, clicking elements, and filling forms.</li><li><strong>Console Log Capture</strong>: Capture logs for debugging.</li><li><strong>Data Extraction</strong>: Extract text content, HTML, or perform evaluations.</li></ul>
+<p>Refer to <code>docs/ZEN_PLAYWRIGHT_AUTOMATION_TOOLCHAIN.md</code> for detailed examples and advanced usage.</p>
+<p>---</p>
+<p><strong>Last Updated</strong>: 2026-06-22T21:45:00+08:00 <strong>Session</strong>: Phase 9B Developer wiring and endpoint verification <strong>Status</strong>: Ready for user setup documentation completion.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

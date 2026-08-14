@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>gridcore/TERMINAL_TELETEXT_GRID_WORK_TAG.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / gridcore/TERMINAL_TELETEXT_GRID_WORK_TAG.md</span></header><main class="site-main"><h1>Terminal & Teletext Grid Modes — Work Tag</h1>
+<p><strong>Status:</strong> 🔖 Tagged for Specialized Work <strong>Priority:</strong> High <strong>Category:</strong> Grid Rendering & Character Maps <strong>Date:</strong> 2026-06-27</p>
+<h2>Overview</h2>
+<p>Terminal and Teletext grid modes require specialized CSS and rendering logic that differs from standard USX surfaces. These modes handle character-based displays, grid algebra, and retro-futuristic aesthetics.</p>
+<h2>Tagged Components</h2>
+<h3>1. Terminal Viewport</h3>
+<p><strong>Files:</strong></p>
+<ul><li><code>frontend/src/styles/gridui-terminal.css</code></li><li><code>frontend/src/surfaces/ucode/UCodeSurface.tsx</code></li></ul>
+<p><strong>Requirements:</strong></p>
+<ul><li>Character-based rendering with monospace fonts</li><li>Grid algebra for character positioning</li><li>Terminal-specific animations (cursor blink, line scroll)</li><li>Input field styling with retro aesthetics</li><li>Integration with USX spacing variables</li></ul>
+<h3>2. Teletext Mode</h3>
+<p><strong>Files:</strong></p>
+<ul><li><code>frontend/src/styles/gridui-terminal.css</code> (lines 69-200)</li><li><code>frontend/src/styles/gridui.css</code></li></ul>
+<p><strong>Requirements:</strong></p>
+<ul><li>Teletext page rendering (40x25 character grid)</li><li>Info bar with page navigation</li><li>LIVE/FEED/BBCSDL badges</li><li>Flash animations for teletext effects</li><li>Page navigation overlay</li></ul>
+<h3>3. Grid Tools UI</h3>
+<p><strong>Files:</strong></p>
+<ul><li><code>frontend/src/surfaces/ucode/gridToolset.ts</code></li><li><code>frontend/src/surfaces/ucode/UCodeSurface.tsx</code></li></ul>
+<p><strong>Requirements:</strong></p>
+<ul><li>Grid tool panels and controls</li><li>Character map selectors</li><li>Grid algebra calculators</li><li>Viewport settings popup</li><li>Display mode toggles</li></ul>
+<h2>Work Items</h2>
+<h3>Phase 1: Terminal Enhancement</h3>
+<ul><li>[ ] Enhance terminal viewport with USX spacing</li><li>[ ] Add proper Pico CSS color variables</li><li>[ ] Improve terminal input field styling</li><li>[ ] Add cursor animations with USX timing</li><li>[ ] Implement line scrolling with smooth transitions</li></ul>
+<h3>Phase 2: Teletext Enhancement</h3>
+<ul><li>[ ] Standardize teletext info bar with USX components</li><li>[ ] Enhance badge animations with USX timing</li><li>[ ] Improve page navigation overlay</li><li>[ ] Add teletext-specific font loading</li><li>[ ] Implement character grid rendering</li></ul>
+<h3>Phase 3: Grid Tools Enhancement</h3>
+<ul><li>[ ] Update grid tool panels with USX layout</li><li>[ ] Enhance character map selectors</li><li>[ ] Improve grid algebra calculator UI</li><li>[ ] Add viewport settings popup with USX styling</li><li>[ ] Implement display mode toggles</li></ul>
+<h2>Technical Constraints</h2>
+<p>⚠️ <strong>IMPORTANT:</strong> Grid-based CSS styles are intentionally SEPARATE from USX styles. Do NOT merge gridui styles with USX styles — they have unique rendering requirements (grid algebra, teletext, character maps) that conflict with USX layout.</p>
+<h3>Separation Rules:</h3>
+<p>1. Keep <code>gridui.css</code> and <code>gridui-terminal.css</code> separate from USX files 2. Use USX variables for spacing and colors, but maintain grid-specific layout 3. Grid algebra calculations must remain independent 4. Character map rendering requires specialized positioning</p>
+<h2>USX Integration Points</h2>
+<p>While maintaining separation, integrate these USX standards:</p>
+<h3>Spacing Variables</h3>
+<pre><code>--usx-spacing-xs: 4px
+--usx-spacing-sm: 8px
+--usx-spacing-md: 12px
+--usx-spacing-lg: 16px
+--usx-spacing-xl: 24px</code></pre>
+<h3>Color Variables</h3>
+<pre><code>--pico-background-color: #0d1117
+--pico-card-background-color: #161b22
+--pico-color: #c9d1d9
+--pico-muted-color: #8b949e
+--pico-border-color: #30363d
+--pico-primary: #58a6ff</code></pre>
+<h3>Typography</h3>
+<pre><code>--pico-font-family: system-ui, -apple-system, sans-serif
+--pico-font-size: 1rem</code></pre>
+<h2>Testing Requirements</h2>
+<p>1. <strong>Terminal Mode Tests:</strong></p>
+<ul><li>Character rendering accuracy</li><li>Input field responsiveness</li><li>Cursor animation smoothness</li><li>Line scrolling performance</li></ul>
+<p>2. <strong>Teletext Mode Tests:</strong></p>
+<ul><li>Page rendering accuracy (40x25 grid)</li><li>Badge animation performance</li><li>Navigation overlay functionality</li><li>Flash animation timing</li></ul>
+<p>3. <strong>Grid Tools Tests:</strong></p>
+<ul><li>Panel layout responsiveness</li><li>Character map selector functionality</li><li>Grid algebra calculator accuracy</li><li>Settings popup usability</li></ul>
+<h2>Dependencies</h2>
+<ul><li>USX spacing system</li><li>Pico CSS variables</li><li>Custom monospace fonts (PetMe128, Teletext50, Press Start 2P, C64 User Mono)</li><li>Grid algebra library</li><li>Character map data</li></ul>
+<h2>Success Criteria</h2>
+<ul><li>[ ] Terminal viewport renders correctly with USX spacing</li><li>[ ] Teletext mode displays 40x25 character grid accurately</li><li>[ ] Grid tools UI is responsive and accessible</li><li>[ ] All animations use USX timing standards</li><li>[ ] Color variables use Pico CSS standards</li><li>[ ] No conflicts with USX layout system</li></ul>
+<h2>Next Steps</h2>
+<p>1. Review current <code>gridui-terminal.css</code> implementation 2. Identify USX integration opportunities 3. Create enhancement plan for each component 4. Implement changes maintaining separation 5. Test all grid modes thoroughly 6. Document final implementation</p>
+<h2>References</h2>
+<ul><li><code>frontend/src/styles/gridui-terminal.css</code></li><li><code>frontend/src/styles/gridui.css</code></li><li><code>frontend/src/styles/usx/usx-spacing-scale.css</code></li><li><code>frontend/src/styles/usx/usx-pico-reset.css</code></li><li><code>docs/USX_LAYOUT_SYSTEM_SPEC.md</code></li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

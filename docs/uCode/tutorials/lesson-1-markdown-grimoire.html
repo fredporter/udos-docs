@@ -1,0 +1,144 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>tutorials/lesson-1-markdown-grimoire.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / tutorials/lesson-1-markdown-grimoire.md</span></header><main class="site-main"><p>--- title: "Lesson 1: The Markdown Grimoire" status: draft last_updated: 2026-05-26T19:55:01+10:00 category: course tags: [course, uconnect] description: "<strong>Course:</strong> uDos Orientation" ---</p>
+<h1>Lesson 1: The Markdown Grimoire</h1>
+<p><strong>Course:</strong> uDos Orientation <strong>Time:</strong> 45–60 minutes <strong>Difficulty:</strong> Beginner <strong>Output:</strong> A structured vault with contacts, projects, and tasks</p>
+<p>---</p>
+<h2>What You'll Learn</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ul><li>Create a markdown file and add <strong>frontmatter</strong> (YAML metadata)</li><li>Use <strong><code>[[wiki]]</code> links</strong> to connect ideas</li><li>Write tasks with <strong><code>- [ ]</code></strong> syntax that the vault understands</li><li>Build a <strong>mini vault</strong> with contacts, projects, and tasks</li><li>Explain how your notes could become <strong>story entries</strong> in the Public Story Lane</li></ul>
+<p>---</p>
+<h2>Prerequisites</h2>
+<ul><li>Completed <strong>Lesson 0</strong> (you know your way to <code>@toybox</code>)</li><li>A terminal and text editor (any will do – VS Code, Obsidian, even Notepad)</li><li>Imagination (required)</li></ul>
+<p>---</p>
+<h2>Part 1: Markdown is Magic</h2>
+<p><strong>Markdown</strong> is a simple way to write formatted text that any computer can read. It looks like plain text, but it contains <strong>hidden structure</strong> – like runes carved into stone.</p>
+<p>Here's a basic spell:</p>
+<pre><code># A Hero Rises
+
+The wizard **Merlin** prepares a *fireball* spell.
+
+- Find the dragon
+- Cast the incantation
+- Save the village</code></pre>
+<p>That's markdown. The <code>#</code> means "heading". <code><strong>bold</strong></code> and <code><em>italic</em></code> add emphasis. <code>-</code> makes a list.</p>
+<p>But uDos markdown is <strong>enhanced</strong> – it can hold <strong>frontmatter</strong> (secret metadata), <strong>tasks</strong> (actionable items), and <strong>links</strong> (portals between notes).</p>
+<p>---</p>
+<h2>Part 2: Your First Spell – A Contact File</h2>
+<p>In the Student Lane, <code>vault/user/contacts/</code> holds information about people (allies, mentors, contributors).</p>
+<p>Let's create one in the safety of <code>@toybox</code>.</p>
+<h3>Step 1: Navigate to the Toybox</h3>
+<pre><code>cd ~/vault/user/@toybox
+mkdir -p contacts
+cd contacts</code></pre>
+<h3>Step 2: Create a Markdown File</h3>
+<p>Use your text editor (or <code>nano</code>) to create <code>merlin.md</code>:</p>
+<pre><code>nano merlin.md</code></pre>
+<p>Paste this:</p>
+<pre><code>---
+name: Merlin
+role: Archwizard
+location: Camelot
+status: active
+tags: [mentor, magic]
+---
+
+# Merlin, the Archwizard
+
+Merlin is a legendary wizard who advises King Arthur.
+
+## Known Spells
+- Teleportation
+- Fireball
+- [[mind-reading]]
+
+## Current Tasks
+- [ ] Teach the young wizard about frontmatter
+- [x] Create the first contact file
+- [ ] Brew a potion of clarity
+
+## Notes
+&gt; &quot;The vault is the source of truth.&quot;
+
+See also: [[arthur|King Arthur]]</code></pre>
+<p>Notice the <strong><code>[[wiki]]</code> links</strong>:</p>
+<ul><li><code>[[mind-reading]]</code> – links to a note that doesn't exist yet (that's fine!)</li><li><code>[[arthur|King Arthur]]</code> – links to a note with an alias</li></ul>
+<h3>Step 3: Save and View</h3>
+<p>Save the file (<code>Ctrl+O</code>, then <code>Ctrl+X</code> in nano). Then view it in the terminal:</p>
+<pre><code>cat merlin.md</code></pre>
+<p><strong>Congratulations!</strong> You've written your first uDos spell.</p>
+<p>---</p>
+<h2>Part 3: Frontmatter – The Secret Metadata</h2>
+<p>Frontmatter is the <strong>hidden power</strong> of each note. It lives at the top, between <code>---</code> lines, in YAML format.</p>
+<pre><code>---
+name: Merlin
+role: Archwizard
+location: Camelot
+status: active
+tags: [mentor, magic]
+---</code></pre>
+<p><strong>Why frontmatter matters:</strong></p>
+<ul><li>uDos can <strong>search</strong> for all contacts with <code>status: active</code></li><li>The <strong>student lane</strong> can generate a directory of wizards</li><li>The <strong>public story lane</strong> might turn Merlin into a recurring character</li><li>You can sort, filter, and query your vault without a database</li></ul>
+<p>---</p>
+<h2>Part 4: Links – Portals Between Notes</h2>
+<p>The <code>[[wiki]]</code> link is a <strong>portal</strong>. When you write <code>[[mind-reading]]</code>, you're saying: "There is a note called <code>mind-reading.md</code> somewhere in this vault."</p>
+<p>If the note exists, following the link takes you there. If it doesn't, the link is a <strong>dangling portal</strong> – a promise of future knowledge.</p>
+<p><strong>Alias syntax:</strong> <code>[[arthur|King Arthur]]</code> – the link points to <code>arthur.md</code>, but displays as "King Arthur".</p>
+<p><strong>Why links matter:</strong></p>
+<ul><li>Build a <strong>knowledge graph</strong> – ideas connect, just like neurons in a brain</li><li>The student lane can generate a <strong>map</strong> of your realm</li><li>The public story lane can turn links into "quest lines"</li></ul>
+<p>---</p>
+<h2>Part 5: Tasks – Actionable Spells</h2>
+<p>The <code>- [ ]</code> syntax creates a <strong>task</strong> – something you need to do.</p>
+<pre><code>- [ ] Teach the young wizard about frontmatter
+- [x] Create the first contact file
+- [ ] Brew a potion of clarity</code></pre>
+<ul><li><code>- [ ]</code> means "not done"</li><li><code>- [x]</code> means "done"</li></ul>
+<p><strong>Why tasks matter:</strong></p>
+<ul><li>uDos can <strong>list all pending tasks</strong> across your entire vault</li><li>The student lane can show your "quest log"</li><li>The public story lane could turn completed tasks into "achievements"</li></ul>
+<p>---</p>
+<h2>Part 6: Build Your Mini Vault (Exercise)</h2>
+<p>Now it's your turn to <strong>extend the vault</strong> creatively.</p>
+<p><strong>Choose one of these paths:</strong></p>
+<h3>Path A – The Hero's Journey</h3>
+<p>Create a new contact: <code>contacts/yourname.md</code> with your own frontmatter (role, location, powers). Then create a project: <code>projects/my-epic-quest.md</code> that lists tasks you want to accomplish in uDos. Link your contact to the quest.</p>
+<h3>Path B – The Monster Manual</h3>
+<p>Create a <code>monsters/</code> folder and add a file for a creature (e.g., <code>dragon.md</code>). Include frontmatter: <code>health</code>, <code>damage</code>, <code>loot</code>. Link it to the <code>quest-for-grail.md</code> as an obstacle.</p>
+<h3>Path C – The Spellbook</h3>
+<p>Create a <code>spells/</code> folder. Write a markdown file for a new uCode spell (e.g., <code>teleport.md</code>). Describe what it does, and frontmatter with <code>mana_cost</code>, <code>range</code>. Link it to your contact.</p>
+<p><strong>Spend at least 15 minutes on this.</strong> The goal is not perfection – it's understanding how markdown, frontmatter, links, and tasks work together.</p>
+<p>---</p>
+<h2>What You've Learned</h2>
+<ul><li>✅ Markdown is the source of truth – plain text with hidden structure</li><li>✅ Frontmatter (YAML) stores <strong>metadata</strong> like a character sheet</li><li>✅ <code>[[wiki]]</code> links create <strong>portals</strong> between notes</li><li>✅ <code>- [ ]</code> tasks are <strong>actionable items</strong> the vault can track</li><li>✅ You built a mini vault with contacts, projects, and links</li></ul>
+<p>---</p>
+<h2>How This Becomes a Story</h2>
+<p>When a developer (not you, yet) adds a feature like "support for teletext grid" and commits it with a game-tagged message, the <code>storyteller</code> daemon generates a <strong>public story entry</strong>:</p>
+<blockquote><em>"The Wizard carved a new teletext grid on level 12. The walls shimmer with runes."</em></blockquote>
+<p>And a <strong>student tutorial</strong>:</p>
+<blockquote><em>"Level 12 – Implementing a Teletext Grid – Step-by-step guide to adding a grid renderer in Rust."</em></blockquote>
+<p>Your student notes, however, are your <strong>private grimoire</strong>. They won't appear on the public site unless you choose to share them.</p>
+<p>But one day, when you become a contributor, your commits will become legend.</p>
+<p>---</p>
+<h2>Next Up</h2>
+<p><strong>Lesson 2: Local-First Development</strong> – You'll run a local server that reads your vault and turns it into a live API. Your contacts will become JSON. Your tasks will become a REST endpoint. The magic becomes <strong>real</strong>.</p>
+<p>But first, spend some time in <code>@toybox</code>. Add more notes. Link them. Create tasks. Break things (with compost, not trash). This is your workshop.</p>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   ╔═══════════════════════════════════════════════════════════════════╗    │
+│   ║                                                                   ║    │
+│   ║   LESSON 1 COMPLETE!                                              ║    │
+│   ║                                                                   ║    │
+│   ║   You have learned:                                               ║    │
+│   ║   ✓ Markdown basics (headings, lists, emphasis)                  ║    │
+│   ║   ✓ Frontmatter (YAML metadata)                                  ║    │
+│   ║   ✓ Wiki links [[like this]]                                     ║    │
+│   ║   ✓ Task syntax - [ ] and - [x]                                  ║    │
+│   ║   ✓ How your notes relate to the three lanes                     ║    │
+│   ║                                                                   ║    │
+│   ║   Your first grimoire entries are written.                       ║    │
+│   ║   The vault remembers.                                           ║    │
+│   ║                                                                   ║    │
+│   ║   PRESS [SPACE] TO CONTINUE TO LESSON 2                          ║    │
+│   ║                                                                   ║    │
+│   ╚═══════════════════════════════════════════════════════════════════╝    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘</code></pre>
+<p>---</p>
+<p><strong>Ready for Lesson 2, or want to adjust anything in Lesson 1?</strong> 🔧</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

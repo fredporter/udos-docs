@@ -1,0 +1,522 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/SKILLS_FRAMEWORK.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / specs/SKILLS_FRAMEWORK.md</span></header><main class="site-main"><h1>uCode Skills Framework — Classic Game Adaptation</h1>
+<p><strong>Status:</strong> 🔒 LOCKED — Canonical Reference <strong>Version:</strong> 1.0 <strong>Date:</strong> 2026-07-06</p>
+<h2>Overview</h2>
+<p>The Skills Framework defines automated tools ("Skills") for importing and adapting classic programs into the uCode ecosystem. Each Skill produces a structured output conforming to a specific JSON schema.</p>
+<h2>Skill Catalog</h2>
+<p>| Skill | Purpose | Input | Output | |-------|---------|-------|--------| | <code>Source-Miner</code> | Scan codebases for integration points | Repository URL or file path | JSON report of LENS-extractable elements | | <code>LENS-Craft</code> | Generate LENS extractor code | Source-Miner report + memory map | Python LENS extractor module | | <code>SKIN-Weaver</code> | Convert original graphics to uCode SKINs | Asset files (.png, .bmp, sprite data) | SKIN manifest + asset files | | <code>MCP-Scribe</code> | Define MCP command interfaces | Source-Miner report + game mechanics spec | MCP command YAML specification | | <code>Inspire-Engine</code> | Generate game design docs for rewrites | Research materials (reviews, wikis) | Structured game design document | | <code>uCode-Weaver</code> | Generate skeleton code from GDD | Inspire-Engine GDD output | BBC BASIC or Python source with LENS/SKIN/MCP hooks |</p>
+<p>---</p>
+<h2>1. Source-Miner Schema</h2>
+<p><strong>Purpose:</strong> Analyze a codebase and extract LENS-extractable integration points.</p>
+<h3>Input</h3>
+<pre><code>{
+  &quot;source&quot;: {
+    &quot;type&quot;: &quot;repository&quot;,
+    &quot;url&quot;: &quot;https://github.com/example/elite-source&quot;,
+    &quot;branch&quot;: &quot;master&quot;,
+    &quot;language&quot;: [&quot;6502&quot;, &quot;assembly&quot;]
+  },
+  &quot;options&quot;: {
+    &quot;scan_depth&quot;: &quot;full&quot;,
+    &quot;target_patterns&quot;: [&quot;*.asm&quot;, &quot;*.6502&quot;, &quot;*.s&quot;],
+    &quot;exclude_patterns&quot;: [&quot;test_*.asm&quot;, &quot;*.tmp&quot;]
+  }
+}</code></pre>
+<h3>Output</h3>
+<pre><code>{
+  &quot;skill&quot;: &quot;Source-Miner&quot;,
+  &quot;version&quot;: &quot;1.0&quot;,
+  &quot;executed_at&quot;: &quot;2026-07-06T23:00:00Z&quot;,
+  &quot;source&quot;: &quot;https://github.com/example/elite-source&quot;,
+  &quot;findings&quot;: {
+    &quot;memory_map&quot;: [
+      {
+        &quot;label&quot;: &quot;ship_status&quot;,
+        &quot;address&quot;: &quot;0x0222&quot;,
+        &quot;type&quot;: &quot;byte&quot;,
+        &quot;description&quot;: &quot;Bitmask: 0=docked, 1=in flight&quot;,
+        &quot;confidence&quot;: 0.95
+      },
+      {
+        &quot;label&quot;: &quot;ship_location_x&quot;,
+        &quot;address&quot;: &quot;0x0234&quot;,
+        &quot;type&quot;: &quot;uint16&quot;,
+        &quot;description&quot;: &quot;Current system X coordinate&quot;,
+        &quot;confidence&quot;: 0.90
+      },
+      {
+        &quot;label&quot;: &quot;ship_location_y&quot;,
+        &quot;address&quot;: &quot;0x0236&quot;,
+        &quot;type&quot;: &quot;uint16&quot;,
+        &quot;description&quot;: &quot;Current system Y coordinate&quot;,
+        &quot;confidence&quot;: 0.90
+      },
+      {
+        &quot;label&quot;: &quot;inventory&quot;,
+        &quot;address&quot;: &quot;0x0240&quot;,
+        &quot;type&quot;: &quot;array&quot;,
+        &quot;length&quot;: 12,
+        &quot;element_type&quot;: &quot;byte&quot;,
+        &quot;description&quot;: &quot;Commodity quantities (0-255)&quot;,
+        &quot;confidence&quot;: 0.85
+      }
+    ],
+    &quot;functions&quot;: [
+      {
+        &quot;name&quot;: &quot;MainLoop&quot;,
+        &quot;address&quot;: &quot;0x0400&quot;,
+        &quot;description&quot;: &quot;Main game loop entry point&quot;,
+        &quot;parameters&quot;: []
+      },
+      {
+        &quot;name&quot;: &quot;DockShip&quot;,
+        &quot;address&quot;: &quot;0x1200&quot;,
+        &quot;description&quot;: &quot;Execute docking sequence&quot;,
+        &quot;parameters&quot;: []
+      },
+      {
+        &quot;name&quot;: &quot;JumpWarp&quot;,
+        &quot;address&quot;: &quot;0x1500&quot;,
+        &quot;description&quot;: &quot;Execute hyperspace jump&quot;,
+        &quot;parameters&quot;: [
+          { &quot;register&quot;: &quot;A&quot;, &quot;description&quot;: &quot;Destination system index&quot; }
+        ]
+      }
+    ],
+    &quot;data_structures&quot;: [
+      {
+        &quot;name&quot;: &quot;ShipData&quot;,
+        &quot;size&quot;: 64,
+        &quot;fields&quot;: [
+          { &quot;offset&quot;: 0, &quot;name&quot;: &quot;type&quot;, &quot;size&quot;: 1 },
+          { &quot;offset&quot;: 1, &quot;name&quot;: &quot;x&quot;, &quot;size&quot;: 2 },
+          { &quot;offset&quot;: 3, &quot;name&quot;: &quot;y&quot;, &quot;size&quot;: 2 },
+          { &quot;offset&quot;: 5, &quot;name&quot;: &quot;z&quot;, &quot;size&quot;: 2 }
+        ]
+      }
+    ],
+    &quot;asset_references&quot;: [
+      {
+        &quot;path&quot;: &quot;gfx/ships/*.bin&quot;,
+        &quot;type&quot;: &quot;sprite_data&quot;,
+        &quot;count&quot;: 13,
+        &quot;description&quot;: &quot;Ship wireframe model data&quot;
+      },
+      {
+        &quot;path&quot;: &quot;text/*.txt&quot;,
+        &quot;type&quot;: &quot;teletext_pages&quot;,
+        &quot;count&quot;: 24,
+        &quot;description&quot;: &quot;Teletext planet descriptions&quot;
+      }
+    ]
+  },
+  &quot;recommendations&quot;: [
+    {
+      &quot;action&quot;: &quot;create_lens_extractor&quot;,
+      &quot;target&quot;: &quot;ship_status&quot;,
+      &quot;priority&quot;: &quot;high&quot;,
+      &quot;rationale&quot;: &quot;Core game state for save/load and telemetry&quot;
+    },
+    {
+      &quot;action&quot;: &quot;create_lens_extractor&quot;,
+      &quot;target&quot;: &quot;inventory&quot;,
+      &quot;priority&quot;: &quot;high&quot;,
+      &quot;rationale&quot;: &quot;Commodity trading data for external tools&quot;
+    },
+    {
+      &quot;action&quot;: &quot;create_mcp_command&quot;,
+      &quot;target&quot;: &quot;DockShip&quot;,
+      &quot;priority&quot;: &quot;medium&quot;,
+      &quot;rationale&quot;: &quot;Allow external docking trigger&quot;
+    }
+  ]
+}</code></pre>
+<p>---</p>
+<h2>2. LENS-Craft Schema</h2>
+<p><strong>Purpose:</strong> Generate LENS extractor code from a Source-Miner memory map.</p>
+<h3>Input</h3>
+<pre><code>{
+  &quot;source_miner_report&quot;: &quot;&lt;Source-Miner output&gt;&quot;,
+  &quot;emulator&quot;: {
+    &quot;type&quot;: &quot;6502&quot;,
+    &quot;memory_size&quot;: 65536,
+    &quot;memory_base&quot;: &quot;0x0000&quot;,
+    &quot;endianness&quot;: &quot;little&quot;
+  },
+  &quot;output&quot;: {
+    &quot;language&quot;: &quot;python&quot;,
+    &quot;module_name&quot;: &quot;elite_lens&quot;,
+    &quot;path&quot;: &quot;runtimes/basic/bridge/lens/extractors/elite_lens.py&quot;
+  }
+}</code></pre>
+<h3>Output</h3>
+<pre><code>{
+  &quot;skill&quot;: &quot;LENS-Craft&quot;,
+  &quot;version&quot;: &quot;1.0&quot;,
+  &quot;executed_at&quot;: &quot;2026-07-06T23:00:00Z&quot;,
+  &quot;module_path&quot;: &quot;runtimes/basic/bridge/lens/extractors/elite_lens.py&quot;,
+  &quot;extractors&quot;: [
+    {
+      &quot;name&quot;: &quot;elite_ship_status&quot;,
+      &quot;type&quot;: &quot;bitmask&quot;,
+      &quot;address&quot;: &quot;0x0222&quot;,
+      &quot;size&quot;: 1,
+      &quot;labels&quot;: {
+        &quot;0&quot;: &quot;docked&quot;,
+        &quot;1&quot;: &quot;in_flight&quot;,
+        &quot;2&quot;: &quot;docking&quot;,
+        &quot;3&quot;: &quot;jumping&quot;
+      },
+      &quot;description&quot;: &quot;Current ship docking/flight state&quot;
+    },
+    {
+      &quot;name&quot;: &quot;elite_location&quot;,
+      &quot;type&quot;: &quot;struct&quot;,
+      &quot;address&quot;: &quot;0x0234&quot;,
+      &quot;size&quot;: 4,
+      &quot;fields&quot;: [
+        { &quot;name&quot;: &quot;x&quot;, &quot;offset&quot;: 0, &quot;type&quot;: &quot;uint16&quot;, &quot;description&quot;: &quot;System X coordinate&quot; },
+        { &quot;name&quot;: &quot;y&quot;, &quot;offset&quot;: 2, &quot;type&quot;: &quot;uint16&quot;, &quot;description&quot;: &quot;System Y coordinate&quot; }
+      ],
+      &quot;description&quot;: &quot;Current star system location&quot;
+    },
+    {
+      &quot;name&quot;: &quot;elite_inventory&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;address&quot;: &quot;0x0240&quot;,
+      &quot;size&quot;: 12,
+      &quot;element_type&quot;: &quot;byte&quot;,
+      &quot;labels&quot;: [
+        &quot;food&quot;, &quot;textiles&quot;, &quot;radioactives&quot;, &quot;slaves&quot;,
+        &quot;liquor_wines&quot;, &quot;luxuries&quot;, &quot;narcotics&quot;, &quot;computers&quot;,
+        &quot;machinery&quot;, &quot;alloys&quot;, &quot;firearms&quot;, &quot;furs&quot;
+      ],
+      &quot;description&quot;: &quot;Cargo hold inventory (tons)&quot;
+    },
+    {
+      &quot;name&quot;: &quot;elite_credits&quot;,
+      &quot;type&quot;: &quot;uint32&quot;,
+      &quot;address&quot;: &quot;0x0200&quot;,
+      &quot;size&quot;: 4,
+      &quot;description&quot;: &quot;Player credit balance (tenths of credit)&quot;
+    }
+  ]
+}</code></pre>
+<h3>Generated Code Template</h3>
+<pre><code># Auto-generated by LENS-Craft v1.0
+# Target: Elite (BBC Micro, 6502 emulation)
+
+class EliteLensExtractor:
+    def __init__(self, emu):
+        self._emu = emu
+
+    @property
+    def ship_status(self) -&gt; str:
+        val = self._emu.read_byte(0x0222)
+        labels = {0: &quot;docked&quot;, 1: &quot;in_flight&quot;, 2: &quot;docking&quot;, 3: &quot;jumping&quot;}
+        return labels.get(val, &quot;unknown&quot;)
+
+    @property
+    def location(self) -&gt; dict:
+        x = self._emu.read_uint16(0x0234)
+        y = self._emu.read_uint16(0x0236)
+        return {&quot;x&quot;: x, &quot;y&quot;: y}
+
+    @property
+    def inventory(self) -&gt; dict:
+        items = [&quot;food&quot;, &quot;textiles&quot;, &quot;radioactives&quot;, &quot;slaves&quot;,
+                 &quot;liquor_wines&quot;, &quot;luxuries&quot;, &quot;narcotics&quot;, &quot;computers&quot;,
+                 &quot;machinery&quot;, &quot;alloys&quot;, &quot;firearms&quot;, &quot;furs&quot;]
+        result = {}
+        for i, label in enumerate(items):
+            result[label] = self._emu.read_byte(0x0240 + i)
+        return result
+
+    @property
+    def credits(self) -&gt; int:
+        return self._emu.read_uint32(0x0200)
+
+    def capture_all(self) -&gt; dict:
+        return {
+            &quot;ship_status&quot;: self.ship_status,
+            &quot;location&quot;: self.location,
+            &quot;inventory&quot;: self.inventory,
+            &quot;credits&quot;: self.credits,
+        }</code></pre>
+<p>---</p>
+<h2>3. SKIN-Weaver Schema</h2>
+<p><strong>Purpose:</strong> Convert original game assets to uCode SKIN formats.</p>
+<h3>Input</h3>
+<pre><code>{
+  &quot;source_assets&quot;: [
+    {
+      &quot;path&quot;: &quot;gfx/ships/adder.bin&quot;,
+      &quot;type&quot;: &quot;wireframe_model&quot;,
+      &quot;format&quot;: &quot;elite_wireframe&quot;,
+      &quot;transform&quot;: {
+        &quot;scale&quot;: 2.0,
+        &quot;rotation&quot;: 0,
+        &quot;center&quot;: [12, 12]
+      }
+    }
+  ],
+  &quot;target&quot;: {
+    &quot;locale&quot;: &quot;teletext_grid&quot;,
+    &quot;resolution&quot;: {&quot;cols&quot;: 40, &quot;rows&quot;: 25},
+    &quot;palette&quot;: &quot;bbc_mode7&quot;
+  }
+}</code></pre>
+<h3>Output</h3>
+<pre><code>{
+  &quot;skill&quot;: &quot;SKIN-Weaver&quot;,
+  &quot;version&quot;: &quot;1.0&quot;,
+  &quot;executed_at&quot;: &quot;2026-07-06T23:00:00Z&quot;,
+  &quot;skin_name&quot;: &quot;elite_classic&quot;,
+  &quot;manifest&quot;: {
+    &quot;name&quot;: &quot;Elite Classic (Teletext)&quot;,
+    &quot;version&quot;: &quot;1.0&quot;,
+    &quot;palette&quot;: {
+      &quot;0&quot;: &quot;#000000&quot;,
+      &quot;1&quot;: &quot;#00ff00&quot;,
+      &quot;2&quot;: &quot;#00ff00&quot;,
+      &quot;3&quot;: &quot;#ffff00&quot;,
+      &quot;4&quot;: &quot;#0000ff&quot;,
+      &quot;5&quot;: &quot;#ff00ff&quot;,
+      &quot;6&quot;: &quot;#00ffff&quot;,
+      &quot;7&quot;: &quot;#00ff00&quot;
+    },
+    &quot;character_mappings&quot;: [
+      {
+        &quot;source&quot;: &quot;gfx/ships/adder.bin&quot;,
+        &quot;target_char&quot;: &quot;@&quot;,
+        &quot;target_fg&quot;: 2,
+        &quot;target_bg&quot;: 0,
+        &quot;description&quot;: &quot;Adder ship (green)&quot;
+      }
+    ],
+    &quot;teletext_overrides&quot;: {
+      &quot;header_row&quot;: { &quot;fg&quot;: 2, &quot;bg&quot;: 0, &quot;bold&quot;: true },
+      &quot;hud_row&quot;: { &quot;fg&quot;: 3, &quot;bg&quot;: 0, &quot;bold&quot;: false },
+      &quot;alert_row&quot;: { &quot;fg&quot;: 1, &quot;bg&quot;: 0, &quot;bold&quot;: true }
+    }
+  },
+  &quot;exported_assets&quot;: [
+    { &quot;source&quot;: &quot;gfx/ships/adder.bin&quot;, &quot;output&quot;: &quot;skins/elite_classic/chars/adder.json&quot; }
+  ]
+}</code></pre>
+<p>---</p>
+<h2>4. MCP-Scribe Schema</h2>
+<p><strong>Purpose:</strong> Generate MCP command specifications from game mechanics analysis.</p>
+<h3>Input</h3>
+<pre><code>{
+  &quot;program_name&quot;: &quot;Elite&quot;,
+  &quot;program_type&quot;: &quot;adapt-source&quot;,
+  &quot;game_mechanics&quot;: {
+    &quot;genre&quot;: [&quot;space_trading&quot;, &quot;combat_sim&quot;],
+    &quot;save_system&quot;: &quot;manual_dock&quot;,
+    &quot;input_method&quot;: &quot;keyboard&quot;,
+    &quot;persistence&quot;: &quot;save_at_dock&quot;
+  },
+  &quot;source_miner_report&quot;: &quot;&lt;Source-Miner output&gt;&quot;
+}</code></pre>
+<h3>Output</h3>
+<pre><code>{
+  &quot;skill&quot;: &quot;MCP-Scribe&quot;,
+  &quot;version&quot;: &quot;1.0&quot;,
+  &quot;executed_at&quot;: &quot;2026-07-06T23:00:00Z&quot;,
+  &quot;program&quot;: &quot;Elite&quot;,
+  &quot;commands&quot;: [
+    {
+      &quot;name&quot;: &quot;elite_save&quot;,
+      &quot;description&quot;: &quot;Save current game state via LENS capture&quot;,
+      &quot;parameters&quot;: {
+        &quot;slot&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Save slot name&quot;,
+          &quot;default&quot;: &quot;autosave&quot;
+        }
+      },
+      &quot;action&quot;: &quot;lens_capture&quot;,
+      &quot;payload&quot;: {
+        &quot;target&quot;: &quot;variables&quot;,
+        &quot;scope&quot;: &quot;elite_save&quot;,
+        &quot;keys&quot;: [&quot;ship_status&quot;, &quot;location&quot;, &quot;inventory&quot;, &quot;credits&quot;]
+      }
+    },
+    {
+      &quot;name&quot;: &quot;elite_load&quot;,
+      &quot;description&quot;: &quot;Restore saved game state&quot;,
+      &quot;parameters&quot;: {
+        &quot;slot&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Save slot to load&quot;,
+          &quot;default&quot;: &quot;autosave&quot;
+        }
+      },
+      &quot;action&quot;: &quot;lens_restore&quot;,
+      &quot;payload&quot;: {
+        &quot;target&quot;: &quot;variables&quot;,
+        &quot;scope&quot;: &quot;elite_save&quot;,
+        &quot;keys&quot;: [&quot;ship_status&quot;, &quot;location&quot;, &quot;inventory&quot;, &quot;credits&quot;]
+      }
+    },
+    {
+      &quot;name&quot;: &quot;elite_dock&quot;,
+      &quot;description&quot;: &quot;Trigger docking sequence&quot;,
+      &quot;parameters&quot;: {},
+      &quot;action&quot;: &quot;mcp_inject&quot;,
+      &quot;payload&quot;: {
+        &quot;target&quot;: &quot;6502_execute&quot;,
+        &quot;address&quot;: &quot;0x1200&quot;,
+        &quot;description&quot;: &quot;Call DockShip routine&quot;
+      }
+    },
+    {
+      &quot;name&quot;: &quot;elite_jump&quot;,
+      &quot;description&quot;: &quot;Initiate hyperspace jump to system&quot;,
+      &quot;parameters&quot;: {
+        &quot;system_index&quot;: {
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;description&quot;: &quot;Target system index (0-255)&quot;
+        }
+      },
+      &quot;action&quot;: &quot;mcp_inject&quot;,
+      &quot;payload&quot;: {
+        &quot;target&quot;: &quot;6502_execute&quot;,
+        &quot;address&quot;: &quot;0x1500&quot;,
+        &quot;register&quot;: &quot;A&quot;,
+        &quot;value_template&quot;: &quot;{{system_index}}&quot;
+      }
+    },
+    {
+      &quot;name&quot;: &quot;elite_pause&quot;,
+      &quot;description&quot;: &quot;Pause/resume game execution&quot;,
+      &quot;parameters&quot;: {},
+      &quot;action&quot;: &quot;emulator_control&quot;,
+      &quot;payload&quot;: {
+        &quot;command&quot;: &quot;toggle_pause&quot;
+      }
+    },
+    {
+      &quot;name&quot;: &quot;elite_status&quot;,
+      &quot;description&quot;: &quot;Query current game state&quot;,
+      &quot;parameters&quot;: {},
+      &quot;action&quot;: &quot;lens_query&quot;,
+      &quot;payload&quot;: {
+        &quot;extractor&quot;: &quot;EliteLensExtractor&quot;,
+        &quot;method&quot;: &quot;capture_all&quot;
+      }
+    }
+  ]
+}</code></pre>
+<p>---</p>
+<h2>5. Inspire-Engine Schema</h2>
+<p><strong>Purpose:</strong> Generate game design documents for rewrites by analyzing research materials.</p>
+<h3>Input</h3>
+<pre><code>{
+  &quot;target_game&quot;: &quot;Knight Orc&quot;,
+  &quot;approach&quot;: &quot;rewrite_inspired_by&quot;,
+  &quot;research_sources&quot;: [
+    {
+      &quot;type&quot;: &quot;mobygames&quot;,
+      &quot;url&quot;: &quot;https://www.mobygames.com/game/knight-orc&quot;,
+      &quot;reliability&quot;: &quot;high&quot;
+    },
+    {
+      &quot;type&quot;: &quot;wikipedia&quot;,
+      &quot;url&quot;: &quot;https://en.wikipedia.org/wiki/Knight_Orc&quot;,
+      &quot;reliability&quot;: &quot;high&quot;
+    },
+    {
+      &quot;type&quot;: &quot;forum_thread&quot;,
+      &quot;url&quot;: &quot;https://example.com/knight-orc-review&quot;,
+      &quot;reliability&quot;: &quot;medium&quot;
+    }
+  ],
+  &quot;design_constraints&quot;: {
+    &quot;target_runtime&quot;: &quot;bbc_basic_sdl&quot;,
+    &quot;display_mode&quot;: &quot;teletext&quot;,
+    &quot;max_program_size&quot;: &quot;64kb&quot;
+  }
+}</code></pre>
+<h3>Output</h3>
+<pre><code>{
+  &quot;skill&quot;: &quot;Inspire-Engine&quot;,
+  &quot;version&quot;: &quot;1.0&quot;,
+  &quot;executed_at&quot;: &quot;2026-07-06T23:00:00Z&quot;,
+  &quot;target_game&quot;: &quot;Knight Orc&quot;,
+  &quot;game_design_document&quot;: {
+    &quot;title&quot;: &quot;Knight Orc (uCode Adaptation)&quot;,
+    &quot;genre&quot;: [&quot;text_adventure&quot;, &quot;fantasy&quot;],
+    &quot;summary&quot;: &quot;You are Grindleguts, an orc seeking revenge in a fantasy/sci-fi world. The game features a real-time NPC schedule system unique to the KAOS engine.&quot;,
+    &quot;core_mechanics&quot;: [
+      {
+        &quot;name&quot;: &quot;text_parser&quot;,
+        &quot;description&quot;: &quot;Standard text adventure parser supporting VERB NOUN grammar&quot;,
+        &quot;constraints&quot;: [&quot;max 2 words per command&quot;, &quot;abbreviation support (N=North, X=Examine)&quot;],
+        &quot;vocabulary_size&quot;: &quot;~200 words (60 verbs, 140 nouns/adjectives)&quot;
+      },
+      {
+        &quot;name&quot;: &quot;npc_schedules&quot;,
+        &quot;description&quot;: &quot;NPCs follow daily routines independent of player actions. Time advances with player actions.&quot;,
+        &quot;implementation&quot;: &quot;Tick-based time system. Each NPC has a schedule array: [location, time_start, time_end, action]&quot;,
+        &quot;constraints&quot;: [&quot;Clock resolution: 1 tick per command&quot;, &quot;Day/night cycle: 24 ticks (1 tick = 1 in-game hour)&quot;]
+      },
+      {
+        &quot;name&quot;: &quot;magic_system&quot;,
+        &quot;description&quot;: &quot;Spell casting with mana cost and component requirements&quot;,
+        &quot;spells&quot;: [
+          { &quot;name&quot;: &quot;BLAST&quot;, &quot;cost&quot;: 5, &quot;effect&quot;: &quot;damage_target&quot;, &quot;learn_location&quot;: &quot;wizard_tower&quot; },
+          { &quot;name&quot;: &quot;HEAL&quot;, &quot;cost&quot;: 3, &quot;effect&quot;: &quot;restore_health&quot;, &quot;learn_location&quot;: &quot;healer_hut&quot; },
+          { &quot;name&quot;: &quot;SHIELD&quot;, &quot;cost&quot;: 4, &quot;effect&quot;: &quot;temporary_defense&quot;, &quot;learn_location&quot;: &quot;wizard_tower&quot; }
+        ]
+      },
+      {
+        &quot;name&quot;: &quot;world_model&quot;,
+        &quot;description&quot;: &quot;Multi-location world with movable objects and NPCs&quot;,
+        &quot;locations&quot;: [
+          { &quot;id&quot;: &quot;orc_camp&quot;, &quot;name&quot;: &quot;Orc Camp&quot;, &quot;exits&quot;: [&quot;north=dark_forest&quot;] },
+          { &quot;id&quot;: &quot;dark_forest&quot;, &quot;name&quot;: &quot;Dark Forest&quot;, &quot;exits&quot;: [&quot;south=orc_camp&quot;, &quot;east=wizard_tower&quot;] },
+          { &quot;id&quot;: &quot;wizard_tower&quot;, &quot;name&quot;: &quot;Wizard&#x27;s Tower&quot;, &quot;exits&quot;: [&quot;west=dark_forest&quot;] }
+        ]
+      }
+    ],
+    &quot;uCode_integration&quot;: {
+      &quot;lens_extractors&quot;: [
+        { &quot;target&quot;: &quot;player_location&quot;, &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Current location ID&quot; },
+        { &quot;target&quot;: &quot;player_inventory&quot;, &quot;type&quot;: &quot;array&quot;, &quot;description&quot;: &quot;List of carried item IDs&quot; },
+        { &quot;target&quot;: &quot;game_time&quot;, &quot;type&quot;: &quot;uint16&quot;, &quot;description&quot;: &quot;Current game time in ticks&quot; },
+        { &quot;target&quot;: &quot;npc_statuses&quot;, &quot;type&quot;: &quot;array&quot;, &quot;description&quot;: &quot;Array of {npc_id, location, action} for each NPC&quot; }
+      ],
+      &quot;skin_themes&quot;: [
+        { &quot;name&quot;: &quot;dark_fantasy&quot;, &quot;description&quot;: &quot;Dark background with muted colours&quot; },
+        { &quot;name&quot;: &quot;teletext_classic&quot;, &quot;description&quot;: &quot;Standard MODE 7 teletext&quot; }
+      ],
+      &quot;mcp_commands&quot;: [
+        { &quot;name&quot;: &quot;knight_orc_save&quot;, &quot;description&quot;: &quot;Save game state&quot; },
+        { &quot;name&quot;: &quot;knight_orc_load&quot;, &quot;description&quot;: &quot;Load game state&quot; },
+        { &quot;name&quot;: &quot;knight_orc_time_skip&quot;, &quot;description&quot;: &quot;Advance game time by N ticks&quot; }
+      ]
+    }
+  },
+  &quot;effort_estimate&quot;: {
+    &quot;total_weeks&quot;: 10,
+    &quot;breakdown&quot;: {
+      &quot;core_engine&quot;: 3,
+      &quot;parser_and_vocabulary&quot;: 1,
+      &quot;world_building&quot;: 2,
+      &quot;npc_system&quot;: 2,
+      &quot;magic_system&quot;: 1,
+      &quot;testing&quot;: 1
+    }
+  }
+}</code></pre>
+<p>---</p>
+<h2>Implementation Phases</h2>
+<h3>Phase 1: Skill Scaffolding (Week 1-2)</h3>
+<ul><li>Define JSON schema validator for each skill (TypeScript, using zod)</li><li>Build <code>Source-Miner</code> for 6502 assembly (most common target)</li><li>Create CLI entry points: <code>gridsmith skill source-miner <url></code></li></ul>
+<h3>Phase 2: Core Skills (Week 3-4)</h3>
+<ul><li>Build <code>LENS-Craft</code> — generates Python extractors</li><li>Build <code>MCP-Scribe</code> — generates MCP command YAML</li><li>Test on Elite source (simplest known target)</li></ul>
+<h3>Phase 3: Asset Skills (Week 5-6)</h3>
+<ul><li>Build <code>SKIN-Weaver</code> — converts graphics to teletext/sprite formats</li><li>Build <code>Inspire-Engine</code> — game design doc generator</li><li>Test on Repton assets and Knight Orc research</li></ul>
+<h3>Phase 4: Integration (Week 7-8)</h3>
+<ul><li>Wire skills into GridSmith MCP tools</li><li>Create end-to-end pipeline: <code>Source-Miner → LENS-Craft → MCP-Scribe</code></li><li>Generate Program.yaml from skills pipeline output</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

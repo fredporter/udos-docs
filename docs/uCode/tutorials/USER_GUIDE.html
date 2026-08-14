@@ -1,0 +1,99 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>tutorials/USER_GUIDE.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / tutorials/USER_GUIDE.md</span></header><main class="site-main"><p>--- title: "DevStudio User/Dev Guide" status: draft last_updated: 2026-05-26T15:10:21+10:00 category: guide tags: [devstudio, guide] description: "This guide explains how to use DevStudio for managing projects, configurations, and agentic workflows. It is intended..." ---</p>
+<h1>DevStudio User/Dev Guide</h1>
+<p>This guide explains how to use DevStudio for managing projects, configurations, and agentic workflows. It is intended for both users and developers who want to work on projects like Snackbar or uDos.</p>
+<h2>Overview</h2>
+<p>DevStudio is a centralized development environment that integrates with the <code>Projects</code> directory to provide a unified setup for all your development needs. It supports:</p>
+<ul><li><strong>Centralized Project Configuration</strong>: All project configurations are stored in <code>~/Code/Projects/</code>.</li><li><strong>Agentic Workflows</strong>: Automated workflows for development tasks.</li><li><strong>LeChat Pro API Integration</strong>: Unified API for logging, messaging, and other services.</li><li><strong>Compartmentalized Project Work</strong>: Each project is isolated and can be worked on independently.</li></ul>
+<h2>Getting Started</h2>
+<h3>1. Navigate to DevStudio</h3>
+<pre><code>cd ~/Code/DevStudio</code></pre>
+<h3>2. Load a Project Configuration</h3>
+<p>Use DevStudio to load a project's configuration:</p>
+<pre><code>devstudio config load-project Snackbar</code></pre>
+<p>This will display the Snackbar configuration, including the LeChat Pro API settings.</p>
+<h3>3. Update DevStudio Configuration</h3>
+<p>Edit the main DevStudio configuration:</p>
+<pre><code>devstudio config show
+devstudio config set agentic_workflows.llm_provider deepseek</code></pre>
+<h3>4. Run Agentic Workflows</h3>
+<p>DevStudio supports automated workflows for development tasks. See the <code>workflows/</code> directory for examples.</p>
+<h2>Configuration</h2>
+<h3>Main Configuration (<code>config.yaml</code>)</h3>
+<p>The main DevStudio configuration is located at <code>~/Code/DevStudio/config.yaml</code>. It includes settings for:</p>
+<ul><li><strong>Agentic Workflows</strong>: LLM provider, workflow directory, max steps, etc.</li><li><strong>Projects Directory</strong>: Path to the centralized Projects directory.</li><li><strong>LeChat Pro API</strong>: API key and URL for the LeChat Pro service.</li><li><strong>Discovery Agent</strong>: Sandbox settings, timeouts, and test patterns.</li><li><strong>EEA (Extended Editing Agent)</strong>: Editor settings, backup directory, etc.</li><li><strong>MCP (Multi-Project Control)</strong>: Socket path and timeout settings.</li><li><strong>Logging</strong>: Log level and log file path.</li><li><strong>GitHub</strong>: API URL, token path, and default repository.</li><li><strong>Vault</strong>: Paths to Vault, Sandbox, and Registry directories.</li></ul>
+<h3>Project Configuration (<code>Projects/<project>/config/config.yaml</code>)</h3>
+<p>Each project has its own configuration file with settings for:</p>
+<ul><li><strong>LeChat Pro API</strong>: API key, URL, and enabled flag.</li><li><strong>Project-Specific Settings</strong>: Debug mode, log level, memory path, etc.</li></ul>
+<h2>Commands</h2>
+<h3><code>devstudio config</code></h3>
+<p>Manage DevStudio and project configurations.</p>
+<pre><code>devstudio config show              # Show current DevStudio configuration
+devstudio config set &lt;key&gt; &lt;value&gt; # Set a configuration value
+devstudio config get &lt;key&gt;         # Get a configuration value
+devstudio config load-project &lt;name&gt; # Load a project&#x27;s configuration</code></pre>
+<h3><code>devstudio</code> (Main Command)</h3>
+<p>Run DevStudio with various options.</p>
+<pre><code>devstudio help  # Show help</code></pre>
+<h3>Release & Publishing Commands</h3>
+<pre><code># Release all components (tags + pushes to trigger GitHub Actions)
+release all v1.0.0
+
+# Release a specific org
+release okagent v1.0.0
+release udosgo v1.0.0
+
+# Publish vault to Linux
+release vault
+vault-publish          # Same, directly
+
+# Via dev CLI
+ud release             # Interactive release creation
+ud vault               # Publish vault to Linux
+ud actions             # Open GitHub Actions
+ud inbox               # Open Continue Mission Control inbox</code></pre>
+<p>See <a href="docs/WORKFLOW_PIPELINE.md">docs/WORKFLOW_PIPELINE.md</a> for full pipeline documentation.</p>
+<h2>Working on Projects</h2>
+<h3>uDos Project</h3>
+<p>To work on the uDos project:</p>
+<p>1. Load the uDos configuration:</p>
+<pre><code>   devstudio config load-project uDos</code></pre>
+<p>2. Navigate to the uDos codebase:</p>
+<pre><code>   cd ~/Code/uDosGo</code></pre>
+<p>3. Update the uDos code to use the <code>ConfigManager</code> (similar to Snackbar).</p>
+<p>4. Test the configuration and ensure the LeChat Pro API is working.</p>
+<h3>Snackbar Project</h3>
+<p>To work on the Snackbar project:</p>
+<p>1. Load the Snackbar configuration:</p>
+<pre><code>   devstudio config load-project Snackbar</code></pre>
+<p>2. Navigate to the Snackbar codebase:</p>
+<pre><code>   cd ~/Code/Apps/Snackbar</code></pre>
+<p>3. Run Snackbar:</p>
+<pre><code>   ./launch.sh</code></pre>
+<h2>Adding a New Project</h2>
+<p>To add a new project to the centralized configuration system:</p>
+<p>1. Create the project directory:</p>
+<pre><code>   mkdir -p ~/Code/Projects/YourProject/config</code></pre>
+<p>2. Create the configuration file:</p>
+<pre><code>   touch ~/Code/Projects/YourProject/config/config.yaml</code></pre>
+<p>3. Add the configuration:</p>
+<pre><code>   # YourProject Configuration
+   lechat:
+     api_key: &quot;your_api_key_here&quot;
+     api_url: &quot;https://api.lechat.pro&quot;
+     enabled: true
+   
+   your_project:
+     debug_mode: false
+     log_level: &quot;info&quot;</code></pre>
+<p>4. Update your project code to use the <code>ConfigManager</code>.</p>
+<h2>Troubleshooting</h2>
+<h3>Issue: Configuration Not Found</h3>
+<ul><li>Ensure the <code>Projects</code> directory exists at <code>~/Code/Projects/</code>.</li><li>Verify the project name in the <code>ConfigManager</code> matches the directory name.</li><li>Check for typos in the configuration file path.</li></ul>
+<h3>Issue: DevStudio Cannot Load Project</h3>
+<ul><li>Ensure DevStudio's <code>config.yaml</code> has the correct <code>projects_dir</code> path.</li><li>Verify the project configuration file exists at <code>~/Code/Projects/YourProject/config/config.yaml</code>.</li></ul>
+<h3>Issue: LeChat API Not Working</h3>
+<ul><li>Verify the <code>api_key</code> and <code>api_url</code> in the project's <code>config.yaml</code>.</li><li>Ensure the <code>enabled</code> flag is set to <code>true</code>.</li><li>Check the network connection and API endpoint.</li></ul>
+<h2>Documentation</h2>
+<ul><li><strong>Projects README</strong>: <code>~/Code/Projects/README.md</code> - Overview of the Projects directory.</li><li><strong>Next Agent Guide</strong>: <code>~/Code/Projects/NEXT_AGENT_GUIDE.md</code> - Guide for working on projects like uDos.</li><li><strong>DevStudio Config</strong>: <code>~/Code/DevStudio/config.sh</code> - Configuration management script.</li></ul>
+<h2>License</h2>
+<p>DevStudio is licensed under the MIT License. See the <code>LICENSE</code> file for details.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

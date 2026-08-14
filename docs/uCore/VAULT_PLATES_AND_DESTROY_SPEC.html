@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>VAULT_PLATES_AND_DESTROY_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / VAULT_PLATES_AND_DESTROY_SPEC.md</span></header><main class="site-main"><h1>Vault Plates & Enhanced DESTROY/REBUILD Specification</h1>
+<blockquote><strong>Version:</strong> 2.0</blockquote>
+<blockquote><strong>Status:</strong> Active</blockquote>
+<blockquote><strong>Scope:</strong> Vault topology, vault seed plates, transport pipeline, vault discovery, interactive DESTROY, distribution alignment</blockquote>
+<h2>1. Philosophy</h2>
+<p>The DESTROY/REBUILD protocol must be able to: 1. <strong>Discover</strong> all user data across vault layers (User, Shared, Global, Code, Public) 2. <strong>Dry-run</strong> identify everything before any destructive action 3. <strong>Offer choices</strong> — Destroy & Rebuild, Destroy User Data Only, Destroy Installation & Data 4. <strong>Spool</strong> out archives/backups for later recovery 5. <strong>Break off Nuggets</strong> for reuse in another place/time/context 6. <strong>Rebuild</strong> from distribution packages (GitHub uCode/uCore)</p>
+<h2>2. Vault Topology</h2>
+<p>From <code>vault_file_discovery.py</code> and <code>skill_vault_discovery.py</code>:</p>
+<p>| Layer | Path | Purpose | Permissions | Plate | |-------|------|---------|-------------|-------| | <strong>user</strong> | <code>~/Vault/</code> | Personal vault (one per user) | Read/Write | <code>vault.user_vault_seed</code> | | <strong>shared</strong> | <code>~/Shared/</code> | Shared vaults (team workspaces) | Read/Write (permission check) | <code>vault.shared_workspace_seed</code> | | <strong>global</strong> | <code>~/Public/global-knowledge/</code> | Global knowledge bank | Read-only | <code>vault.global_knowledge_seed</code> | | <strong>code</strong> | <code>~/Code/</code> | Dev repos (uCore, uDocs, etc.) | Read/Write (dev) | (no plate — git-managed) | | <strong>public</strong> | <code>~/Public/doc-sites/</code> | Published doc sites | Publish-only | <code>vault.public_publishing_framework</code> |</p>
+<h3>Additional Operational Paths</h3>
+<p>| Path | Purpose | Plate | |------|---------|-------| | <code>~/Public/#transport/</code> | File transport pipeline (incoming/queue/outgoing/processed/failed) | <code>vault.transport_pipeline</code> | | <code>~/Public/learning/</code> | Learning resources and tutorials | (ad-hoc) | | <code>~/.ucore/</code> | uCore config, logs, indices | (managed by system) |</p>
+<h2>3. Vault Plates</h2>
+<p>Plate domain: <code>vault</code> (added to PlateMeta domain Literal)</p>
+<h3>3.1 User Vault Seed Plate — <code>vault.user_vault_seed</code></h3>
+<p><strong>File:</strong> <code>plates/vault/user_vault_seed.yaml</code> (v2.0.0)</p>
+<p>Mirrors the real on-disk <code>~/Vault/</code> structure with 15 directories:</p>
+<p>| Category | Directories | |----------|-------------| | <strong>Operational</strong> | <code>@inbox/</code> (pending/processed/failed), <code>@groovebox/</code> (creative workspace) | | <strong>Core Knowledge</strong> | <code>knowledge/</code> (concepts/insights/research), <code>binders/</code> (active/completed/on-hold/templates), <code>missions/</code> (active/completed/templates), <code>tasks/</code>, <code>daily/</code>, <code>journals/</code> | | <strong>People & Agents</strong> | <code>people/</code>, <code>agents/</code> | | <strong>Assets</strong> | <code>attachments/</code>, <code>scripts/</code>, <code>security/</code> | | <strong>Templates & Dev</strong> | <code>templates/</code>, <code>dev/</code> |</p>
+<h3>3.2 Shared Workspace Vault Plate — <code>vault.shared_workspace_seed</code></h3>
+<p><strong>File:</strong> <code>plates/vault/shared_workspace_seed.yaml</code> (v1.0.0)</p>
+<p>Template-based structure for team workspaces under <code>~/Shared/</code>:</p>
+<pre><code>{workspace_name}/
+├── Projects/
+├── Knowledge/
+├── Assets/
+└── Archive/</code></pre>
+<h3>3.3 Public Publishing Framework Plate — <code>vault.public_publishing_framework</code></h3>
+<p><strong>File:</strong> <code>plates/vault/public_publishing_framework.yaml</code> (v1.0.0)</p>
+<p>Template-based structure for published doc sites under <code>~/Public/doc-sites/</code>:</p>
+<pre><code>{site_name}/
+├── docs/
+├── assets/
+└── _config.yml</code></pre>
+<h3>3.4 Global Knowledge Seed Plate — <code>vault.global_knowledge_seed</code></h3>
+<p><strong>File:</strong> <code>plates/vault/global_knowledge_seed.yaml</code> (v1.0.0)</p>
+<p>Read-only reference vault under <code>~/Public/global-knowledge/</code> with 18 directories:</p>
+<p>| Category | Directories | |----------|-------------| | <strong>Life Domains</strong> | water, fire, shelter, food, medical, skills, survival, wellbeing, community, communication, tech, making, reference, navigation, learning | | <strong>System</strong> | categories, contributor, bin |</p>
+<h3>3.5 Transport Pipeline Plate — <code>vault.transport_pipeline</code></h3>
+<p><strong>File:</strong> <code>plates/vault/transport_pipeline.yaml</code> (v1.0.0)</p>
+<p>Operational file staging pipeline under <code>~/Public/#transport/</code>:</p>
+<pre><code>incoming/  →  queue/  →  processing  →  outgoing/  →  delivered
+                ↓                          ↓
+           failed/                    processed/</code></pre>
+<h2>4. Vault Discovery Skill</h2>
+<p><strong>File:</strong> <code>backend/app/skills/builtin/skill_vault_discovery.py</code></p>
+<p><code>VaultDiscoverySkill(BaseSkill)</code> that: 1. Scans all 5 vault layers (user, shared, global, code, public) 2. Reports file counts, sizes, extensions, and structure per layer 3. Identifies uCore-specific data (configs, logs, plates, spool archives) 4. Dry-run mode (default) for safe identification 5. Nugget extraction — breaks off reusable components as <code>.nugget.json</code> manifests</p>
+<h3>API</h3>
+<pre><code># Dry-run: identify everything
+result = await vault_discovery_skill.run(dry_run=True)
+
+# Full scan with Nugget extraction
+result = await vault_discovery_skill.run(
+    dry_run=False,
+    extract_nuggets=True,
+    nugget_output_dir=&quot;~/Nuggets/&quot;
+)</code></pre>
+<h3>Output</h3>
+<pre><code>{
+  &quot;vaults&quot;: {
+    &quot;user&quot;: { &quot;path&quot;: &quot;~/Vault/&quot;, &quot;files&quot;: 42, &quot;size_bytes&quot;: 1048576 },
+    &quot;shared&quot;: { &quot;path&quot;: &quot;~/Shared/&quot;, &quot;files&quot;: 156, &quot;size_bytes&quot;: 5242880 },
+    &quot;global&quot;: { &quot;path&quot;: &quot;~/Public/global-knowledge/&quot;, &quot;files&quot;: 89, &quot;size_bytes&quot;: 2097152 },
+    &quot;code&quot;: { &quot;path&quot;: &quot;~/Code/&quot;, &quot;files&quot;: 1200, &quot;size_bytes&quot;: 104857600 },
+    &quot;public&quot;: { &quot;path&quot;: &quot;~/Public/doc-sites/&quot;, &quot;files&quot;: 12, &quot;size_bytes&quot;: 524288 }
+  },
+  &quot;ucore_data&quot;: {
+    &quot;config&quot;: { &quot;path&quot;: &quot;~/.ucore/&quot;, &quot;files&quot;: 8 },
+    &quot;logs&quot;: { &quot;path&quot;: &quot;~/.ucore/logs/&quot;, &quot;files&quot;: 15 },
+    &quot;plates&quot;: { &quot;path&quot;: &quot;plates/&quot;, &quot;files&quot;: 6 },
+    &quot;spool_archives&quot;: { &quot;path&quot;: &quot;~/.ucore/logs/&quot;, &quot;count&quot;: 2 }
+  },
+  &quot;nuggets&quot;: [
+    { &quot;id&quot;: &quot;nugget.vault.user.001&quot;, &quot;source&quot;: &quot;~/Vault/Knowledge/&quot;, &quot;files&quot;: 5 }
+  ],
+  &quot;total_files&quot;: 1499,
+  &quot;total_size_bytes&quot;: 113246208,
+  &quot;dry_run&quot;: true
+}</code></pre>
+<h2>5. Enhanced DESTROY Interactive Options</h2>
+<p>When DESTROY is invoked, the user is presented with options:</p>
+<pre><code>╔══════════════════════════════════════════════════════╗
+║           uCore DESTROY/REBUILD UTILITY              ║
+╚══════════════════════════════════════════════════════╝
+
+Running vault discovery (dry-run)...
+  Found 1499 files across 5 vault layers
+  uCore data: 8 config files, 15 logs, 6 plates, 2 spool archives
+
+Select an option:
+
+  [1] Dry-run only (identify everything, no changes)
+  [2] Destroy &amp; Rebuild (reset corrupted components, keep user data)
+  [3] Destroy User Data Only (remove ~/Vault/, keep installation)
+  [4] Destroy Installation &amp; Data (complete uninstall)
+  [5] Break off Nuggets (extract reusable components, then rebuild)
+  [6] Cancel
+
+Enter choice [1-6]:</code></pre>
+<h3>Option Details</h3>
+<p>| Option | Action | |--------|--------| | <strong>1. Dry-run</strong> | Run vault discovery, report findings, no changes | | <strong>2. Destroy & Rebuild</strong> | Run DESTROY/REBUILD protocol on corrupted plates, keep user vault data intact | | <strong>3. Destroy User Data</strong> | Backup ~/Vault/ to SPOOL, remove ~/Vault/ contents, keep installation | | <strong>4. Destroy All</strong> | Full uninstall: remove ~/Vault/, ~/.ucore/, plates/, stop services | | <strong>5. Nuggets</strong> | Extract reusable components from vaults as Nuggets, then optionally rebuild | | <strong>6. Cancel</strong> | Exit without changes |</p>
+<h2>6. Distribution & Packaging Alignment</h2>
+<h3>Existing Systems</h3>
+<p>| System | Location | Status | |--------|----------|--------| | <strong>DistributionSystem</strong> | <code>backend/app/services/distribution_system/distribution_system.py</code> | ✅ Implemented | | <strong>PackageManager</strong> | <code>backend/app/services/distribution_system/package_manager.py</code> | ✅ Implemented | | <strong>install-root.sh</strong> | <code>scripts/install-root.sh</code> | Sets UDOS_ROOT env var | | <strong>ucore_startup.sh</strong> | <code>scripts/ucore_startup.sh</code> | Starts services at login |</p>
+<h3>Vendor Structure</h3>
+<pre><code>vendor/
+├── README.md
+├── dist/                    # Distribution packages
+│   ├── ucore-core/          # Core backend
+│   ├── ucore-frontend/      # Frontend
+│   └── ucore-plates/        # Canonical plates
+└── sources.yaml             # Source definitions (GitHub, npm, pip)</code></pre>
+<h3>Source Definitions</h3>
+<p>4 sources in <code>vendor/sources.yaml</code>, all pointing to <code>github.com/uDosGo/uCore.git</code>:</p>
+<ul><li><code>ucore-core</code> — backend/</li><li><code>ucore-frontend</code> — frontend/</li><li><code>ucore-plates</code> — plates/</li><li><code>ucore-vendor</code> — vendor/</li></ul>
+<h2>7. Implementation Status</h2>
+<h3>Phase 1: Vault Plates ✅ Complete</h3>
+<ul><li>[x] Add "vault" domain to PlateMeta domain Literal</li><li>[x] Create user vault seed plate (v2.0.0 — 15 directories matching real ~/Vault/)</li><li>[x] Create shared workspace vault plate</li><li>[x] Create public publishing framework plate</li><li>[x] Create global knowledge seed plate (new — 18 directories)</li><li>[x] Create transport pipeline plate (new — 5-stage pipeline)</li></ul>
+<h3>Phase 2: Vault Discovery Skill ✅ Complete</h3>
+<ul><li>[x] Create vault_discovery skill (BaseSkill subclass)</li><li>[x] Implement dry-run mode</li><li>[x] Implement Nugget extraction</li><li>[x] Integrate with vault_file_discovery.py</li></ul>
+<h3>Phase 3: Enhanced DESTROY CLI ✅ Complete</h3>
+<ul><li>[x] Add interactive menu to plate_refresh CLI</li><li>[x] Implement all 6 DESTROY options</li><li>[x] Wire SPOOL archiving for each option</li><li>[x] Add confirmation prompts</li></ul>
+<h3>Phase 4: Distribution Alignment ✅ Complete</h3>
+<ul><li>[x] Create vendor/ directory structure</li><li>[x] Wire DistributionSystem to GitHub pulls</li><li>[x] Wire PackageManager to plate system</li><li>[x] Create install/update/repair CLI commands</li></ul>
+<h3>Phase 5: Verification & Monitoring ✅ Complete</h3>
+<ul><li>[x] Create verification engine (95% pass rate, security, dogfooding)</li><li>[x] Create monitoring system (usage tracking, audit trail, health checks)</li><li>[x] Wire --verify and --promote flags to refresh.py CLI</li><li>[x] Wire --monitor and --audit flags to refresh.py CLI</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

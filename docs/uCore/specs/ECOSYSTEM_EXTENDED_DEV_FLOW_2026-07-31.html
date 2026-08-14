@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/ECOSYSTEM_EXTENDED_DEV_FLOW_2026-07-31.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / specs/ECOSYSTEM_EXTENDED_DEV_FLOW_2026-07-31.md</span></header><main class="site-main"><h1>Ecosystem Extended Dev Flow (2026-07-31)</h1>
+<p>Status: Active planning baseline Owner: uCore host shell + companion plugin/extension repos Purpose: keep core infrastructure simple and robust while enabling focused plugin waves.</p>
+<h2>1. Current Ecosystem State</h2>
+<h3>1.1 Repo topology (validated)</h3>
+<p>1. Host shell and extension registry are in <code>uCore</code>. 2. Developer lane UI lives in uCore (<code>/developer</code> repo browser) with ops panels folded into Snackbar + Intelligence; runtime tooling is in <code>uDev/mcp-bridge</code>. 3. Runtime foundations are in <code>uCode</code> (GridCore/uCode profile model). 4. External plugin repos exist and register via manifest discovery:</p>
+<p>5. Workflow/knowledge/runtime boundaries are already hard-cut to external providers (<code>uFlow</code>, <code>uKnowledge</code>, <code>ucode_runtime</code>). 6. <code>uVector</code> exists as a separate engine repository (<code>uvcore</code>) and is currently positioned as an extension-class runtime candidate (not a <code>udos-*</code> domain plugin).</p>
+<ul><li><code>udos-budget</code></li><li><code>udos-identity</code></li><li><code>udos-google</code></li><li><code>udos-dreamscape</code></li><li><code>udos-publishing</code> (scaffolded baseline)</li></ul>
+<h3>1.1B Taxonomy lock (Extension vs Plugin)</h3>
+<p>1. <strong>Extension</strong> = top-level runtime contract discoverable by uCore registry. 2. <strong>Plugin</strong> = extension subtype (<code>kind: plugin</code>), generally optional domain capability. 3. <code>udos-*</code> repositories are the default plugin lane. 4. <code>uFlow</code> and <code>uKnowledge</code> are required extension lanes, not plugins. 5. Independent projects (for example Groovebox, HomeNest, SonicScrewdriver) can consume/install uCore while remaining project-level surfaces unless explicitly onboarded as extension manifests.</p>
+<h3>1.2 Stability snapshot</h3>
+<p>1. <code>uCore</code> main is clean except active planning edits. 2. The Developer Surface is the in-core repo browser (Code/Repository/Editor) at <code>/developer</code>. 3. Operational panels (Agents/Models/Skills/Services/Feeds/Snacks/Extensions/Logs/MCP) are folded into Snackbar + Intelligence. 4. <code>udos-identity</code> is currently minimal (profile/session routes only), ready for expansion waves.</p>
+<h3>1.3 Source-of-truth constraints</h3>
+<p>1. Keep uCore as host shell + registry + preflight gates only. 2. Keep feature ownership in extension/plugin repos. 3. No new in-core fallback route ownership for plugin capabilities. 4. Stop-the-line proof bundle remains mandatory each wave.</p>
+<h2>2. What Is Needed (Delta)</h2>
+<h3>2.1 Core (uCore) needs</h3>
+<p>1. Capability contracts for:</p>
+<p>2. Preflight/readiness checks expanded for new capabilities. 3. Registry docs and migration matrix updated for new plugin repos.</p>
+<ul><li>Headless WordPress user gateway readiness.</li><li>Google service readiness (OAuth, API scopes, sync health).</li><li>Dreamscape briefing/chronos orchestration readiness.</li></ul>
+<h3>2.2 Existing repos needing updates</h3>
+<p>1. uCore Developer Surface (<code>/developer</code>)</p>
+<p>2. <code>uDev/mcp-bridge</code></p>
+<p>3. <code>udos-identity</code></p>
+<p>4. <code>uCode</code></p>
+<p>5. <code>uFlow</code> and <code>uKnowledge</code></p>
+<p>6. <code>uVector</code></p>
+<ul><li>Keep the Code/Repository/Editor repo browser stable.</li><li>Add capability cards only for capabilities that pass preflight.</li><li>Add bridge tools for new plugin APIs after routes are stable.</li><li>Expand from stubs to full story/profile/privacy/auth gateway logic.</li><li>Continue mapping-system phases (GridCore-first, future 3D/uCode2-profile compatibility).</li><li>Only if workflow/knowledge orchestration endpoints need bridge updates for Dreamscape.</li><li>Keep as extension-class engine track aligned with uCode2/uCode3-era rendering/runtime evolution.</li><li>Prepare onboarding path as an external extension when integration wave starts.</li></ul>
+<h3>2.3 Plugin repos baseline (scaffolded)</h3>
+<p>1. <code>udos-google</code> exists with baseline scaffold and Wave G contracts. 2. <code>udos-dreamscape</code> exists with baseline scaffold and Wave H contracts. 3. <code>udos-publishing</code> exists with baseline scaffold and publishing boundary ownership. 4. <code>udos-publishing</code> remains independent from <code>udos-identity</code> once publishing/review scope is exercised beyond the local identity flow.</p>
+<p>Repo-scaffold rule:</p>
+<p>1. Start with minimal manifest + route registrar (or equivalent route contract surface) + health endpoint + tests. 2. Add capability only after preflight contract exists in uCore.</p>
+<h2>3. Target Ownership Model</h2>
+<h3>3.0 Surface Placement Policy</h3>
+<p>1. Keep end-user shell UI surfaces primarily in <code>uCore</code>. 2. Keep Developer Lane UI in uCore (<code>/developer</code> repo browser + Snackbar/Intelligence panels). 3. Keep feature/business logic ownership in plugins/extensions (<code>udos-*</code>, <code>uFlow</code>, <code>uKnowledge</code>, <code>uCode</code>). 4. Keep legacy route redirects in uCore where useful, but avoid duplicate standalone surfaces when a canonical host surface already exists.</p>
+<p>Current decisions:</p>
+<p>1. <code>snackmachine</code> standalone surface removed; capabilities route to Server/Workflow/System/Developer. 2. Standalone <code>teletext</code> and <code>terminal</code> surfaces removed; canonical UX is inside <code>uCode</code> tabs. 3. <code>workflow</code> surface UI stays in <code>uCore</code>, while workflow execution/route ownership remains in <code>uFlow</code>. 4. <code>documentation</code> surface UI stays in <code>uCore</code>; publishing/backing providers can move to plugin ownership.</p>
+<h3>3.1 Keep core simple</h3>
+<p>uCore owns:</p>
+<p>1. Host-shell APIs and orchestration. 2. Extension registry and manifest validation. 3. Capability readiness/preflight policy. 4. Developer control/status/reporting surfaces.</p>
+<p>uCore does not own:</p>
+<p>1. Google API business logic. 2. WordPress identity/content business logic. 3. Dreamscape mission/briefing intelligence logic. 4. Runtime mapping implementation details.</p>
+<h3>3.2 Plugin ownership map</h3>
+<p>1. <code>udos-identity</code></p>
+<p>2. <code>udos-google</code></p>
+<p>3. <code>udos-dreamscape</code></p>
+<p>4. <code>udos-publishing</code> (optional)</p>
+<ul><li>Story forms, profile variables, vault privacy model, publish-review metadata.</li><li>OAuth + Workspace sync + Gemini/Gems + Agent Studio + Nano Banana services.</li><li>Interest parsing, mission generation, proactive briefing, Chronos schedule hooks.</li><li>Draft/review/publish flow and external target registry.</li></ul>
+<h3>3.2B Extension-class engine and companion map</h3>
+<p>1. <code>uFlow</code></p>
+<p>2. <code>uKnowledge</code></p>
+<p>3. <code>uVector</code> (<code>uvcore</code>)</p>
+<ul><li>Required workflow extension ownership (<code>kind: workflow</code>).</li><li>Required knowledge extension ownership (<code>kind: knowledge</code>).</li><li>Extension-class engine candidate for vector/image conversion and multi-target rendering.</li><li>Aligns with future uCode2/uCode3 display/runtime needs.</li><li>Likely support lanes include:</li><li>Google/Nano-Banana image generation post-processing,</li><li>vector and font asset conversion,</li><li>bitmap/grid uCode-compatible output pipelines.</li></ul>
+<h3>3.3 Publishing and place mirror direction</h3>
+<p>1. <code>udo.guide</code> is the canonical publishing guide and remote-facing documentation entrypoint. 2. <code>udo.place</code> is the canonical place mirror for local environment, location, and presence-aware publishing state. 3. <code>udos-publishing</code> owns the cloud mirror layer that maps local drafts, frontmatter, tags, location hints, beacons, and portals into published targets. 4. The publishing layer must support verification and shareable references without pulling publishing logic back into <code>uCore</code> or <code>udos-identity</code>. 5. Local shell surfaces may present publishing/place state, but ownership stays in the publishing repo/plugin boundary.</p>
+<h2>4. Extended Dev Flow (Anti-Mess)</h2>
+<h2>Gate 0 - Core Stability First</h2>
+<p>1. Ensure <code>uCore</code> boot + diagnostics pass. 2. Ensure Developer Surface build/dev pass in <code>uDev</code>. 3. Freeze contract docs before coding new plugin features.</p>
+<h2>Gate 1 - Contract Before Code</h2>
+<p>1. Write/lock API contracts and manifests. 2. Add preflight capability stubs in uCore. 3. Add route parity tests before feature implementation.</p>
+<h2>Gate 2 - Vertical Slice by Plugin</h2>
+<p>1. Pick one plugin wave at a time. 2. Deliver end-to-end thin slice (routes, tests, UI hooks, docs). 3. Stop-the-line evidence bundle before next plugin.</p>
+<h2>Gate 3 - Surface Integration Last</h2>
+<p>1. Expose only ready capabilities in Developer Surface. 2. Hide/disable controls when preflight is failing. 3. Avoid speculative UI wiring to unfinished APIs.</p>
+<h2>5. Sprint Plan</h2>
+<h3>Sprint 0 (Stabilize and Align, 3-4 days)</h3>
+<p>1. Lock this execution model and plugin matrix. 2. Keep Developer Surface green and deterministic. 3. Add preflight placeholders for WordPress/Google/Dreamscape. 4. Complete detached-surface cleanup and confirm <code>discover</code> parity (registered == filesystem).</p>
+<p>Exit criteria:</p>
+<p>1. Build/test/runtime green. 2. Contract docs approved. 3. No ambiguous ownership in docs.</p>
+<h3>Sprint 1 (Identity + Story Contract, 1 week)</h3>
+<p>1. Expand <code>udos-identity</code> API contracts. 2. Implement story-form progression and variable persistence. 3. Implement privacy/share rule checks and tests.</p>
+<p>Exit criteria:</p>
+<p>1. Story/profile/privacy routes pass parity tests. 2. Preflight for identity capability returns accurate readiness.</p>
+<h3>Sprint 2 (Headless WordPress Gateway, 1 week)</h3>
+<p>1. Add WordPress gateway connector routes in <code>udos-identity</code> (or <code>udos-publishing</code> if split). 2. Add OAuth handoff and token-safe server-side flow. 3. Add content directory + publish/review metadata endpoints. 4. Restore documentation publishing API endpoints consumed by uCore Documentation surface.</p>
+<p>Exit criteria:</p>
+<p>1. Gateway auth/content/permission preflight passes. 2. End-to-end story submission and content retrieval proof exists.</p>
+<h3>Sprint 2B (Publishing and Place Mirror, 1 week)</h3>
+<p>1. Confirm <code>udos-publishing</code> as the owning repo for cloud mirror publishing and review state. 2. Add frontmatter/tagging/location/beacon/portal contracts for <code>udo.guide</code> and <code>udo.place</code>. 3. Add verification and shareable target references for publishing outputs. 4. Add preflight and route parity checks for publishing/place readiness.</p>
+<p>Exit criteria:</p>
+<p>1. Publishing/place routes and health checks pass parity tests. 2. Cloud mirror ownership is documented and isolated from core host shell logic.</p>
+<h3>Sprint 3 (Google Plugin Foundation, 1 week)</h3>
+<p>1. Create <code>udos-google</code> repo with manifest + health + basic Gemini chat tool. 2. Add Vault documents <-> Drive thin sync slice. 3. Add bridge endpoints for safe token management and scope checks.</p>
+<p>Exit criteria:</p>
+<p>1. <code>udos-google</code> loads via manifest discovery. 2. Basic sync + chat slice proven with tests.</p>
+<h3>Sprint 4 (Dreamscape Foundation, 1 week)</h3>
+<p>1. Create <code>udos-dreamscape</code> repo and mission model endpoints. 2. Add 3-file method scaffolding and daily briefing generator baseline. 3. Integrate optional memory tool interface (non-blocking if unavailable).</p>
+<p>Exit criteria:</p>
+<p>1. Mission create/list and briefing generation routes working. 2. Daily briefing artifact proof in Vault-compatible path.</p>
+<h3>Sprint 5 (Surface Integration and Hardening, 1 week)</h3>
+<p>1. Wire Developer Surface widgets for readiness + execution controls. 2. Add reliability/performance/security checks for all new flows. 3. Finalize docs, release checklist, and rollback notes.</p>
+<p>Exit criteria:</p>
+<p>1. Control panel reflects all new capabilities with accurate status. 2. Stop-the-line bundle complete for each plugin wave.</p>
+<h3>Sprint 6 (Final Dev-Round and Closure, 1 week)</h3>
+<p>1. Run the final autonomous dev-round after Waves G, H, and I land. 2. Consolidate evidence, repairs, and release notes into the canonical handoff. 3. Commit and push all remaining planning, docs, and backlog updates.</p>
+<p>Exit criteria:</p>
+<p>1. Final round artifacts and repair log are published. 2. Phase handoff is closed with no open wave items.</p>
+<h2>6. First-Cut Backlog by Repo</h2>
+<h3>uCore</h3>
+<p>1. Add capability keys:</p>
+<p>2. Add preflight endpoints and failure-repair hints. 3. Update extension registry migration matrix docs.</p>
+<ul><li><code>identity_gateway</code></li><li><code>wordpress_gateway</code></li><li><code>publishing_mirror</code></li><li><code>google_ai_bridge</code></li><li><code>dreamscape_orchestration</code></li></ul>
+<h3>uCore Developer Surface</h3>
+<p>1. Keep the <code>/developer</code> repo browser and Snackbar/Intelligence panels stable first. 2. Add cards for WordPress/Google/Dreamscape preflight states to Snackbar Dashboard. 3. Add action buttons only when routes are implemented.</p>
+<h3>udos-identity</h3>
+<p>1. Add setup-story schema, step progression, and submissions. 2. Add privacy rules and share expiry validation. 3. Add WordPress user/meta/group mapping adapters.</p>
+<h3>udos-publishing (new)</h3>
+<p>1. Manifest + route registrar + health. 2. Cloud mirror contract for guide/place publishing state. 3. Frontmatter, tagging, location, beacon, and portal mapping slice.</p>
+<h3>udos-google (new)</h3>
+<p>1. Manifest + route registrar + health. 2. Gemini chat + Gems minimal endpoints. 3. Drive mirror thin slice.</p>
+<h3>udos-dreamscape (new)</h3>
+<p>1. Manifest + route registrar + health. 2. Interest intake + mission scaffolding. 3. Briefing generation baseline.</p>
+<h2>7. Risk Controls</h2>
+<p>1. Never merge plugin feature code without preflight contract. 2. Keep one plugin focus per wave branch. 3. Prefer additive routes first; defer destructive sync operations. 4. Maintain strict env-driven discovery (<code>UCORE_EXTENSION_MANIFEST_PATHS</code>). 5. Enforce route duplicate audit and manifest validation in CI.</p>
+<h2>8. Immediate Next Actions</h2>
+<p>1. Freeze the post-restructure scaffold inventory as the baseline for the next plan. 2. Complete remaining Wave F2 publishing/place implementation slices against the existing <code>udos-publishing</code> scaffold. 3. Commit and push current planning/tasker documentation updates. 4. Start the new execution plan from this scaffolded ecosystem baseline.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

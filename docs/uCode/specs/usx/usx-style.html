@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/usx/usx-style.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / specs/usx/usx-style.md</span></header><main class="site-main"><p>--- title: "USX Style Specification — v1.0" status: draft last_updated: 2026-05-17T22:11:35+10:00 category: specification tags: [specification, surface, ucode1, usx] description: "> <strong>Style tokens, themes, and font system.</strong> Merged from OBF style guide, VA1 style guide, and Monaspace font system." ---</p>
+<h1>USX Style Specification — v1.0</h1>
+<blockquote><strong>Style tokens, themes, and font system.</strong> Merged from OBF style guide, VA1 style guide, and Monaspace font system.</blockquote>
+<h2>Overview</h2>
+<p>USX Style defines named themes and style tokens using <code> </code>`<code>usx-style </code> fenced code blocks. Styles are wireframe-first: black background, green ink, monospace typography.</p>
+<h2>Wireframe Theme</h2>
+<pre><code>
+COLORS:
+  ink: &quot;#00FF00&quot;        # Teletext green
+  paper: &quot;#000000&quot;      # Black background
+  grid: &quot;#1a1a1a&quot;       # Grid lines
+  accent: &quot;#00FF00&quot;     # Highlights
+  error: &quot;#FF0000&quot;      # Errors
+  warning: &quot;#FFCC00&quot;    # Warnings
+
+TYPOGRAPHY:
+  family: &quot;Monaspace Krypton, JetBrains Mono, Monaco, monospace&quot;
+  size: &quot;14px&quot;
+  line-height: &quot;1.5&quot;
+
+SPACING:
+  cell: &quot;8px&quot;
+  tile: &quot;16px&quot;
+  gap: &quot;4px&quot;
+
+BORDERS:
+  style: &quot;solid&quot;
+  width: &quot;1px&quot;
+  color: &quot;var(--grid)&quot;
+
+SHADOWS: none
+ANIMATIONS: none (wireframe)
+
+GRID:
+  visible: true
+  cell_size: &quot;2×6&quot;
+  color: &quot;var(--grid)&quot;
+
+COMPONENTS:
+  button: &quot;px-4 py-2 bg-teletext text-black rounded&quot;
+  card: &quot;border border-teletext rounded-lg p-4&quot;
+  input: &quot;bg-gray-800 border border-gray-700 rounded px-3 py-2&quot;</code></pre>
+<h2>Colour Palette</h2>
+<p>| Role | Hex | CSS Variable | Use | |------|-----|-------------|-----| | Ink | <code>#00FF00</code> | <code>--usx-ink</code> | Primary text | | Paper | <code>#000000</code> | <code>--usx-paper</code> | Background | | Grid | <code>#1A1A1A</code> | <code>--usx-grid</code> | Grid lines | | Accent | <code>#00FF00</code> | <code>--usx-accent</code> | Highlights | | Error | <code>#FF0000</code> | <code>--usx-error</code> | Errors | | Warning | <code>#FFCC00</code> | <code>--usx-warning</code> | Warnings |</p>
+<h2>Font System</h2>
+<h3>Monaspace Family</h3>
+<p>| Variant | Role | |---------|------| | <strong>Monaspace Argon</strong> | Structural, wide — headers / display | | <strong>Monaspace Krypton</strong> | Monospace — grids, Teletext, code | | <strong>Monaspace Neon</strong> | Clean sans — prose | | <strong>Monaspace Radon</strong> | Cursive — quotes / emphasis | | <strong>Monaspace Xenon</strong> | Serif — publishing |</p>
+<p><strong>Why Monaspace:</strong> variable font (single file, multiple axes), built for code and prose, open source, works with <strong>24px</strong> cell metrics.</p>
+<h3>Variable-Width Healing</h3>
+<p>Proportional glyphs are <strong>not</strong> forced to one advance width: text "heals" into natural reading rhythm while <strong>cell size (24px)</strong> bounds the layout box. Renderers may still snap to grid lines for Teletext overlays.</p>
+<h3>Font Sources</h3>
+<p>| Source | Behaviour | |--------|-----------| | <strong>system</strong> | Installed OS fonts | | <strong>google</strong> | Google Fonts (via CDN where allowed) | | <strong>local</strong> | <code>~/.local/share/udos/fonts/</code> | | <strong>cdn</strong> | <code>https://cdn.udo.space/fonts/</code> |</p>
+<h3>User Config</h3>
+<pre><code># ~/.config/udos/fonts.yaml
+defaults:
+  mono: &quot;Monaspace Krypton&quot;
+  sans: &quot;Monaspace Neon&quot;
+  serif: &quot;Monaspace Xenon&quot;
+  display: &quot;Monaspace Argon&quot;
+  cursive: &quot;Monaspace Radon&quot;
+
+sources:
+  google:
+    - &quot;JetBrains Mono&quot;
+    - &quot;IBM Plex Mono&quot;
+  local:
+    - &quot;~/.local/share/udos/fonts/C64_Pro_Mono.ttf&quot;
+  cdn:
+    - &quot;https://cdn.udo.space/fonts/Teletext50.woff2&quot;
+
+grid:
+  cell_width: 24
+  cell_height: 24
+  fallback: &quot;Courier New&quot;</code></pre>
+<h3>USX-Style Font Block</h3>
+<pre><code>FONT_SYSTEM:
+  family: &quot;Monaspace&quot;
+  sources:
+    - type: &quot;system&quot;
+      name: &quot;Monaspace Krypton&quot;
+      weight: &quot;400&quot;
+    - type: &quot;google&quot;
+      name: &quot;JetBrains Mono&quot;
+      fallback: true
+    - type: &quot;local&quot;
+      path: &quot;~/.local/share/udos/fonts/retro.ttf&quot;
+    - type: &quot;cdn&quot;
+      url: &quot;https://cdn.udo.space/fonts/teletext.woff2&quot;
+
+  grid_cell:
+    width: 24
+    height: 24
+    unit: &quot;pixels&quot;
+
+  variable_width: true
+  ligatures: true</code></pre>
+<h3>CLI Commands</h3>
+<pre><code>udo font install retro
+udo font list
+udo font activate Teletext50</code></pre>
+<h2>Layout Blocks</h2>
+<pre><code>BLOCK two-column
+  STYLE: &quot;display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;&quot;
+
+BLOCK three-column
+  STYLE: &quot;display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;&quot;
+
+BLOCK card-grid
+  STYLE: &quot;display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;&quot;</code></pre>
+<h2>Display Profiles</h2>
+<h3>Text-Terminal Profiles</h3>
+<p>| Profile | Width | Height | Grid (cells) | Cell size | |---------|-------|--------|-------------|-----------| | <strong>terminal</strong> | 80 columns | 24 rows | 12×12 | 2×6 chars | | <strong>mobile</strong> | 40 columns (scaled) | 12 rows (scaled) | 6×6 | 2×6 chars (scaled) | | <strong>desktop</strong> | 120 columns | 36 rows | 18×18 | 2×6 chars |</p>
+<h3>Default Fonts (Text Mode)</h3>
+<p>| Platform | Font | |----------|------| | macOS | Monaco | | Linux / Windows | JetBrains Mono | | Fallback | Courier New |</p>
+<h3>Fallback Glyphs</h3>
+<ul><li><strong>Blocks:</strong> <code>█ ░ ▒ ▓ ■ □</code></li><li><strong>Lines:</strong> <code>┌ ┐ └ ┘ ├ ┤ ┬ ┴ ┼</code></li><li><strong>Arrows:</strong> <code>← ↑ → ↓ ↔ ↕</code></li></ul>
+<p>Renderers should substitute down gracefully when a font lacks Teletext glyphs.</p>
+<h2>See Also</h2>
+<ul><li><a href="usx-core.md">usx-core.md</a> — Core format and fence types</li><li><a href="usx-ui.md">usx-ui.md</a> — UI components and authoring blocks</li><li><a href="usx-grid.md">usx-grid.md</a> — Grid system and cell maths</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>GRID_ALGEBRA_COLUMN_SPECS.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / GRID_ALGEBRA_COLUMN_SPECS.md</span></header><main class="site-main"><h1>Grid Algebra — Column Width & Viewport Spec</h1>
+<blockquote><strong>Status:</strong> ✅ Finalised (v2.0)</blockquote>
+<blockquote><strong>Supersedes:</strong> v1.x (archived below)</blockquote>
+<blockquote><strong>Last Updated:</strong> 2026-01-07</blockquote>
+<p>---</p>
+<h2>1. Core Principle: Character Density Guarantee</h2>
+<p><strong>Character count per column MUST increase with viewport size, never decrease.</strong> This ensures readable content at all sizes — small viewports get fewer, wider columns; large viewports get more, narrower columns with the same per-column character density.</p>
+<p>---</p>
+<h2>2. Column Spec Table</h2>
+<p>| Viewport Width | Column Count | Per-Column Width | Gap    | Alias        | |---------------|-------------|------------------|--------|--------------| | < 480px       | 1           | 40ch             | 0      | <code>xs</code>         | | 480–768px     | 2           | 35ch             | 16px   | <code>sm</code>         | | 768–1024px    | 2           | 40ch             | 24px   | <code>md</code>         | | 1024–1440px   | 3           | 35ch             | 24px   | <code>lg</code>         | | 1440–1920px   | 3           | 40ch             | 24px   | <code>xl</code>         | | 1920px+       | 4           | 40ch              | 24px   | <code>xxl</code>        |</p>
+<h3>Rationale</h3>
+<ul><li><strong>1×40ch (xs):</strong> Single-column reading on phones. 40ch ≈ 8–10 words/line, optimal for narrow viewports.</li><li><strong>2×35ch (sm):</strong> Two compact columns on tablets. 35ch ≈ 7–9 words/line.</li><li><strong>2×40ch (md):</strong> Two wider columns on landscape tablets. 40ch ≈ optimal reading width.</li><li><strong>3×35ch (lg):</strong> Three columns on desktop browsers. 35ch keeps lines short enough for comfortable reading.</li><li><strong>3×40ch (xl):</strong> Three wider columns on large desktop. Full reading width.</li><li><strong>4×40ch (xxl):</strong> Four columns on ultrawide/TV. Cinema/boardroom display mode.</li></ul>
+<p>---</p>
+<h2>3. Design Tokens (CSS Custom Properties)</h2>
+<p>These are the source-of-truth tokens, defined in <code>usx-standard.css</code>:</p>
+<pre><code>/* Column Width Tokens */
+--usx-col-width-xs: 40ch;
+--usx-col-width-sm: 35ch;
+--usx-col-width-md: 72ch;   /* single-column prose reading */
+--usx-col-width-lg: 80ch;   /* single-column prose wide */
+--usx-col-gap: 24px;
+
+/* Column Count Per Breakpoint */
+--usx-cols-xs: 1;    /* &lt; 480px  */
+--usx-cols-sm: 2;    /* 480px+   */
+--usx-cols-md: 2;    /* 768px+   */
+--usx-cols-lg: 3;    /* 1024px+  */
+--usx-cols-xl: 3;    /* 1440px+  */
+--usx-cols-xxl: 4;   /* 1920px+  */</code></pre>
+<p>---</p>
+<h2>4. Grid Algebra Functions</h2>
+<pre><code>// src/grid-core/algebra.ts
+
+resolveColumns(viewportWidth: number): ColumnSpec
+// Returns { count, width, gap, breakpoint } for the current viewport
+
+resolveProseWidth(viewportWidth: number): string
+// Returns optimal max-width string for single-column prose
+
+columnSpecToMaxWidth(spec: ColumnSpec): string
+// Converts spec to CSS max-width value
+
+columnSpecTotalWidth(spec: ColumnSpec): string
+// Calculates total content width (columns + gaps) as CSS calc()</code></pre>
+<p>---</p>
+<h2>5. Viewer Modes & Column Behaviours</h2>
+<h3>ProseViewer (<code>ProseViewer.vue</code>)</h3>
+<ul><li><strong>Purpose:</strong> Traditional scrolling document reading</li><li><strong>Column behaviour:</strong> Auto-resolves via <code>resolveColumns()</code>, sets responsive <code>max-width</code></li><li><strong>Single-column:</strong> <code>1×40ch</code> centred</li><li><strong>Multi-column:</strong> Uses CSS <code>columns</code> property, width calculated from spec</li><li><strong>Slide separators:</strong> Automatically stripped</li></ul>
+<h3>MultiColumnViewer (<code>MultiColumnViewer.vue</code>)</h3>
+<ul><li><strong>Purpose:</strong> Newspaper/magazine grid layout</li><li><strong>Column behaviour:</strong> Auto-resolves via <code>resolveColumns()</code>, uses CSS Grid with <code>grid-template-columns</code></li><li><strong>Each column:</strong> Wrapped in card-style container with border and background</li><li><strong>Column count:</strong> 1–4 based on viewport</li></ul>
+<h3>SlideViewer (<code>SlideViewer.vue</code>)</h3>
+<ul><li><strong>Purpose:</strong> Marp-style presentation slides</li><li><strong>Column behaviour:</strong> Single slide at a time, navigation controls</li><li><strong>Aspect ratios:</strong> 16:9, 4:3, fill</li><li><strong>Width:</strong> 960px max, responsive padding</li></ul>
+<h3>GridCoreUI (<code>GridCoreUI.vue</code>)</h3>
+<ul><li><strong>Purpose:</strong> Character-grid embeddable widget</li><li><strong>Column behaviour:</strong> Fixed character grid (teletext/terminal style)</li><li><strong>Cell rendering:</strong> Pixel-perfect <code>canvas</code> via <code>gridui-canvas.ts</code></li><li><strong>Palette:</strong> 8-colour foreground + background</li></ul>
+<h3>Web Publishing View</h3>
+<ul><li><strong>Purpose:</strong> Public web publishing (markdown → HTML)</li><li><strong>Column behaviour:</strong> Same responsive spec as ProseViewer</li><li><strong>Options:</strong> Full-width scroll, multi-column, or slide view</li></ul>
+<p>---</p>
+<h2>6. Non-Column Design Standards</h2>
+<h3>UI Spacing (8px System)</h3>
+<p>| Token | Value | Usage | |-------|-------|-------| | <code>--usx-spacing-xs</code> | 4px | Micro margins | | <code>--usx-spacing-sm</code> | 8px | Tight grouping | | <code>--usx-spacing-md</code> | 12px | Buttons, inputs | | <code>--usx-spacing-lg</code> | 16px | Cards, sections | | <code>--usx-spacing-xl</code> | 24px | Page padding | | <code>--usx-spacing-2xl</code> | 32px | Wide sections |</p>
+<h3>Icon Standards (Material Symbols Outlined + Iconify)</h3>
+<ul><li><strong>Relative sizing:</strong> <code>1em</code> default, <code>1.25em</code> for larger contexts, <code>1.5em</code> for headings</li><li><strong>Icon+label gap:</strong> <code>0.5em</code> (Material3 standard)</li><li><strong>Minimum touch target:</strong> 32×32px for icon-only buttons</li><li><strong>No hardcoded px:</strong> All icon sizes use em/rem relative to context</li><li><strong>No <code>!important</code>:</strong> Use specificity cascade instead</li></ul>
+<h3>Form/Button Standards (Pico-sized, mobile-friendly)</h3>
+<ul><li><strong>Button height:</strong> 40px default, 44px for large touch targets</li><li><strong>Button padding:</strong> 8px vertical, 16px horizontal</li><li><strong>Input height:</strong> 40px default, 32px compact, 44px large</li><li><strong>Hit area:</strong> Minimum 44×44px on mobile</li></ul>
+<h3>Color & Border Standards (GitHub-inspired dark)</h3>
+<ul><li><strong>Background:</strong> <code>#0d1117</code> (pico surface)</li><li><strong>Card background:</strong> <code>#141b26</code></li><li><strong>Border:</strong> <code>rgba(88, 166, 255, 0.08)</code> or <code>#30363d</code></li><li><strong>Primary accent:</strong> <code>#58a6ff</code></li><li><strong>Code block background:</strong> <code>#1a2332</code></li><li><strong>No fades, shading, color-blending, or animation</strong> — flat, minimal borders</li><li><strong>Focus indicator:</strong> 1px <code>#58a6ff</code> outline (focus-visible only)</li></ul>
+<h3>Typography</h3>
+<ul><li><strong>Body:</strong> Inter, system-ui, 1rem (16px), line-height 1.6</li><li><strong>Monospace:</strong> Menlo, Monaco, Courier New</li><li><strong>Headings:</strong> 600 weight, tight line-height (1.3)</li><li><strong>Prose line-height:</strong> 1.8 for relaxed reading</li></ul>
+<p>---</p>
+<h2>7. Grid Presets (Character Grids)</h2>
+<p>| Preset | Cols | Rows | Aspect | Use Case | |--------|------|------|--------|----------| | teletext | 40 | 25 | 4:3 | Classic Ceefax/Teletext | | teletext-wide | 48 | 36 | 4:3 | Extended teletext | | terminal | 80 | 24 | 4:3 | Classic terminal | | terminal-wide | 120 | 36 | 16:9 | Wide terminal | | editor | 60 | 20 | 3:1 | Grid editing workspace | | map | 60 | 20 | 3:1 | Map/grid view | | mini | 28 | 28 | 1:1 | Square widget |</p>
+<p>---</p>
+<h2>8. Archived Spec (v1.x)</h2>
+<h3>Previous Column Spec (v1.0, deprecated)</h3>
+<p>| Viewport | Cols | Width | Notes | |----------|------|-------|-------| | < 480px | 1 | 100% | Full-width, no constraint | | 480px+ | 1 | 40ch | Centred single column | | 768px+ | 2 | 35ch | Two columns | | 1024px+ | 2 | 40ch | Wider columns | | 1440px+ | 3 | 35ch | Three narrower |</p>
+<p><strong>Problems with v1.0:</strong></p>
+<ul><li>No 4-column option for ultrawide/TV</li><li>Inconsistent character density (2×40ch had more chars than 3×35ch but fewer columns)</li><li>v1 used <code>72ch</code> prose width which was too wide for comfortable reading</li><li>No CSS custom properties — hardcoded values everywhere</li></ul>
+<h3>Migration Notes</h3>
+<ul><li>All components updated to use <code>resolveColumns()</code> instead of hardcoded widths</li><li>CSS custom properties now match the algebra spec exactly</li><li>Viewers auto-resolve on window resize</li><li>Barrel exports include all new algebra functions</li><li>All <code>!important</code> declarations removed from Vue components</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

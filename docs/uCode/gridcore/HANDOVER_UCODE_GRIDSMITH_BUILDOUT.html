@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>gridcore/HANDOVER_UCODE_GRIDSMITH_BUILDOUT.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / gridcore/HANDOVER_UCODE_GRIDSMITH_BUILDOUT.md</span></header><main class="site-main"><h1>uCode + GridSmith Buildout Handover</h1>
+<p>Date: 2026-06-23 Audience: Cline and DevAgent Status: Current state assessment plus next-build handover</p>
+<h2>Scope</h2>
+<p>This handover covers the live <code>uCode</code> surface in <code>uCore</code>, the new <code>GridSmith</code> world-building scaffold inside the sibling <code>uCode</code> monorepo, and the immediate follow-on work required to turn the current scaffold into a real GridCore workspace experience.</p>
+<h2>Repos and Real Paths</h2>
+<h3>Live repos</h3>
+<ul><li>uCore: <code>/Users/fredbook/Code/uCore</code></li><li>uCode: <code>/Users/fredbook/Code/uCode</code></li></ul>
+<h3>Live GridSmith paths</h3>
+<ul><li>Agent root: <code>/Users/fredbook/Code/uCode/agents/gridsmith</code></li><li>Workspace root: <code>/Users/fredbook/Code/uCode/workspaces/gridcore</code></li><li>Dedicated workspace file: <code>/Users/fredbook/Code/uCode/gridsmith.code-workspace</code></li></ul>
+<h3>Live frontend surface</h3>
+<ul><li><code>uCode</code> surface: <code>/Users/fredbook/Code/uCore/frontend/src/surfaces/ucode/UCodeSurface.tsx</code></li><li>Grid tool metadata: <code>/Users/fredbook/Code/uCore/frontend/src/surfaces/ucode/gridToolset.ts</code></li><li>surface styles: <code>/Users/fredbook/Code/uCore/frontend/src/styles/surfaces/ucode.css</code></li></ul>
+<h3>Live backend bridge and APIs</h3>
+<ul><li>GridSmith bridge: <code>/Users/fredbook/Code/uCore/backend/app/services/gridsmith_bridge.py</code></li><li>GridSmith REST API: <code>/Users/fredbook/Code/uCore/backend/app/api/gridsmith_api.py</code></li><li>MCP exposure: <code>/Users/fredbook/Code/uCore/backend/app/api/mcp.py</code></li><li>route registration: <code>/Users/fredbook/Code/uCore/backend/app/api/routes.py</code></li><li>agent config: <code>/Users/fredbook/Code/uCore/backend/config/agents.yaml</code></li></ul>
+<h2>What Exists Right Now</h2>
+<h2>1. uCode surface</h2>
+<p><code>UCodeSurface</code> is currently a split layout:</p>
+<ul><li>left/main viewport: Terminal or Teletext</li><li>right dashboard: Grid toolset cards and detail views</li></ul>
+<p>It already includes:</p>
+<ul><li>Terminal and Teletext toggle</li><li>sidebar navigation for grid tools</li><li>a GridSmith dashboard entry</li><li>a GridSmith BASIC import form</li><li>a dedicated detached GridSmith bubble and right-side chat panel</li></ul>
+<p>Important UI behavior change already made:</p>
+<ul><li>the generic floating AssistUI bubble/panel is now hidden on <code>/ucode</code></li><li>only the dedicated GridSmith detached bubble should remain on this surface</li></ul>
+<p>That suppression lives in:</p>
+<ul><li><code>/Users/fredbook/Code/uCore/frontend/src/main.tsx</code></li></ul>
+<h2>2. GridSmith agent scaffold</h2>
+<p>The live GridSmith package builds successfully and currently provides:</p>
+<ul><li>tool contract definitions</li><li>grid creation helper</li><li><code>latlon -> uCode</code></li><li><code>uCode -> latlon</code></li><li>BASIC import command</li></ul>
+<p>Key files:</p>
+<ul><li><code>/Users/fredbook/Code/uCode/agents/gridsmith/src/index.ts</code></li><li><code>/Users/fredbook/Code/uCode/agents/gridsmith/src/cli.ts</code></li><li><code>/Users/fredbook/Code/uCode/agents/gridsmith/src/tools/basic.ts</code></li></ul>
+<h2>3. BASIC import path</h2>
+<p>BASIC import is now functional through all layers:</p>
+<ul><li>CLI</li><li>uCore bridge</li><li>REST</li><li>MCP</li><li>UCode surface form</li></ul>
+<p>Current behavior:</p>
+<ul><li>accepts inline BASIC or a file path</li><li>parses lines into a simple structure</li><li>classifies statements like <code>PRINT</code>, <code>DATA</code>, <code>GOTO</code>, <code>GOSUB</code>, <code>REM</code></li><li>writes output into the live GridCore workspace:</li><li><code>scripts/basic/*.bas</code></li><li><code>worlds/libraries/*.json</code></li><li><code>grids/imports/*.json</code></li></ul>
+<p>This is a real pipeline, but still an early importer, not yet a semantic world compiler.</p>
+<h2>4. GridSmith specialized agent</h2>
+<p>A dedicated world-building agent exists in:</p>
+<ul><li><code>/Users/fredbook/Code/uCore/backend/config/agents.yaml</code></li></ul>
+<p>Current agent id:</p>
+<ul><li><code>gridsmith-dev</code></li></ul>
+<p>Current routing key:</p>
+<ul><li><code>worldbuild</code></li></ul>
+<p>The UCode surface uses this route through:</p>
+<ul><li><code>POST /api/agents/spec/route</code></li></ul>
+<h2>5. Tests</h2>
+<p>Focused coverage exists for the new GridSmith integration:</p>
+<ul><li><code>/Users/fredbook/Code/uCore/backend/tests/test_api_gridsmith.py</code></li><li><code>/Users/fredbook/Code/uCore/backend/tests/test_api_mcp.py</code></li></ul>
+<p>Validated already:</p>
+<ul><li>GridSmith package build</li><li>frontend build</li><li>GridSmith API tests</li><li>GridSmith MCP discovery/call tests</li></ul>
+<h2>What Is Still Missing</h2>
+<h2>1. World rendering loop is not complete</h2>
+<p>The current importer creates manifests and preview artifacts, but it does not yet:</p>
+<ul><li>project imported BASIC semantics onto layered <code>gridcore</code> data structures</li><li>push imported worlds into a live rendered grid view</li><li>open imported worlds directly in Terminal or Teletext as world scenes</li></ul>
+<p>The UCode surface has controls, but no end-to-end “import then render world” path yet.</p>
+<h2>2. AMOS importer is not implemented</h2>
+<p>The current scaffold supports BASIC only.</p>
+<p>Missing:</p>
+<ul><li>AMOS parsing/import logic</li><li>AMOS-specific mapping rules for screens, sprites, map commands, and scene data</li><li>REST/MCP/UI exposure for AMOS import</li></ul>
+<h2>3. GridSmith chat is routed through generic agent-spec route only</h2>
+<p>The detached GridSmith panel works, but it currently behaves as a thin front-end over the agent routing endpoint.</p>
+<p>Missing:</p>
+<ul><li>structured world-building prompts</li><li>prompt templates for layers, maps, entities, spatial conversions</li><li>tool-assisted responses that combine agent planning with live GridSmith tool calls</li><li>conversation persistence or world context persistence</li></ul>
+<h2>4. No persistent world browser inside UCode surface</h2>
+<p>The UCode surface can import a world, but it cannot yet:</p>
+<ul><li>browse existing world manifests</li><li>open existing imported BASIC worlds</li><li>inspect generated import artifacts</li><li>select a world and render it in the viewport</li></ul>
+<h2>5. No viewport-to-world binding</h2>
+<p>Current viewport is still generic <code>TerminalPanel</code> / <code>TeletextGrid</code>.</p>
+<p>Missing:</p>
+<ul><li>binding a selected GridSmith world to the viewport</li><li>layer toggles</li><li>map selection</li><li>entity overlays</li><li>world status and current manifest display</li></ul>
+<h2>6. No actual editor flows</h2>
+<p>Grid tool cards still mostly describe capability. They do not yet provide:</p>
+<ul><li>live grid editing canvas for the selected world</li><li>layer stack editor</li><li>sprite/object inspector</li><li>font/sprite import workflow</li><li>save/export flows for edited grids</li></ul>
+<h2>7. No write-back integration with runtime semantics</h2>
+<p>Current importer stores files, but there is no return path from edited world assets back into:</p>
+<ul><li>BASIC runtime structures</li><li>AMOS runtime structures</li><li>runtime execution previews</li></ul>
+<h2>Recommended Build Split</h2>
+<h2>Cline: surface and orchestration work</h2>
+<p>Cline should own:</p>
+<ul><li>UCode surface evolution</li><li>GridSmith panel UX</li><li>world browser in the right dashboard</li><li>viewport/world selection and status wiring</li><li>REST and MCP integration paths</li><li>end-to-end validation and UX hardening</li></ul>
+<p>Concrete Cline tasks: 1. add a world manifest browser to <code>UCodeSurface</code> 2. add current-world state and bind it to imported manifests 3. add a lightweight “open imported world” action after BASIC import 4. replace static tool-detail copy with live status cards where possible 5. wire the detached GridSmith chat panel to tool actions, not just freeform prompt routing 6. hide any remaining generic chat affordances from the uCode/GridCore surface</p>
+<h2>DevAgent: data model and package logic</h2>
+<p>DevAgent should own:</p>
+<ul><li>GridSmith world/file formats</li><li>importer semantics</li><li>gridcore-layer mapping logic</li><li>AMOS import</li><li>export formats and transformation utilities</li></ul>
+<p>Concrete DevAgent tasks: 1. evolve <code>basic.ts</code> from line classifier to semantic importer 2. add <code>amos.ts</code> importer scaffold and CLI command 3. define canonical world manifest schema 4. define canonical import artifact schema for BASIC and AMOS 5. add grid composition helpers for terrain/details/collision/entities 6. add a renderer-ready projection format for viewport consumption</p>
+<h2>Suggested Build Order</h2>
+<h3>Phase A: make imported worlds visible</h3>
+<p>1. add <code>GET /api/gridsmith/worlds</code> to list manifests 2. add <code>GET /api/gridsmith/worlds/{id}</code> to fetch a manifest 3. show imported worlds in UCode surface 4. let user pick a world in the dashboard</p>
+<h3>Phase B: make a world renderable</h3>
+<p>1. define one renderer-friendly world payload 2. bind selected world to <code>TerminalPanel</code> or <code>TeletextGrid</code> 3. show at least one imported BASIC world in the viewport</p>
+<h3>Phase C: deepen the importer</h3>
+<p>1. map <code>PRINT</code> to teletext/text layers 2. map <code>DATA</code> to entity/detail payloads 3. map <code>GOTO</code> / <code>GOSUB</code> to navigation metadata 4. produce layered grid cells rather than summary JSON only</p>
+<h3>Phase D: AMOS support</h3>
+<p>1. add AMOS importer 2. expose via CLI/REST/MCP/UI 3. map sprite/screen semantics into GridSmith layers</p>
+<h2>Current Risk Notes</h2>
+<p>1. <code>@udos/gridcore</code> and <code>@udos/viewport-renderer</code> are still partially scaffolded packages, not complete parity replacements. 2. The UCode surface is currently stronger as a control and planning surface than as a finished world editor. 3. The current GridSmith chat experience is useful for orchestration, but it is not yet coupled to tool execution strongly enough to feel like a full agent IDE. 4. The importer currently writes files into the workspace but does not update any live viewport state.</p>
+<h2>Immediate Next Best Task</h2>
+<p>The highest-leverage next step is:</p>
+<p>1. implement a world manifest listing API in uCore 2. add a world browser in <code>UCodeSurface</code> 3. bind selected world state into the existing viewport area</p>
+<p>That would convert the current scaffold from “import and plan” into “import, select, and see”.</p>
+<h2>Validation Baseline Already Achieved</h2>
+<p>Already validated in current local workspace:</p>
+<ul><li>GridSmith package builds in live <code>uCode</code></li><li>UCode frontend builds in live <code>uCore</code></li><li>GridSmith REST tests pass</li><li>GridSmith MCP tests pass</li><li>BASIC import works through the shared bridge and writes a manifest into the live workspace</li></ul>
+<h2>One-line Summary</h2>
+<p>The <code>uCode</code> surface now has a dedicated GridSmith entry point and detached GridSmith agent UI, and the generic ChatUI bubble is hidden there. What remains is the actual world-browser/render/editor loop: list worlds, select one, bind it to the viewport, deepen BASIC import semantics, and then add AMOS parity.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

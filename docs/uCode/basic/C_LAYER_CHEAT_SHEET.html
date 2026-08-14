@@ -1,0 +1,122 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>basic/C_LAYER_CHEAT_SHEET.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / basic/C_LAYER_CHEAT_SHEET.md</span></header><main class="site-main"><p>--- title: "uCode1 C-Layer Character System Cheat Sheet" status: draft last_updated: 2026-04-25T16:27:54+10:00 category: documentation tags: [ucode1] description: "- <strong>CXXX</strong>: Layer number (100-899)" ---</p>
+<h1>uCode1 C-Layer Character System Cheat Sheet</h1>
+<h2>🎯 Quick Reference</h2>
+<h3>C-Layer Format: <code>CXXX#YYY</code></h3>
+<ul><li><strong>CXXX</strong>: Layer number (100-899)</li><li><strong>YYY</strong>: Character position within layer (1-256)</li><li><strong>Example</strong>: <code>C245#1</code> = Emoji layer 245, character 1 (:rocket:)</li></ul>
+<h2>📚 Layer Reference</h2>
+<h3>Default Layer (C100)</h3>
+<pre><code>C100#0-C100#255: Standard ANSI + Extended ASCII
+- C100#0-C100#127: Standard ANSI characters
+- C100#128-C100#255: Extended ASCII characters
+- C100#256: Last character of default layer</code></pre>
+<h3>Emoji Layers (C101-C356)</h3>
+<pre><code>C101#1-C356#256: 256-character emoji map
+- C245#1: :rocket: (Launch/startup)
+- C187#1: :computer: (Technical/systems)
+- C123#1: :book: (Documentation/learning)
+- C312#1: :lock: (Security/privacy)
+- C287#1: :gear: (Settings/configuration)
+- C345#1: :warning: (Alerts/warnings)
+- C211#1: :check: (Success/completion)
+- C212#1: :x: (Errors/failure)</code></pre>
+<h3>Teletext Blocks (C400-C499)</h3>
+<pre><code>C400#1-C499#256: UI elements and borders
+Format: [CXXX#YYY]
+- [C400#1]: █ (Solid block)
+- [C404#1]: ━ (Horizontal line)
+- [C405#1]: ┃ (Vertical line)
+- [C406#1]: ┏ (Top-left corner)
+- [C407#1]: ┓ (Top-right corner)
+- [C408#1]: ┗ (Bottom-left corner)
+- [C409#1]: ┛ (Bottom-right corner)</code></pre>
+<h3>C64 Characters (C500-C599)</h3>
+<pre><code>C500#1-C599#256: Retro computing characters
+Format: {C64:CXXX#YYY}
+- {C64:C00#1}: Space
+- {C64:C65#1}: A (Standard)
+- {C64:C128#1}: A (Orange)
+- {C64:C144#1}: Graphics A</code></pre>
+<h3>Acorn Characters (C600-C699)</h3>
+<pre><code>C600#1-C699#256: UK heritage characters
+Format: {ACN:CXXX#YYY}
+- {ACN:C00#1}: Space
+- {ACN:C32#1}: £ (Pound sign)
+- {ACN:C64#1}: @
+- {ACN:C96#1}: Graphics block</code></pre>
+<h2>🎨 Common Character Combinations</h2>
+<h3>Status Indicators</h3>
+<pre><code>✅ Success :check: (C211#1)
+❌ Error :x: (C212#1)
+⚠️ Warning :warning: (C345#1)
+🔒 Secure :lock: (C312#1)</code></pre>
+<h3>UI Elements</h3>
+<pre><code>┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  Title Here [C404#1]      ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃  Content...              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━┛</code></pre>
+<h3>Technical Documentation</h3>
+<pre><code># System Status :rocket: (C245#1)
+
+## Database Connection ✅ (C211#1)
+- Status: Online
+- Response time: 12ms
+
+## Command Processing :gear: (C287#1)
+- Active commands: 42
+- Queue depth: 3</code></pre>
+<h2>🔤 Character Format Examples</h2>
+<h3>Emoji Format</h3>
+<pre><code>:emoji: (CXXX#YYY)
+:rocket: (C245#1)
+:computer: (C187#1)</code></pre>
+<h3>Teletext Format</h3>
+<pre><code>[CXXX#YYY]
+[C400#1] = █
+[C404#1] = ━</code></pre>
+<h3>C64 Format</h3>
+<pre><code>{C64:CXXX#YYY}
+{C64:C65#1} = A
+{C64:C128#1} = A (orange)</code></pre>
+<h3>Acorn Format</h3>
+<pre><code>{ACN:CXXX#YYY}
+{ACN:C32#1} = £
+{ACN:C64#1} = @</code></pre>
+<h2>📊 Layer Range Summary</h2>
+<p>| Layer Range | Purpose | Format | Example | |-------------|---------|--------|---------| | C100#0-C100#255 | Default (ANSI/ASCII) | Direct | <code>A</code> | | C101#1-C356#256 | Emoji | <code>:emoji:</code> | <code>:rocket:</code> (C245#1) | | C400#1-C499#256 | Teletext Blocks | <code>[CXXX#YYY]</code> | <code>[C404#1]</code> (━) | | C500#1-C599#256 | C64 Characters | <code>{C64:CXXX#YYY}</code> | <code>{C64:C65#1}</code> (A) | | C600#1-C699#256 | Acorn Characters | <code>{ACN:CXXX#YYY}</code> | <code>{ACN:C32#1}</code> (£) | | C700#1-C799#256 | Reserved | - | - | | C800#1-C899#256 | Custom | - | - |</p>
+<h2>🎯 Usage Guidelines</h2>
+<h3>Priority Order</h3>
+<p>1. <strong>Standard ANSI</strong> (C100) - Maximum compatibility 2. <strong>Emoji</strong> (:emoji:) - Visual emphasis 3. <strong>Teletext Blocks</strong> ([CXXX#YYY]) - UI elements 4. <strong>C64 Characters</strong> ({C64:CXXX#YYY}) - Retro computing 5. <strong>Acorn Characters</strong> ({ACN:CXXX#YYY}) - UK heritage</p>
+<h3>Best Practices</h3>
+<ul><li><strong>Consistency</strong>: Use same characters for same concepts</li><li><strong>Moderation</strong>: 1-2 special characters per section max</li><li><strong>Fallbacks</strong>: Always provide ANSI alternatives</li><li><strong>Documentation</strong>: Include C-layer references</li><li><strong>Testing</strong>: Verify rendering in different terminals</li></ul>
+<h2>🔧 Quick Reference Table</h2>
+<h3>Common Emoji Shortcuts</h3>
+<pre><code>✅ Success = :check: (C211#1)
+❌ Error = :x: (C212#1)
+⚠️ Warning = :warning: (C345#1)
+🔒 Security = :lock: (C312#1)
+⚙️ Settings = :gear: (C287#1)
+🚀 Launch = :rocket: (C245#1)
+💻 Tech = :computer: (C187#1)
+📖 Docs = :book: (C123#1)</code></pre>
+<h3>Common UI Elements</h3>
+<pre><code>█ Block = [C400#1]
+━ Line = [C404#1]
+┃ Vertical = [C405#1]
+┏ Corner = [C406#1]
+┓ Corner = [C407#1]
+┗ Corner = [C408#1]
+┛ Corner = [C409#1]</code></pre>
+<h2>🎓 Learning Resources</h2>
+<h3>Character System Layers</h3>
+<pre><code>C100: Default Layer (ANSI base)
+C101-C356: Emoji Layers (256 chars each)
+C400-C499: Teletext Blocks
+C500-C599: C64 Character Set
+C600-C699: Acorn Character Set
+C700-C799: Reserved
+C800-C899: Custom</code></pre>
+<h3>Remember</h3>
+<ul><li><strong>C100#256</strong>: Last character of default layer</li><li><strong>CXXX#YYY</strong>: Layer#Character format</li><li><strong>Multi-layer</strong>: Collections can span multiple C-layers</li></ul>
+<p>---</p>
+<p>© 2024 uCode1 Team <strong>Cheat Sheet Version</strong>: 1.0 <strong>Last Updated</strong>: 2024-04-25 <strong>Reference</strong>: uCode1/docs/C_LAYER_CHEAT_SHEET.md</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>basic/MARKDOWN_STANDARDS.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / basic/MARKDOWN_STANDARDS.md</span></header><main class="site-main"><p>--- title: "uCode1 Markdown Standards" status: draft last_updated: 2026-04-25T16:27:54+10:00 category: documentation tags: [ucode1] description: "This document establishes the markdown standards for uCode1 documentation, aligning with:" ---</p>
+<h1>uCode1 Markdown Standards</h1>
+<h2>Overview</h2>
+<p>This document establishes the markdown standards for uCode1 documentation, aligning with:</p>
+<p>1. <strong>GitHub Flavored Markdown (GFM)</strong> - https://github.github.com/gfm/ 2. <strong>Common Markdown Style Guide</strong> - https://gist.github.com/rxaviers/7360908</p>
+<h2>1. Basic Formatting</h2>
+<h3>Character Sets and Emoji Usage</h3>
+<p><strong>uCode1 Character System</strong>:</p>
+<ul><li><strong>Base Layer</strong>: C100 (Standard ANSI character set)</li><li><strong>Emoji Layers</strong>: C101+ (256-character emoji map)</li><li><strong>Extended Layers</strong>: C101-C899 (multi-layer character collections)</li><li><strong>Retro Layers</strong>: C64 and Acorn Teletext characters</li><li><strong>References</strong>: C-layer numbering system (C100-C899)</li></ul>
+<p><strong>Emoji Guidelines</strong>:</p>
+<ul><li>Use <code>:emoji:</code> format for consistency</li><li>Reference C-layer positions when needed</li><li>Example: <code>:rocket:</code> (C245) for launch-related content</li><li>Example: <code>:computer:</code> (C187) for technical documentation</li></ul>
+<p><strong>Special Character Usage</strong>:</p>
+<ul><li>Use Teletext references for block characters: <code>[C256]</code></li><li>Use C64 references for retro characters: <code>{C64:C65}</code></li><li>Use Acorn references: <code>{ACN:C42}</code></li><li>Use ANSI fallbacks when special chars not available</li></ul>
+<h3>Headers</h3>
+<p>Use ATX-style headers with consistent spacing:</p>
+<pre><code># Header 1
+
+## Header 2
+
+### Header 3
+
+#### Header 4
+
+##### Header 5
+
+###### Header 6</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Always include a space after <code>#</code></li><li>Use consistent header hierarchy</li><li>Don't skip header levels</li></ul>
+<h3>Paragraphs</h3>
+<pre><code>This is a paragraph. It should be separated from other paragraphs by a blank line.
+
+This is another paragraph. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Separate paragraphs with blank lines</li><li>Wrap lines at 80-100 characters for readability</li><li>Avoid trailing whitespace</li></ul>
+<h3>Emphasis</h3>
+<pre><code>*Italic* or _Italic_
+**Bold** or __Bold__
+***Bold Italic*** or ___Bold Italic___</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use <code>*</code> for single words/phrases</li><li>Use <code>_</code> for longer emphasis</li><li>Be consistent within a document</li></ul>
+<h3>Lists</h3>
+<h4>Unordered Lists</h4>
+<pre><code>- Item 1
+- Item 2
+  - Nested item 2.1
+  - Nested item 2.2
+- Item 3</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use <code>-</code> for unordered lists</li><li>Indent nested items with 2 spaces</li><li>Keep list items short and parallel</li></ul>
+<h4>Ordered Lists</h4>
+<pre><code>1. First item
+2. Second item
+3. Third item</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use <code>1.</code> for all items (markdown will auto-number)</li><li>Maintain consistent indentation</li></ul>
+<h3>Links</h3>
+<pre><code>[Link text](https://example.com)
+[Link with title](https://example.com &quot;Title&quot;)
+&lt;https://example.com&gt; (auto-linked)</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use descriptive link text</li><li>Avoid "click here" or "read more"</li><li>Use reference-style links for long URLs</li></ul>
+<h3>Images</h3>
+<pre><code>![Alt text](/path/to/img.jpg)
+![Alt text](/path/to/img.jpg &quot;Title&quot;)</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Always include alt text</li><li>Keep images in an <code>images</code> directory</li><li>Use relative paths</li></ul>
+<h2>2. Code Formatting</h2>
+<h3>Inline Code</h3>
+<pre><code>Use `code` for inline code references.</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use for commands, variables, file names</li><li>Don't overuse for regular text</li></ul>
+<h3>Code Blocks</h3>
+<h4>Fenced Code Blocks (Preferred)</h4>
+<pre><code></code></pre>
+<p>fn main() { println!("Hello, world!"); }</p>
+<pre><code></code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Always specify language for syntax highlighting</li><li>Keep code concise and relevant</li><li>Include necessary context</li></ul>
+<h4>Indented Code Blocks</h4>
+<pre><code>    // Only use when fenced blocks aren&#x27;t available
+    function example() {
+        return true;
+    }</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Prefer fenced code blocks</li><li>Indent with 4 spaces</li></ul>
+<h2>3. Advanced Formatting</h2>
+<h3>Tables</h3>
+<pre><code>| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| Row 1    | Data     | Data     |
+| Row 2    | Data     | Data     |</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Include header row</li><li>Align columns for readability</li><li>Use for data, not layout</li></ul>
+<h3>Blockquotes</h3>
+<pre><code>&gt; This is a blockquote.
+&gt; It can span multiple lines.
+&gt;
+&gt; &gt; Nested blockquotes are possible.</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use for notes, warnings, or citations</li><li>Keep concise</li><li>Don't overuse</li></ul>
+<h3>Horizontal Rules</h3>
+<pre><code>---
+
+***
+
+___</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use <code>---</code> for consistency</li><li>Separate major sections</li><li>Don't overuse</li></ul>
+<h2>4. GFM-Specific Features</h2>
+<h3>Task Lists</h3>
+<pre><code>- [x] Completed task
+- [ ] Incomplete task
+- [ ] Another task</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use for tracking progress</li><li>Keep tasks actionable</li></ul>
+<h3>Strikethrough</h3>
+<pre><code>~~strikethrough~~</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use for deprecated features</li><li>Indicate removed content</li></ul>
+<h3>Tables with Alignment</h3>
+<pre><code>| Left | Center | Right |
+|:-----|:------:|------:|
+| Data | Data  | Data  |</code></pre>
+<p><strong>Best Practices:</strong></p>
+<ul><li>Use alignment sparingly</li><li>Keep tables simple</li></ul>
+<h2>5. uCode1-Specific Conventions</h2>
+<h3>Document Structure</h3>
+<pre><code># Document Title
+
+## Overview
+
+Brief introduction
+
+## Section 1
+
+Content...
+
+## Section 2
+
+Content...
+
+## See Also
+
+- [Related Document](link)
+- [Another Resource](link)
+
+---
+
+© 2024 uCode1 Team</code></pre>
+<h3>Front Matter</h3>
+<p>For documents that need metadata:</p>
+<pre><code>---
+title: Document Title
+author: uCode1 Team
+date: 2024-01-15
+category: Documentation
+---
+
+# Document Title
+
+Content...</code></pre>
+<h3>Code Documentation</h3>
+<pre><code>## Function: `do_something()`
+
+**Description**: Does something important
+
+**Parameters**:
+- `param1` (Type): Description
+- `param2` (Type): Description
+
+**Returns**: Return type and description
+
+**Example**:</code></pre>
+<p>let result = do_something(param1, param2);</p>
+<pre><code></code></pre>
+<h2>6. Best Practices</h2>
+<h3>General</h3>
+<p>1. <strong>Consistency</strong>: Be consistent within a document 2. <strong>Readability</strong>: Prioritize human readability 3. <strong>Conciseness</strong>: Be brief but complete 4. <strong>Organization</strong>: Use logical structure</p>
+<h3>File Organization</h3>
+<p>1. <strong>Naming</strong>: Use <code>KEBAB-CASE.md</code> for files 2. <strong>Directories</strong>: Group related documents 3. <strong>Index</strong>: Include <code>README.md</code> in directories</p>
+<h3>Content</h3>
+<p>1. <strong>Audience</strong>: Write for the intended reader 2. <strong>Purpose</strong>: State the document's goal early 3. <strong>Examples</strong>: Include practical examples 4. <strong>References</strong>: Link to related documents</p>
+<h3>Maintenance</h3>
+<p>1. <strong>Review</strong>: Regularly update documentation 2. <strong>Deprecation</strong>: Mark outdated content 3. <strong>Versioning</strong>: Track document versions</p>
+<h2>7. Tools</h2>
+<h3>Recommended Editors</h3>
+<ul><li><strong>VS Code</strong> with Markdown extensions</li><li><strong>Typora</strong> for live preview</li><li><strong>Obsidian</strong> for knowledge base</li></ul>
+<h3>Validation</h3>
+<ul><li><strong>markdownlint</strong>: Lint markdown files</li><li><strong>Prettier</strong>: Format consistently</li><li><strong>GFM Validator</strong>: Validate syntax</li></ul>
+<h3>Conversion</h3>
+<ul><li><strong>Pandoc</strong>: Convert between formats</li><li><strong>mdbook</strong>: Create documentation books</li></ul>
+<h2>8. Examples</h2>
+<h3>Good Example</h3>
+<pre><code># Vault Schema Management
+
+## Overview
+
+This document explains how uCode1 manages database schemas for the vault system.
+
+## Schema Types
+
+### uCode Schemas
+
+- **Purpose**: Track uCode1 component versions
+- **Format**: JSON with version and components
+- **Example**:
+</code></pre>
+<p>{ "version": "1.0.1", "components": ["vault-bridge", "ok-agent"] }</p>
+<pre><code>
+### Vault Schemas
+
+- **Purpose**: Track SQLite database structure
+- **Format**: SQL DDL statements
+- **Example**:
+</code></pre>
+<p>CREATE TABLE space ( id TEXT PRIMARY KEY, name TEXT NOT NULL );</p>
+<pre><code>
+## Best Practices
+
+1. Use semantic versioning
+2. Include release dates
+3. Document breaking changes
+
+## See Also
+
+- [Command Reference](../CLI_COMMANDS.md)
+- [Architecture Overview](../ARCHITECTURE.md)
+
+---
+
+© 2024 uCode1 Team</code></pre>
+<h3>Bad Example</h3>
+<pre><code># vault schemas
+
+this document is about schemas.
+
+## stuff
+
+some text here
+more text
+no structure
+
+## random
+
+unorganized content
+no examples</code></pre>
+<h2>9. Character Mapping System</h2>
+<h3>uCode1 Character Reference Guide</h3>
+<p><strong>Base Character Sets</strong>:</p>
+<ul><li><strong>Default Layer</strong>: C100 (Standard ANSI character set)</li><li><strong>Emoji Layers</strong>: C101-C356 (256-character emoji map)</li><li><strong>Teletext Blocks</strong>: C400-C499</li><li><strong>C64 Characters</strong>: C500-C599</li><li><strong>Acorn Characters</strong>: C600-C699</li><li><strong>Extended Layers</strong>: C101-C899 (multi-layer collections)</li></ul>
+<p><strong>Emoji Reference System</strong>:</p>
+<ul><li>Use <code>:emoji:</code> notation for standard emoji</li><li>Map to C-layer positions: <code>:rocket:</code> = C245</li><li>Reference format: <code>:emoji:</code> (CXXX)</li></ul>
+<p><strong>Special Character Examples</strong>:</p>
+<p>| Character Type | Format | Example | Reference | |---------------|--------|---------|-----------| | Standard Emoji | <code>:emoji:</code> | <code>:rocket:</code> | C245 | | Teletext Block | <code>[CXXX]</code> | <code>[C256]</code> | C256 | | C64 Character | <code>{C64:CXX}</code> | <code>{C64:C65}</code> | C565 | | Acorn Character | <code>{ACN:CXX}</code> | <code>{ACN:C42}</code> | C642 |</p>
+<p><strong>Character Usage Guidelines</strong>:</p>
+<p>1. <strong>Documentation</strong>: Use emoji sparingly for emphasis 2. <strong>Technical Docs</strong>: Prefer ANSI/ASCII for compatibility 3. <strong>UI Elements</strong>: Use Teletext blocks for borders/layouts 4. <strong>Retro Mode</strong>: Use C64/Acorn chars for authentic feel 5. <strong>Fallbacks</strong>: Always provide ANSI alternatives</p>
+<h3>Character Map Reference</h3>
+<p><strong>Common uCode1 Emoji Mappings</strong>:</p>
+<ul><li><code>:rocket:</code> - Launch/startup (C245)</li><li><code>:computer:</code> - Technical/computing (C187)</li><li><code>:book:</code> - Documentation/learning (C123)</li><li><code>:lock:</code> - Security/privacy (C312)</li><li><code>:gear:</code> - Settings/configuration (C287)</li><li><code>:warning:</code> - Alerts/warnings (C345)</li><li><code>:check:</code> - Success/completion (C211)</li><li><code>:x:</code> - Errors/failure (C212)</li></ul>
+<p><strong>Teletext Block Characters</strong>:</p>
+<ul><li><code>[C256]</code> - Solid block</li><li><code>[C257]</code> - Horizontal line</li><li><code>[C258]</code> | Vertical line</li><li><code>[C259]</code> - Corner piece</li><li><code>[C260]</code> - T-junction</li></ul>
+<h3>C-Layer Position Reference</h3>
+<pre><code>C100:          Default Layer (ANSI base)
+C101-C356:     Emoji Layers (256 characters)
+C400-C499:     Teletext Block Characters
+C500-C599:     C64 Character Set
+C600-C699:     Acorn Teletext Set  
+C700-C799:     Reserved for future expansion
+C800-C899:     Custom/user-defined layers</code></pre>
+<p><strong>Key Features</strong>:</p>
+<ul><li><strong>Base Layer</strong>: C100 provides ANSI compatibility</li><li><strong>Multi-Layer Collections</strong>: Character sets can span multiple C-layers</li><li><strong>Max Layer</strong>: C899 for maximum flexibility</li><li><strong>Default Layer</strong>: C100 ensures backward compatibility</li></ul>
+<h2>10. References</h2>
+<ul><li><a href="https://github.github.com/gfm/">GitHub Flavored Markdown Spec</a></li><li><a href="https://gist.github.com/rxaviers/7360908">Common Markdown Style Guide</a></li><li><a href="https://www.markdownguide.org/">Markdown Guide</a></li><li><a href="https://unicode.org/emoji/">Unicode Emoji Reference</a></li><li><a href="https://teletext.mb21.co.uk/">Teletext Character Set</a></li><li><a href="https://www.c64-wiki.com/wiki/Character_set">C64 Character Set</a></li></ul>
+<p>---</p>
+<p>© 2024 uCode1 Team. All rights reserved.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>learning-pathway/04-troubleshooting.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / learning-pathway/04-troubleshooting.md</span></header><main class="site-main"><h1>Lesson 04 - Troubleshooting And Recovery</h1>
+<p>Deployments don't sempre go perfectly. This lesson teaches systematic troubleshooting and recovery procedures.</p>
+<p><strong>Prerequisites</strong>: Complete Lessons 01-03 first. You should understand the three-phase workflow (plan → dry-run → apply).</p>
+<p>---</p>
+<h2>Troubleshooting Philosophy</h2>
+<p>When deployment fails, follow this discipline:</p>
+<p>1. <strong>Collect evidence</strong> — Understand what actually happened 2. <strong>Classify the problem</strong> — Which phase? Which system? 3. <strong>Know your boundaries</strong> — Is this Sonic's job or someone else's? 4. <strong>Attempt recovery</strong> — Use the right tool for the problem 5. <strong>Escalate if needed</strong> — Raise to the appropriate owner</p>
+<p>The goal is <strong>data-driven decisions</strong>, not guessing.</p>
+<p>---</p>
+<h2>Phase 1: Planning Failures</h2>
+<h3>Symptom: <code>sonic plan</code> command fails</h3>
+<p><strong>Common Error 1: Device not found</strong></p>
+<pre><code>$ sonic plan --usb-device /dev/sdc --out manifest.json
+ERROR: Device /dev/sdc not found</code></pre>
+<p><strong>Diagnosis</strong>:</p>
+<pre><code># Verify device is actually connected
+lsblk | grep -E &quot;sdb|sdc|sdd&quot;
+
+# List all block devices
+sudo fdisk -l | grep &quot;Disk&quot;
+
+# Check USB bus
+lsusb</code></pre>
+<p><strong>Recovery</strong>:</p>
+<ul><li>Device name is usually <code>/dev/sdbN</code> (where N is partition number)</li><li>Use <code>lsblk</code> to find the real device</li><li>Verify it's a USB drive (not your main disk!)</li><li>Rerun with correct device</li></ul>
+<p><strong>Common Error 2: Layout file not found</strong></p>
+<pre><code>$ sonic plan --layout-file /nonexistent/config.json --out manifest.json
+ERROR: Layout file not found: /nonexistent/config.json</code></pre>
+<p><strong>Diagnosis</strong>:</p>
+<pre><code># Verify layout file exists
+ls -l config/sonic-layout.json
+
+# Check config directory
+ls config/</code></pre>
+<p><strong>Recovery</strong>:</p>
+<ul><li>Use correct path to layout file (usually <code>config/sonic-layout.json</code>)</li><li>Verify layout file is readable</li><li>Check for typos in path</li></ul>
+<p><strong>Common Error 3: Layout validation fails</strong></p>
+<pre><code>$ sonic plan --layout-file config/sonic-layout.json --out manifest.json
+ERROR: Layout validation failed: partition 2 exceeds device capacity (need 25G, have 4G)</code></pre>
+<p><strong>Diagnosis</strong>:</p>
+<pre><code># Check actual USB device size
+sudo fdisk -l /dev/sdb | grep &quot;Disk /dev/sdb&quot;
+
+# Check what layout expects
+cat config/sonic-layout.json | jq &#x27;.target.partitions&#x27;</code></pre>
+<p><strong>Recovery</strong>:</p>
+<ul><li>Use a larger USB device, OR</li><li>Edit the layout to use smaller partitions, OR</li><li>Create a new layout file for your device</li></ul>
+<p>---</p>
+<h2>Phase 2: Dry-Run Failures</h2>
+<h3>Symptom: <code>--dry-run</code> shows unexpected steps</h3>
+<p><strong>Example</strong>: Dry-run shows wrong device</p>
+<pre><code>$ bash scripts/sonic-stick.sh --manifest memory/sonic/my-plan.json --dry-run
+[DRY-RUN] Would execute: sgdisk --zap-all ... /dev/sda ← WRONG DEVICE!</code></pre>
+<p><strong>Diagnosis</strong>:</p>
+<pre><code># Check the manifest target device
+cat memory/sonic/my-plan.json | jq &#x27;.metadata.target_device&#x27;
+
+# Verify which device you actually want
+lsblk | grep -E &quot;Name|sda|sdb|sdc&quot;</code></pre>
+<p><strong>Recovery</strong>:</p>
+<ul><li><strong>STOP!</strong> Do not apply this manifest</li><li>Generate a new manifest with the correct device</li><li>This is exactly why dry-run exists</li></ul>
+<p><strong>Example</strong>: Dry-run shows missing files</p>
+<pre><code>$ bash scripts/sonic-stick.sh --manifest memory/sonic/my-plan.json --dry-run
+[WARN] Payload not found: file:///memory/sonic/artifacts/arch-base.tar.gz
+[ERROR] Cannot proceed with missing payloads</code></pre>
+<p><strong>Diagnosis</strong>:</p>
+<pre><code># Check for the missing file
+ls -lh memory/sonic/artifacts/
+
+# Find where the actual file is
+find . -name &quot;arch-base.tar.gz&quot; 2&gt;/dev/null
+
+# Check manifest references
+cat memory/sonic/my-plan.json | jq &#x27;.payloads&#x27;</code></pre>
+<p><strong>Recovery</strong>:</p>
+<ul><li>Download/extract missing payloads</li><li>Update layout to point to correct paths</li><li>Regenerate manifest</li><li>Retry dry-run</li></ul>
+<p>---</p>
+<h2>Phase 3: Apply Failures (Most Critical)</h2>
+<h3>Symptom: Apply starts but fails mid-execution</h3>
+<p><strong>Example: Disk full during extraction</strong></p>
+<pre><code>[EXEC] Step 07/12: Extract base system
+tar: write error: No space left on device
+[ERROR] Apply halted at step 07/12</code></pre>
+<p><strong>Diagnosis</strong>:</p>
+<pre><code># Check actual partition sizes created
+sudo fdisk -l /dev/sdb
+
+# Check mounted filesystems
+mount | grep /mnt/sonic
+
+# Check free space
+df -h /mnt/sonic-root
+
+# Check what was extracted so far
+sudo ls -lh /mnt/sonic-root/</code></pre>
+<p><strong>Recovery</strong>:</p>
+<p>Option A: Use a larger USB drive</p>
+<pre><code># Restore old device partition table
+sudo sgdisk --load-backup=memory/sonic/sdb-backup.gpt /dev/sdb
+
+# Clean up mounts
+sudo umount /mnt/sonic-root
+sudo umount /mnt/sonic-boot
+
+# Use new device
+sonic plan --usb-device /dev/sdc --out new-manifest.json
+bash scripts/sonic-stick.sh --manifest new-manifest.json</code></pre>
+<p>Option B: Modify layout for smaller device</p>
+<pre><code># Edit layout to use less space
+nano config/sonic-layout.json
+# (reduce partition sizes)
+
+# Regenerate and retry
+sonic plan --layout-file config/sonic-layout.json --usb-device /dev/sdb --out manifest.json
+bash scripts/sonic-stick.sh --manifest manifest.json --dry-run
+bash scripts/sonic-stick.sh --manifest manifest.json</code></pre>
+<p><strong>Example: Bootloader installation fails</strong></p>
+<pre><code>[EXEC] Step 10/12: Generate boot entries
+grub-mkconfig: error: no known filesystem
+[ERROR] Apply halted at step 10/12</code></pre>
+<p><strong>Diagnosis</strong>:</p>
+<pre><code># Check if partitions are mounted correctly
+mount | grep sonic
+
+# Verify bootloader filesystem
+ls /mnt/sonic-boot/
+
+# Check if boot files are present
+sudo ls -lh /mnt/sonic-root/boot/</code></pre>
+<p><strong>Recovery</strong>:</p>
+<pre><code># Manually fix boot configuration
+sudo chroot /mnt/sonic-root
+grub-mkconfig -o /boot/grub/grub.cfg
+exit
+
+# Continue from where it failed (or restart full apply)
+bash scripts/sonic-stick.sh --manifest manifest.json --resume-from=10</code></pre>
+<p><strong>Example: Permission denied during apply</strong></p>
+<pre><code>[EXEC] Step 02/12: Create new GPT partition table
+Error: Operation not permitted
+[ERROR] Apply requires sudo/root privileges</code></pre>
+<p><strong>Diagnosis</strong>:</p>
+<pre><code>whoami  # Check current user
+sudo whoami  # Check if sudo works
+sudo fdisk -l | head -1  # Verify sudo access</code></pre>
+<p><strong>Recovery</strong>:</p>
+<pre><code># Apply must run as root or with sudo
+sudo bash scripts/sonic-stick.sh --manifest manifest.json
+
+# Or configure sudoers to not require password
+visudo  # (requires editing sudoers carefully)</code></pre>
+<p>---</p>
+<h2>Post-Apply Issues</h2>
+<h3>Symptom: Apply succeeds but device won't boot</h3>
+<p><strong>Diagnosis</strong>:</p>
+<pre><code># Check partition table
+sudo sgdisk -p /dev/sdb
+
+# Verify boot partition exists and is readable
+sudo mount /dev/sdb1 /mnt/check-boot
+ls /mnt/check-boot
+ls /mnt/check-boot/EFI/BOOT/
+
+# Check if MBR is valid
+sudo fdisk -l /dev/sdb | head -20</code></pre>
+<p><strong>Recovery</strong>:</p>
+<pre><code># Restore and retry
+sudo sgdisk --load-backup=memory/sonic/sdb-backup.gpt /dev/sdb
+sudo umount /mnt/check-boot
+
+# Note which step failed and run apply again
+bash scripts/sonic-stick.sh --manifest manifest.json --resume-from=10
+
+# Or start completely fresh
+sonic plan --layout-file config/sonic-layout.json --usb-device /dev/sdb --out manifest.json
+bash scripts/sonic-stick.sh --manifest manifest.json</code></pre>
+<h3>Symptom: Device boots but runtime initialization fails</h3>
+<p><strong>Example: uHOME won't start</strong></p>
+<pre><code>[Boot successful]
+Sonic-deployed system ready
+uHOME initialization...
+ERROR: uHOME runtime failed to initialize</code></pre>
+<p><strong>At this point, </strong>Sonic's job is done.<strong> This is a uHOME-server issue.</strong></p>
+<p><strong>Diagnosis</strong> (collect evidence for escalation):</p>
+<pre><code># Boot the device and collect logs
+sudo mount /dev/sdb2 /mnt/uhome-device
+ls /mnt/uhome-device/var/log/
+cat /mnt/uhome-device/var/log/uhome-init.log
+
+# Collect output
+tar -czf uhome-failure-logs.tar.gz /mnt/uhome-device/var/log/</code></pre>
+<p><strong>Escalation (contact uHOME-server team)</strong>:</p>
+<ul><li>Share logs from above</li><li>Include the manifest used</li><li>Include device specs (USB size, hardware target)</li><li>Document exact symptoms</li></ul>
+<p>---</p>
+<h2>Decision Tree: Where's the Problem?</h2>
+<p>Use this flowchart to classify the issue:</p>
+<pre><code>┌─ Does `sonic plan` succeed?
+│  └─ NO → Phase 1 failure (see Phase 1 section)
+│  └─ YES ↓
+│
+├─ Does `--dry-run` succeed?
+│  └─ NO → Phase 2 failure (see Phase 2 section)
+│  └─ YES ↓
+│
+├─ Does `apply` (without --dry-run) succeed?
+│  └─ NO → Phase 3 failure (see Phase 3 section)
+│  └─ YES ↓
+│
+├─ Does device boot?
+│  └─ NO → Boot configuration issue (see Phase 3: &quot;won&#x27;t boot&quot;)
+│  └─ YES ↓
+│
+└─ Does runtime initialize?
+   └─ NO → uHOME-server issue (Sonic is done, escalate)
+   └─ YES → SUCCESS! Deployment complete</code></pre>
+<p>---</p>
+<h2>Recovery Tools</h2>
+<h3>Evidence Collection</h3>
+<pre><code># Collect diagnostic bundle
+bash scripts/collect-logs.sh --device /dev/sdb --output recovery-logs/</code></pre>
+<p>Creates:</p>
+<ul><li>Partition table snapshot</li><li>Mount status</li><li>Boot configuration</li><li>System logs</li><li>Manifest copy</li></ul>
+<h3>Partition Verification</h3>
+<pre><code># Verify partition layout
+bash scripts/verify-usb-layout.sh /dev/sdb
+
+# Output:
+# ✓ Partition 1: EFI System (500M)
+# ✓ Partition 2: Linux (20G)
+# ✓ Boot files: Present
+# ✓ Device is bootable</code></pre>
+<h3>Manual Inspection</h3>
+<pre><code># Mount and explore
+sudo mount /dev/sdb2 /mnt/inspect-root
+sudo mount /dev/sdb1 /mnt/inspect-boot
+
+# Check filesystem integrity
+sudo fsck -n /dev/sdb2  # (read-only check)
+
+# Explore directory structure
+sudo ls -la /mnt/inspect-root/
+sudo ls -la /mnt/inspect-root/boot/</code></pre>
+<h3>Backup and Restore</h3>
+<pre><code># Save partition table before major changes
+sudo sgdisk --backup=$HOME/sdb-backup.gpt /dev/sdb
+
+# Restore partition table
+sudo sgdisk --load-backup=$HOME/sdb-backup.gpt /dev/sdb
+
+# Full device backup (takes time)
+sudo dd if=/dev/sdb of=$HOME/sdb-full-backup.img bs=4M status=progress</code></pre>
+<p>---</p>
+<h2>Escalation Guide</h2>
+<p><strong>When to escalate</strong> (it's not your problem):</p>
+<p>| Issue | Owner | How to Escalate | |-------|-------|---| | Runtime won't start | uHOME-server | Share logs + manifest | | Sonic CLI errors | Sonic team | GitHub issue + error message | | Device won't boot after Sonic applies correctly | System/firmware | Escalate with boot logs | | uDOS profile issues | uDOS team | Profile validation errors |</p>
+<p><strong>What to include</strong> when escalating:</p>
+<ul><li>Exact error messages (full output if possible)</li><li>Command you ran</li><li>Manifest (if relevant)</li><li>Evidence collection output</li><li>What you've already tried</li></ul>
+<p>---</p>
+<h2>When to Give Up and Restart</h2>
+<p>Sometimes, the best recovery is starting fresh:</p>
+<pre><code># Restore original partition table
+sudo sgdisk --load-backup=memory/sonic/sdb-backup.gpt /dev/sdb
+
+# Verify restoration
+sudo sgdisk -p /dev/sdb
+
+# Wipe clean (if needed)
+sudo sgdisk --zap-all /dev/sdb
+
+# Try again with fresh manifest
+sonic plan --layout-file config/sonic-layout.json --usb-device /dev/sdb --out manifest-v2.json
+bash scripts/sonic-stick.sh --manifest manifest-v2.json --dry-run
+bash scripts/sonic-stick.sh --manifest manifest-v2.json</code></pre>
+<p>---</p>
+<h2>Deeper Dive: Advanced Recovery</h2>
+<ul><li><strong>Chroot recovery</strong>: <code>modules/rescue/chroot-recovery.sh</code></li><li><strong>Partition recovery</strong>: <code>modules/rescue/partition-recover.sh</code></li><li><strong>Bootloader debugging</strong>: <code>docs/howto/bootloader-debug.md</code></li></ul>
+<p>---</p>
+<h2>Checkpoint: Can You Troubleshoot?</h2>
+<p><strong>Scenario 1</strong>: Apply fails at step 7/12 with "No space left." What's your first action?</p>
+<ul><li>A) Try applying again</li><li>B) Collect evidence with <code>bash scripts/collect-logs.sh</code></li><li>C) Immediately restore from backup</li><li><strong>Answer</strong>: B — Always understand the problem first</li></ul>
+<p><strong>Scenario 2</strong>: Dry-run shows device <code>/dev/sda</code> but you wanted <code>/dev/sdb</code>. What do you do?</p>
+<ul><li>A) Apply anyway and hope</li><li>B) Stop and regenerate manifest with correct device</li><li>C) Manually edit manifest to change device</li><li><strong>Answer</strong>: B — Never apply a plan with wrong device. Regenerate.</li></ul>
+<p><strong>Scenario 3</strong>: Device boots but runtime fails. Who do you contact?</p>
+<ul><li>A) Sonic team (it's a deployment issue)</li><li>B) uHOME-server team (it's a runtime issue)</li><li>C) Your device manufacturer (hardware issue)</li><li><strong>Answer</strong>: B — Runtime failures are uHOME-server's responsibility</li></ul>
+<p>---</p>
+<h2>Key Takeaway</h2>
+<p><strong>Troubleshooting is about boundaries and evidence</strong>.</p>
+<p>Collect data → Classify the problem → Apply the right tool → Escalate when needed.</p>
+<p>The vast majority of deployment issues can be avoided or fixed with the discipline you learned in Lessons 01-03 (review, dry-run, understand boundaries).</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

@@ -1,0 +1,69 @@
+:root {
+  --usx-color-background: #0f1217;
+  --usx-color-surface: #171b22;
+  --usx-color-surface-variant: #1f242e;
+  --usx-color-on-surface: #e6e9ef;
+  --usx-color-on-surface-muted: #9aa3b2;
+  --usx-color-border: #2a303c;
+  --usx-color-primary: #58a6ff;
+  --usx-color-success: #3fb950;
+  --usx-color-warning: #d29922;
+  --usx-color-danger: #f85149;
+  --usx-font-family-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --usx-font-family-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --usx-color-background: #ffffff;
+    --usx-color-surface: #f6f8fa;
+    --usx-color-surface-variant: #eef1f4;
+    --usx-color-on-surface: #1f2328;
+    --usx-color-on-surface-muted: #59636e;
+    --usx-color-border: #d0d7de;
+    --usx-color-primary: #0969da;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--usx-font-family-sans);
+  background: var(--usx-color-background);
+  color: var(--usx-color-on-surface);
+  line-height: 1.6;
+}
+.site-header, .site-footer {
+  padding: 0.9rem 1.5rem;
+  background: var(--usx-color-surface);
+  border-bottom: 1px solid var(--usx-color-border);
+  display: flex; gap: 0.75rem; align-items: center;
+}
+.site-footer { border-top: 1px solid var(--usx-color-border); border-bottom: none; }
+.site-home { color: var(--usx-color-primary); font-weight: 600; text-decoration: none; }
+.site-crumb { color: var(--usx-color-on-surface-muted); font-size: 0.9rem; }
+.site-main { max-width: 72rem; margin: 0 auto; padding: 1.5rem; }
+h1, h2, h3, h4 { line-height: 1.3; margin: 1.25rem 0 0.5rem; }
+h1 { border-bottom: 1px solid var(--usx-color-border); padding-bottom: 0.4rem; }
+a { color: var(--usx-color-primary); }
+code, pre {
+  font-family: var(--usx-font-family-mono);
+  background: var(--usx-color-surface-variant);
+  border-radius: 4px;
+}
+code { padding: 0.1rem 0.35rem; font-size: 0.9em; }
+pre { padding: 0.9rem; overflow-x: auto; }
+pre code { padding: 0; background: none; }
+blockquote {
+  margin: 0.75rem 0; padding: 0.4rem 1rem;
+  border-left: 3px solid var(--usx-color-border);
+  color: var(--usx-color-on-surface-muted);
+}
+.repo-card, .doc-row {
+  display: block; padding: 0.75rem 1rem; margin: 0.4rem 0;
+  background: var(--usx-color-surface);
+  border: 1px solid var(--usx-color-border);
+  border-radius: 8px; text-decoration: none; color: var(--usx-color-on-surface);
+}
+.repo-card:hover, .doc-row:hover { border-color: var(--usx-color-primary); }
+.doc-row code { float: right; }
+.meta { color: var(--usx-color-on-surface-muted); font-size: 0.85rem; }
+.badge { color: var(--usx-color-success); }

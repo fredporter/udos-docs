@@ -1,0 +1,199 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>legacy/mcp-archive/MCP_VAULT_ALIGNMENT_ASSESSMENT.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / legacy/mcp-archive/MCP_VAULT_ALIGNMENT_ASSESSMENT.md</span></header><main class="site-main"><h1>MCP & Vault Alignment Assessment</h1>
+<p><strong>Version:</strong> 1.0.0 <strong>Date:</strong> 2026-06-30 <strong>Status:</strong> Active Assessment <strong>Owner:</strong> Developer Productivity Team</p>
+<p>---</p>
+<h2>Executive Summary</h2>
+<p>This document assesses the uCore/snackbar MCP tools for Vault docs and Code dev ops, evaluates the current Vault structure and AppFlowy Snack integration/doc mirror, compiles specs relating to Docs and Vault permissions/Workspaces, and assesses MCP skills including the ability to repair MCP when corruption happens (DESTROY/REBUILD).</p>
+<p><strong>Key Findings:</strong></p>
+<ul><li>✅ MCP layer is functional with 22 registered tools + dynamic skill tools</li><li>✅ DESTROY/REBUILD capability exists via <code>skill_mcp_self_heal</code> + <code>mcp_guardrails</code></li><li>✅ AppFlowy integration is functional (local-first SQLite access)</li><li>⚠️ Vault path misalignment across 3 files (<code>vault_file_discovery.py</code>, <code>vault-sync.example.yaml</code>, <code>sync_config.yaml</code>)</li><li>⚠️ Snackbar <code>server.py</code> modularization incomplete (25 missing module imports)</li><li>⚠️ <code>/api/mcp/diagnostics</code> endpoint spec'd but not implemented</li></ul>
+<p>---</p>
+<h2>1. MCP Tools Assessment</h2>
+<h3>1.1 MCP API Surface</h3>
+<p>The MCP layer lives in three files under <code>backend/app/api/</code>:</p>
+<p>| File | Role | Lines | |------|------|-------| | <code>mcp.py</code> | Discovery (<code>GET /api/mcp/tools</code>) + Call (<code>POST /api/mcp/call</code>) | 338 | | <code>mcp_handlers.py</code> | 22 tool handlers + <code>dispatch_tool()</code> router | 640 | | <code>mcp_guardrails.py</code> | Integrity validation (6 checks) | 231 |</p>
+<h3>1.2 Registered MCP Tools (22)</h3>
+<p>| Domain | Tools | Vault/DevOps Relevance | |--------|-------|----------------------| | <strong>Knowledge</strong> | <code>knowledge_search</code>, <code>knowledge_list_workspaces</code>, <code>knowledge_list_documents</code> | ✅ Direct Vault docs access via AppFlowy SQLite | | <strong>Clipboard</strong> | <code>clipboard_capture</code>, <code>clipboard_get</code>, <code>clipboard_delete</code> | DevOps copy buffer | | <strong>Tasker</strong> | <code>tasker_list_boards</code>, <code>tasker_read_task</code>, <code>tasker_write_task</code>, <code>tasker_sync_export</code> | Code dev ops task management | | <strong>Flow Router</strong> | <code>flow_router_route</code>, <code>flow_router_analytics</code>, <code>flow_router_history</code> | AI model routing for dev tasks | | <strong>Gridsmith</strong> | <code>gridsmith_tools_list</code>, <code>gridsmith_create_grid</code>, <code>gridsmith_latlon_to_ucode</code>, <code>gridsmith_ucode_to_latlon</code>, <code>gridsmith_import_basic_program</code> | Low relevance to docs/vault | | <strong>TOON</strong> | <code>toon_encode</code>, <code>toon_stats</code>, <code>toon_clear</code> | Token optimization for context | | <strong>System</strong> | <code>autostart_health_check</code> | Service lifecycle | | <strong>Skills</strong> | Dynamic <code>skill_*</code> tools (all discovered skills) | Extensible dev ops |</p>
+<h3>1.3 MCP Services</h3>
+<p>| Service | Location | Status | |---------|----------|--------| | TOON Context Server | <code>backend/app/mcp/toon/server.py</code> | ✅ SQLite-backed token-optimization cache (30-60% compression) | | GitHub MCP | <code>backend/app/services/mcp/github_client.py</code>, <code>github_tools.py</code> | 🟨 Partial (Phase 5 of upgrade checklist) |</p>
+<h3>1.4 MCP Discovery & Call Flow</h3>
+<pre><code>Client (VS Code/Continue/Cline)
+  ↓
+GET /api/mcp/tools → handle_mcp_discover()
+  Returns: { tools: [...], protocolVersion, serverInfo }
+  ↓
+POST /api/mcp/call → handle_mcp_call() → dispatch_tool(body)
+  Body: { &quot;name&quot;: &quot;tool_name&quot;, &quot;arguments&quot;: {...} }
+  ↓
+TOOL_HANDLERS[tool_name](arguments, request_id)
+  ↓
+JSON-RPC 2.0 response</code></pre>
+<p>---</p>
+<h2>2. Vault Structure Assessment</h2>
+<h3>2.1 Confirmed Vault Topology</h3>
+<p>| Layer | Path | Purpose | Permissions | |-------|------|---------|-------------| | <strong>User</strong> | <code>~/Vault/</code> | One personal vault (Obsidian-format) | Read/Write | | <strong>Shared</strong> | <code>~/Shared/</code> | Many shared vaults (<code>uConnect/</code>, etc.) | Read/Write (permission check) | | <strong>Global</strong> | <code>~/Public/global-knowledge/</code> | Global knowledge bank | Read-only | | <strong>Public</strong> | <code>~/Public/doc-sites/</code> | Published vaults (<code>DevStudio-docs/</code>) | Publish-only | | <strong>Code</strong> | <code>~/Code/</code> | Dev repos (uCore, uDocs, uCode, etc.) | Read/Write (dev) |</p>
+<h3>2.2 Actual Filesystem State</h3>
+<pre><code>~/Vault/                    ← User vault (22 items: binders, daily, knowledge, missions, etc.)
+~/Shared/                   ← Shared vaults (uConnect/)
+~/Public/global-knowledge/  ← Global knowledge bank (33 items)
+~/Public/doc-sites/         ← Published sites (DevStudio-docs/)
+~/Code/                     ← Dev repos (uCore, uDocs, uCode, etc.)</code></pre>
+<h3>2.3 Path Misalignment Analysis</h3>
+<h4>Files with CORRECT paths:</h4>
+<ul><li><code>backend/app/knowledge/appflowy.py</code> — reads AppFlowy SQLite directly ✅</li><li><code>backend/app/knowledge/local_first.py</code> — local SQLite operations ✅</li><li><code>backend/app/api/mcp.py</code> + <code>mcp_handlers.py</code> — MCP tools ✅</li><li><code>backend/app/api/mcp_guardrails.py</code> — integrity validation ✅</li><li><code>backend/app/skills/builtin/skill_mcp_self_heal.py</code> — DESTROY/REBUILD ✅</li><li><code>backend/app/menu/snack_registry.py</code> — snack plugin system ✅</li></ul>
+<h4>Files with MISALIGNED paths (require correction):</h4>
+<p>| File | Currently References | Should Reference | Status | |------|---------------------|-----------------|--------| | <code>vault_file_discovery.py</code> | <code>~/Vaults/User/</code>, <code>~/Vaults/Shared/</code>, <code>~/Vaults/Global/</code> | <code>~/Vault/</code>, <code>~/Shared/</code>, <code>~/Public/global-knowledge/</code> | ❌ Fixed | | <code>vault-sync.example.yaml</code> | <code>~/Vault/Shared</code>, <code>~/Vault/Public</code> | <code>~/Shared/</code>, <code>~/Public/doc-sites/</code> | ❌ Fixed | | <code>af_manager/sync_config.yaml</code> | <code>~/Vault/Public</code>, <code>~/Vault/Shared</code> | <code>~/Shared/</code>, <code>~/Public/doc-sites/</code> | ❌ Fixed |</p>
+<p>---</p>
+<h2>3. AppFlowy Snack Integration / Doc Mirror</h2>
+<h3>3.1 Knowledge Module (<code>backend/app/knowledge/</code>)</h3>
+<p>| File | Capability | Status | |------|-----------|--------| | <code>appflowy.py</code> | Direct SQLite read of AppFlowy cloud + local workspaces; <code>list_workspaces()</code>, <code>list_documents()</code>, <code>semantic_search()</code>, <code>get_document_content()</code> | ✅ Functional | | <code>local_first.py</code> | Safe read/write SQLite ops with backup + spool logging; <code>discover_databases()</code>, <code>run_query()</code>, <code>export_to_vault()</code> | ✅ Functional |</p>
+<h3>3.2 AF Manager (<code>backend/app/af_manager/</code>)</h3>
+<p>| File | Purpose | Status | |------|---------|--------| | <code>sync.py</code> (26KB) | Bidirectional sync engine | ✅ Functional | | <code>sync_config.yaml</code> | Maps vault sources to AppFlowy workspaces | ⚠️ Path misalignment (fixed) | | <code>cli.py</code> | CLI for sync operations | ✅ Functional |</p>
+<h3>3.3 Bidirectional Sync Architecture</h3>
+<pre><code>uDocs (canonical) ←→ ~/Vault/CodeDocs
+~/Vault/ ←→ uDocs/ingest/user-vault
+~/Shared/ ←→ uDocs/ingest/shared
+~/Public/doc-sites/ ←→ uDocs/ingest/public</code></pre>
+<p><strong>Conflict handling</strong>: <code>.conflict-left/right.TIMESTAMP.md</code> copies (no overwrite)</p>
+<h3>3.4 Doc Mirror Status (from <code>APPFLOWY_SNACKBAR_LOCAL_FIRST_CHECKLIST.md</code>)</h3>
+<ul><li>✅ SQLite access, query endpoints, export, spool logging</li><li>🟨 Partial: typed schema mapping, MCP resource wrappers, trigger wiring</li><li>⬜ Not done: DB triggers, AppFlowy editor plugin, slash commands</li></ul>
+<h3>3.5 MCP Tools for AppFlowy</h3>
+<p>| Tool | Function | Backend | |------|----------|---------| | <code>knowledge_search</code> | Semantic search across workspaces | <code>appflowy.semantic_search()</code> | | <code>knowledge_list_workspaces</code> | List all AppFlowy workspaces | <code>appflowy.list_workspaces()</code> | | <code>knowledge_list_documents</code> | List documents in workspace | <code>appflowy.list_documents()</code> |</p>
+<p>---</p>
+<h2>4. Specs Compilation: Docs & Vault Permissions/Workspaces</h2>
+<h3>4.1 MCP Permissions Policy (<code>docs/mcp-policy.md</code>)</h3>
+<ul><li>Tool permissions: <code>always</code> | <code>ask</code> | <code>never</code> | <code>auto</code></li><li>Naming convention: <code>{domain}_{action}_{target}</code></li><li>Spool logs must record tool calls with <code>source = mcp</code></li><li>Security: short-lived tokens, least privilege, audit logging</li><li>Health: <code>/health</code> endpoint (HTTP transport)</li><li>Versioning: semantic versioning for server</li></ul>
+<h3>4.2 Vault Guardrails (<code>docs/APPFLOWY_BIDIRECTIONAL_SYNC.md</code>)</h3>
+<p>1. Keep secrets out of Public container 2. Keep ADRs and architecture docs canonical in uDocs 3. Use Shared for team-wide operational runbooks and glossary 4. Keep Personal container for drafts and private notes</p>
+<h3>4.3 Workspace Mapping (Corrected)</h3>
+<p>| Layer | Path | AppFlowy Workspace | Permissions | |-------|------|-------------------|-------------| | User | <code>~/Vault/</code> | <code>Global Vault</code> | Read/Write | | Shared | <code>~/Shared/</code> | <code>Shared Vault</code> | Read/Write (permission check) | | Global | <code>~/Public/global-knowledge/</code> | <code>Global Knowledge</code> | Read-only | | Public | <code>~/Public/doc-sites/</code> | <code>Public Vault</code> | Publish-only | | Code | <code>~/Code/</code> | (dev repos, not synced to AppFlowy) | Read/Write (dev) |</p>
+<h3>4.4 MCP Diagnostics Spec (<code>docs/mcp-diagnostics.md</code>)</h3>
+<ul><li>Endpoint: <code>/api/mcp/diagnostics</code></li><li>Returns: tool registry snapshot, recent tool calls, health status, remediation path</li><li>Status: Spec only — <strong>now implemented</strong> in <code>api/mcp.py</code></li></ul>
+<p>---</p>
+<h2>5. MCP Skills & DESTROY/REBUILD Capability</h2>
+<h3>5.1 Self-Heal Skills (<code>backend/app/skills/self_heal.py</code>)</h3>
+<p>| Skill | Purpose | DESTROY/REBUILD? | |-------|---------|-----------------| | <code>recover_port_conflict</code> | Detect/resolve port conflicts | No | | <code>diagnose_system</code> | System health diagnostics | No | | <code>cleanup_resources</code> | Kill zombie processes | No | | <code>restart_backend</code> | Graceful restart (CLI-triggered) | Partial | | <code>reset_database</code> | Clear DB and rebuild schema | ✅ Yes (DB DESTROY/REBUILD) |</p>
+<h3>5.2 MCP Guardrails (<code>backend/app/api/mcp_guardrails.py</code>)</h3>
+<p><code>validate_mcp_integrity()</code> runs 6 checks:</p>
+<p>1. <strong>Syntax validation</strong> — <code>mcp.py</code>, <code>mcp_handlers.py</code>, <code>mcp_guardrails.py</code> parse as valid Python 2. <strong>Exports validation</strong> — Required functions present in <code>mcp.py</code> 3. <strong>Handler signatures</strong> — All 22 handlers match expected <code>(arguments, request_id)</code> signature 4. <strong>Tool registry completeness</strong> — <code>TOOL_HANDLERS</code> covers all 22 required tools 5. <strong>Dispatch tool</strong> — <code>dispatch_tool()</code> exists, is callable, accepts <code>body</code> 6. <strong>Frontend port consistency</strong> — No stale 5173/5174 ports (must be 5175)</p>
+<h3>5.3 MCP Self-Heal Skill (<code>backend/app/skills/builtin/skill_mcp_self_heal.py</code>)</h3>
+<p><strong>This is the MCP DESTROY/REBUILD mechanism.</strong> 248-line skill that:</p>
+<ul><li>Runs <code>validate_mcp_integrity()</code> to detect issues</li><li>Auto-repairs what it can:</li><li><strong>Handler signature mismatches</strong> → normalizes to <code>(arguments, request_id)</code></li><li><strong>Missing tools in registry</strong> → adds to <code>TOOL_HANDLERS</code> if handler exists</li><li><strong>Stale frontend ports</strong> → replaces 5173/5174 with 5175</li><li><strong>Orphaned code detection</strong> → identifies dead code after last function</li><li>Flags for manual fix:</li><li><strong>Syntax errors</strong> → cannot auto-repair</li><li><strong>Missing exports</strong> → requires manual code changes</li></ul>
+<p><strong>Invocation:</strong></p>
+<pre><code># Dry run (diagnose only)
+curl -X POST http://localhost:8484/api/mcp/call \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;: &quot;skill_mcp_self_heal&quot;, &quot;arguments&quot;: {&quot;dry_run&quot;: true}}&#x27;
+
+# Execute repairs
+curl -X POST http://localhost:8484/api/mcp/call \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;: &quot;skill_mcp_self_heal&quot;, &quot;arguments&quot;: {&quot;dry_run&quot;: false}}&#x27;</code></pre>
+<h3>5.4 Skill Discovery System</h3>
+<p>Skills are dynamically discovered via <code>backend/app/skills/registry.py</code>:</p>
+<ul><li>Scans <code>backend/app/skills/builtin/</code> directory</li><li>Scans <code>~/.ucore/skills/</code> directory</li><li>Imports all <code>.py</code> files, finds <code>BaseSkill</code> subclasses, instantiates them</li><li>Registers in <code>_registry</code> dict keyed by <code>meta.id</code></li></ul>
+<p>This is why <code>skill_mcp_self_heal</code> exists but isn't in <code>self_heal.py</code>'s <code>SKILLS</code> dict — it's a separate dynamically-discovered skill.</p>
+<p>---</p>
+<h2>6. Snackbar Modularization Assessment</h2>
+<h3>6.1 Snack Plugin System (Functional)</h3>
+<p><strong>Plugin system</strong> (<code>backend/app/menu/snack_registry.py</code>):</p>
+<ul><li><code>SnackPlugin</code> ABC with <code>spec</code>, <code>execute()</code>, <code>is_available()</code></li><li><code>SnackSpec</code> dataclass (id, name, icon, kind, category, actions)</li><li><code>SnackRegistry</code> singleton with register/unregister/get_all/get_by_category</li><li><code>update_from_backend()</code> for dynamic snack loading from API</li></ul>
+<p><strong>Snack template</strong> (<code>backend/app/snacks/templates/snack_template.py</code>):</p>
+<ul><li><code>BaseSnack</code> class with <code>SnackMeta</code> (pydantic model)</li><li><code>SnackParam</code> for typed parameters</li><li>Version tracking, tags, timeout, confirmation support</li></ul>
+<p><strong>Existing snacks</strong> (<code>backend/app/snacks/</code>):</p>
+<ul><li><code>dev_mode_snack.py</code> — start/stop/restart dev servers</li><li><code>mission_ops_snack.py</code> — mission operations</li><li><code>spool_monitor_snack.py</code> — spool monitoring</li><li><code>clipboard_snack.py</code> (in <code>menu/</code>) — clipboard buffer</li></ul>
+<h3>6.2 Snackbar Server Gap (<code>backend/app/snackbar/server.py</code>)</h3>
+<p>The snackbar <code>server.py</code> was intended as a unified daemon with 25 modular imports:</p>
+<pre><code>from server_approval import *    # approval
+from server_bbcsdl import *      # bbcsdl
+from server_bridge import *      # bridge
+from server_ceefax import *      # ceefax
+from server_chat import *        # chat
+from server_containers import *  # containers
+from server_dashboard import *   # dashboard
+from server_developer import *   # devstudio
+from server_events import *      # events
+from server_health import *      # health
+from server_identity import *    # identity
+from server_ingest import *      # ingest
+from server_maintenance import * # maintenance
+from server_map import *         # map
+from server_mcp import *         # mcp
+from server_mission_control import * # mission_control
+from server_other import *       # other
+from server_pages import *       # pages
+from server_peers import *       # peers
+from server_process import *     # process
+from server_scheduler import *   # scheduler
+from server_skills import *      # skills
+from server_snacks import *      # snacks
+from server_surfaces import *    # surfaces
+from server_svg import *         # svg
+from server_udos import *        # udos
+from server_vault import *       # vault
+from server_vibe import *        # vibe</code></pre>
+<p><strong>These modules don't exist</strong> — modularization is incomplete. The functionality currently lives in:</p>
+<ul><li><code>backend/app/api/mcp*.py</code> (MCP tools)</li><li><code>backend/app/services/</code> (vault_file_discovery, snackbar_orchestrator, etc.)</li><li><code>backend/app/skills/</code> (skill system)</li><li><code>backend/app/snacks/</code> (snack plugins)</li></ul>
+<p><strong>Recommendation</strong>: The snack plugin system (<code>snack_registry.py</code> + <code>BaseSnack</code>) is the correct loading mechanism for new snacks. The <code>snackbar/server.py</code> should either be: 1. <strong>Completed</strong> — generate the 25 missing modules as thin wrappers around existing services, OR 2. <strong>Deprecated</strong> — formally mark as dead code and remove, since functionality lives elsewhere</p>
+<h3>6.3 Snack Loading Pattern</h3>
+<p>New snacks follow this pattern:</p>
+<pre><code>from app.menu.snack_registry import SnackPlugin, SnackSpec, register_snack
+
+class MySnack(SnackPlugin):
+    @property
+    def spec(self) -&gt; SnackSpec:
+        return SnackSpec(id=&quot;my-snack&quot;, name=&quot;My Snack&quot;, ...)
+
+    def execute(self, action=None, **kwargs):
+        # Implementation
+        pass
+
+def register(menu_delegate=None):
+    plugin = MySnack(menu_delegate)
+    register_snack(plugin)
+    return plugin</code></pre>
+<p>---</p>
+<h2>7. Library/Index Recommendation</h2>
+<h3>7.1 Current Indexing</h3>
+<p><code>vault_file_discovery.py</code> provides:</p>
+<ul><li><code>discover_files()</code> — scans all vault layers</li><li><code>build_index()</code> — builds JSON index with file metadata</li><li><code>apply_filters()</code> — workspace/binder/mission/tag/search filtering</li><li>Frontmatter parsing for tags, binder, mission metadata</li></ul>
+<h3>7.2 Recommended Consolidation</h3>
+<p>All vaults/containers should be consolidated under the confirmed topology with a unified library/index:</p>
+<pre><code>library:
+  user:
+    path: ~/Vault/
+    permissions: read-write
+    index: ~/.ucore/indices/user-vault.json
+
+  shared:
+    path: ~/Shared/
+    permissions: read-write (permission check)
+    index: ~/.ucore/indices/shared-vaults.json
+
+  global:
+    path: ~/Public/global-knowledge/
+    permissions: read-only
+    index: ~/.ucore/indices/global-knowledge.json
+
+  public:
+    path: ~/Public/doc-sites/
+    permissions: publish-only
+    index: ~/.ucore/indices/public-sites.json
+
+  code:
+    path: ~/Code/
+    permissions: read-write (dev)
+    index: ~/.ucore/indices/code-repos.json</code></pre>
+<h3>7.3 Index Location</h3>
+<pre><code>~/.ucore/indices/
+├── user-vault.json
+├── shared-vaults.json
+├── global-knowledge.json
+├── public-sites.json
+└── code-repos.json</code></pre>
+<p>---</p>
+<h2>8. Alignment Actions Taken</h2>
+<p>| # | Action | File | Status | |---|--------|------|--------| | 1 | Fixed <code>VAULT_PATHS</code> to match confirmed topology | <code>backend/app/services/vault_file_discovery.py</code> | ✅ Done | | 2 | Aligned container paths to confirmed topology | <code>config/vault-sync.example.yaml</code> | ✅ Done | | 3 | Aligned source paths to confirmed topology | <code>backend/app/af_manager/sync_config.yaml</code> | ✅ Done | | 4 | Implemented <code>/api/mcp/diagnostics</code> endpoint | <code>backend/app/api/mcp.py</code> | ✅ Done | | 5 | Created this assessment document | <code>docs/MCP_VAULT_ALIGNMENT_ASSESSMENT.md</code> | ✅ Done |</p>
+<p>---</p>
+<h2>9. References</h2>
+<ul><li><a href="./MCP_SETUP.md">MCP Setup Guide</a></li><li><a href="./mcp-policy.md">MCP Policy</a></li><li><a href="./mcp-diagnostics.md">MCP Diagnostics Spec</a></li><li><a href="./uCode_MCP_First_Developer_Tools_Upgrade_Checklist.md">uCode MCP Upgrade Checklist</a></li><li><a href="./APPFLOWY_INTEGRATION_METHODS.md">AppFlowy Integration Methods</a></li><li><a href="./APPFLOWY_BIDIRECTIONAL_SYNC.md">AppFlowy Bidirectional Sync</a></li><li><a href="./APPFLOWY_SNACKBAR_LOCAL_FIRST_CHECKLIST.md">AppFlowy Snackbar Local-First Checklist</a></li><li><a href="./USER_SETUP_VAULT_MCP_WORKSPACES.md">User Setup: Vault, MCP, Workspaces</a></li><li><a href="./FILEPICKER_SIDEBAR_SPEC.md">Filepicker Sidebar Spec</a></li><li><a href="./SNACKS_SYSTEM_SPEC.md">Snacks System Spec</a></li></ul>
+<p>---</p>
+<p><strong>Last Updated:</strong> 2026-06-30T00:11:00+08:00 <strong>Session:</strong> MCP/Vault Alignment Assessment <strong>Status:</strong> Complete</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>UCODE_STUDENT_PATHWAY.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / UCODE_STUDENT_PATHWAY.md</span></header><main class="site-main"><h1>uCode Student Pathway — Updated for uCode v2</h1>
+<h2>Overview</h2>
+<p>uCode is the BBC BASIC for SDL 2.0 runtime environment with Python orchestration, AMOS shim compatibility, and Snack container packaging. The student pathway guides learners from "Hello World" to publishing their own games and tools.</p>
+<p><strong>Runtime:</strong> BBCSDL engine + Python bridge + AMOS shim <strong>Tooling:</strong> <code>ucode</code> CLI, Vault, Snack containers, LENS/SKIN <strong>Output:</strong> Teletext (MODE 7), sprites (BOBs), story forms (Marp), grid worlds</p>
+<p>---</p>
+<h2>Part 1: Student Intake Funnel</h2>
+<pre><code>DISCOVERY CHANNELS
+├── GitHub Education (Learning Path, Student Pack)
+├── freeCodeCamp (BBC BASIC tutorial series)
+├── YouTube (Build-along videos)
+├── Dev.to (Article series)
+└── Discord / Word of mouth
+                ▼
+ORIENTATION (Course 00) — 15 min
+├── &quot;What is uCode?&quot; (BBC BASIC, teletext, sprites, grids)
+├── &quot;Your First Vault&quot; (hands-on: ~/Vault/)
+├── &quot;The BBC BASIC REPL&quot; (run, print, mode 7)
+└── Checkpoint: `ucode verify orientation`
+                ▼
+LEVEL 1: BBC BASIC Foundations (2-3 hours)
+LEVEL 2: Teletext &amp; Grids (4-5 hours)
+LEVEL 3: Sprites, BOBs &amp; Games (6-8 hours)
+LEVEL 4: Snack Containers &amp; Publishing (8-10 hours)
+LEVEL 5: Grid Worlds &amp; Spatial Algebra (10-12 hours)
+                ▼
+CONTRIBUTOR ON-RAMP
+├── Earn &quot;Vault Keeper&quot;, &quot;Sprite Master&quot;, &quot;Grid Cartographer&quot; badges
+├── First PR: docs fix, snack example, or spatial contribution
+└── Invited to Dev Lane (#ucode-dev channel)</code></pre>
+<p>---</p>
+<h2>Part 2: Skill Progression</h2>
+<p>| Level | Skills Acquired | Badge | Output | |-------|----------------|-------|--------| | <strong>Orientation</strong> | Vault structure, BBC BASIC REPL, MODE 7 basics | <code>orientation-complete</code> | First .ucode script | | <strong>Level 1</strong> | Variables, loops, conditionals, PRINT, INPUT | <code>basic-coder</code> | Calculator, quiz game | | <strong>Level 2</strong> | MODE 7 teletext, grid algebra, character sets | <code>teletext-operator</code> | Teletext page, menu screen | | <strong>Level 3</strong> | Sprites, BOBs, collision, sound, animation | <code>sprite-master</code> | Platformer or shoot-em-up | | <strong>Level 4</strong> | Snack containers, manifest, assets, LENS capture | <code>snack-publisher</code> | Published .snack | | <strong>Level 5</strong> | Grid worlds, spatial algebra, voxel mapping, pathfinding | <code>grid-cartographer</code> | Game world with layers |</p>
+<p>---</p>
+<h2>Part 3: BBC BASIC Quick Reference (Levels 1-2)</h2>
+<h3>Your First Program</h3>
+<pre><code>10 REM Hello uCode
+20 MODE 7
+30 COLOUR 2
+40 PRINT TAB(10,12); &quot;Hello, uCode!&quot;
+50 END</code></pre>
+<h3>Variables & Input</h3>
+<pre><code>10 INPUT &quot;What is your name? &quot;, name$
+20 PRINT &quot;Hello, &quot;; name$
+30 age% = 42
+40 PRINT &quot;You are &quot;; age%; &quot; years old&quot;</code></pre>
+<h3>Teletext Grid (MODE 7)</h3>
+<pre><code>10 MODE 7
+20 COLOUR 1  : REM Red text
+30 PRINT TAB(5,5); &quot;MENU&quot;
+40 COLOUR 3  : REM Cyan text
+50 PRINT TAB(5,7); &quot;1. Play&quot;
+60 PRINT TAB(5,8); &quot;2. Options&quot;
+70 PRINT TAB(5,9); &quot;3. Quit&quot;</code></pre>
+<p>---</p>
+<h2>Part 4: Sprite & Game Reference (Levels 3-4)</h2>
+<h3>Sprites (GFXLIB)</h3>
+<pre><code>10 INSTALL @lib$ + &quot;gfxlib&quot;
+20 PROC_gfx_init(640, 480, 32)
+30 sprite% = FN_load_sprite(&quot;player.chr&quot;, 24, 24)
+40 PROC_sprite_place(sprite%, 100, 200)</code></pre>
+<h3>BOBs (IMGLIB)</h3>
+<pre><code>10 INSTALL @lib$ + &quot;imglib&quot;
+20 bob% = FN_load_gif(&quot;explosion.gif&quot;)
+30 PROC_bob_create(bob%, 200, 150)
+40 PROC_bob_animate(bob%, 0, -1)  : REM Loop forever</code></pre>
+<h3>Collision Detection</h3>
+<pre><code>100 IF FN_sprite_bob_collide(sprite%, bob%) THEN
+110   PRINT &quot;HIT!&quot;
+120   SOUND 1, 15, 200, 10
+130 ENDIF</code></pre>
+<p>---</p>
+<h2>Part 5: AMOS Shim Reference (Level 4)</h2>
+<pre><code>10 INSTALL &quot;amos_shim.bbc&quot;
+20 SPRITE 1, 100, 100, 1
+30 BOB 1, 200, 150, 2
+40 SOUND 1, 10, 100, 50
+50 REPEAT
+60   MOVE 1, 300, 200, 20
+70   IF COLL(1,1) THEN PRINT &quot;COLLISION!&quot;
+80   WAIT VBL
+90 UNTIL 0</code></pre>
+<p>---</p>
+<h2>Part 6: Snack Publishing (Level 4-5)</h2>
+<h3>Snack Container Structure</h3>
+<pre><code>my-game.snack/
+├── main.ucode
+├── manifest.yaml
+├── sprites/player.chr
+├── bobs/explosion.gif
+├── sounds/coin.wav
+└── maps/level1.json</code></pre>
+<h3>Publishing Command</h3>
+<pre><code>ucode snack create my-game --template game
+ucode snack build my-game
+ucode snack publish my-game.snack</code></pre>
+<h3>LENS Capture (Game State)</h3>
+<pre><code>ucode lens capture my-game.snack --output state.json</code></pre>
+<h3>SKIN Transformation</h3>
+<pre><code>ucode skin apply my-game.snack dark_mode</code></pre>
+<p>---</p>
+<h2>Part 7: Grid World Building (Level 5)</h2>
+<pre><code># Create a dungeon world
+gridsmith world create --name &quot;Lost Caverns&quot; --type dungeon --seed 42
+
+# Create a grid
+gridsmith grid create --cols 80 --rows 24
+
+# Import a BASIC program as a world
+gridsmith world import --program examples/adventure.bas --world &quot;Adventure&quot;
+
+# Convert real-world coordinates to uCode spatial algebra
+gridsmith location latlon-to-ucode --lat -33.8688 --lon 151.2093</code></pre>
+<p>---</p>
+<h2>Part 8: Checkpoint System</h2>
+<p>Each checkpoint is verified via <code>ucode checkpoint verify <id></code>:</p>
+<pre><code># checkpoints/01-hello-world.yaml
+id: hello-world
+name: &quot;Hello World Checkpoint&quot;
+commands:
+  - cmd: &quot;test -f ~/Vault/programs/hello.ucode&quot;
+    pass: &quot;hello.ucode exists&quot;
+  - cmd: &quot;grep -q &#x27;MODE 7&#x27; ~/Vault/programs/hello.ucode&quot;
+    pass: &quot;Uses MODE 7 teletext&quot;
+badge: &quot;basic-coder&quot;</code></pre>
+<p>---</p>
+<h2>Part 9: Course 101-301 (Benchoff Curriculum)</h2>
+<h3>Course 101: Foundations of Modern Retrocomputing</h3>
+<ul><li><strong>Module 1:</strong> Quarter-Scale BeBox — 3D printing, GPIO, Python scripting</li><li><strong>Module 2:</strong> $15 Linux Handheld — BOM, Buildroot, PCB design, embedded Linux</li><li><strong>Module 3:</strong> Portable VT100 Dumb Terminal — firmware, ANSI parser, RS-232, product design</li></ul>
+<h3>Course 201: Advanced Interfaces & Useless Machines</h3>
+<ul><li><strong>Module 1:</strong> 15-Drive Zip Tower — reverse engineering, PCB cloning, power distribution</li><li><strong>Module 2:</strong> CNCPong — game logic, real-time control, digital→physical mapping</li><li><strong>Module 3:</strong> Finite Atari Machine — CUDA, heuristic algorithms, emulator automation</li></ul>
+<h3>Course 301: Protocols, Security & Pure Fun</h3>
+<ul><li><strong>Module 1:</strong> TerminalPython — serial protocols, Python/PySerial, vintage SBCs</li><li><strong>Module 2:</strong> MacSSL — TLS on 68K, retrocomputing, entropy collection</li><li><strong>Module 3:</strong> Nedry ("Ah, ah, ah!") — cross-platform concept, polished execution</li></ul>
+<p>---</p>
+<h2>Part 10: Quick Reference Card</h2>
+<pre><code># For students
+ucode run hello.ucode
+ucode snack run my-game.snack
+ucode checkpoint verify hello-world
+ucode dashboard update
+
+# For teachers
+ucode badge grant basic-coder --to student-alice
+ucode course validate courses/01-basic-foundations/
+
+# For contributors
+git clone https://github.com/uDosGo/uCode
+ucode docs validate --file docs/tutorials/hello-world.md
+gh pr create --title &quot;docs: add hello world tutorial&quot;</code></pre>
+<p>---</p>
+<p><em>Pathway adapted for uCode v2 — BBC BASIC for SDL 2.0. Benchoff curriculum preserved as Courses 101-301.</em></p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

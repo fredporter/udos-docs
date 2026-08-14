@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/GRIDCORE_VARIABLEIZATION_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / specs/GRIDCORE_VARIABLEIZATION_SPEC.md</span></header><main class="site-main"><h1>GridCore Variableization Spec</h1>
+<p>Date: 2026-07-17 Status: Active - Phase 2 complete Owner: Frontend GridCore</p>
+<h2>1. Purpose</h2>
+<p>Define a dedicated variable system for GridCore UI internals that is independent from USX design tokens.</p>
+<p>This spec exists to:</p>
+<ul><li>keep GridCore rendering/editor internals decoupled from USX stylistic constraints</li><li>make GridCore dimensions and UI constants configurable without touching rendering logic</li><li>support future theme/runtime overrides via a stable <code>--gridcore-*</code> variable contract</li></ul>
+<h2>2. Scope and Boundaries</h2>
+<p>In scope:</p>
+<ul><li>uCode GridCore editor internals (toolbars, popovers, control sizing, editor chrome)</li><li>GridCore display/viewer component presentation chrome</li><li>component-local CSS variables under <code>--gridcore-*</code></li></ul>
+<p>Out of scope:</p>
+<ul><li>Grid algebra and rendering behavior</li><li>palette model and color index semantics</li><li>GridBuffer data contracts</li><li>USX surface shell contracts</li><li>canvas renderer fill/stroke constants that are part of renderer behavior, not CSS chrome</li></ul>
+<p>Boundary rule:</p>
+<ul><li>USX may style surface shell/container framing.</li><li>GridCore internals must use <code>--gridcore-*</code> variables for internal constants.</li></ul>
+<h2>3. Namespace</h2>
+<p>All GridCore variables MUST use this prefix:</p>
+<ul><li><code>--gridcore-*</code></li></ul>
+<p>Initial implementation targets:</p>
+<ul><li><code>frontend-vue/src/surfaces/ucode/UCodeSurface.vue</code></li><li><code>frontend-vue/src/grid-core/GridCoreUI.vue</code></li><li><code>frontend-vue/src/grid-core/MultiColumnViewer.vue</code></li><li><code>frontend-vue/src/grid-core/ProseViewer.vue</code></li><li><code>frontend-vue/src/grid-core/SlideViewer.vue</code></li><li><code>frontend-vue/src/styles/gridcore.css</code></li><li><code>frontend-vue/src/main.ts</code> (contract import)</li><li><code>frontend-vue/src/stores/gridcoreSettings.ts</code></li></ul>
+<h2>4. Variable Contract</h2>
+<h3>4.1 Typography and Base</h3>
+<ul><li><code>--gridcore-font-family-mono</code></li><li><code>--gridcore-font-size-xs</code></li><li><code>--gridcore-font-size-sm</code></li><li><code>--gridcore-font-size-md</code></li><li><code>--gridcore-font-size-lg</code></li></ul>
+<h3>4.2 Toolbar and Controls</h3>
+<ul><li><code>--gridcore-border-width</code></li><li><code>--gridcore-border-color</code></li><li><code>--gridcore-border</code></li><li><code>--gridcore-focus-outline-width</code></li><li><code>--gridcore-focus-outline-offset</code></li><li><code>--gridcore-active-ring-width</code></li><li><code>--gridcore-hover-bg</code></li><li><code>--gridcore-selection-bg</code></li><li><code>--gridcore-selection-bg-muted</code></li><li><code>--gridcore-toolbar-gap</code></li><li><code>--gridcore-toolbar-gap-lg</code></li><li><code>--gridcore-toolbar-padding-y</code></li><li><code>--gridcore-toolbar-padding-x</code></li><li><code>--gridcore-toolbar-min-height</code></li><li><code>--gridcore-control-height</code></li><li><code>--gridcore-control-radius</code></li><li><code>--gridcore-control-input-width</code></li><li><code>--gridcore-control-input-pad-x</code></li><li><code>--gridcore-tools-gap</code></li><li><code>--gridcore-tools-pad-x</code></li><li><code>--gridcore-actions-gap</code></li><li><code>--gridcore-action-btn-height</code></li><li><code>--gridcore-action-btn-pad-x</code></li><li><code>--gridcore-tool-btn-size</code></li><li><code>--gridcore-action-size</code></li></ul>
+<h3>4.3 Popovers and Overlays</h3>
+<ul><li><code>--gridcore-popover-offset-y</code></li><li><code>--gridcore-popover-cell-size</code></li><li><code>--gridcore-popover-gap</code></li><li><code>--gridcore-popover-padding</code></li><li><code>--gridcore-popover-shadow</code></li><li><code>--gridcore-popover-radius</code></li><li><code>--gridcore-checker-size</code></li><li><code>--gridcore-checker-color</code></li><li><code>--gridcore-popover-transition</code></li></ul>
+<h3>4.4 Markers</h3>
+<ul><li><code>--gridcore-marker-font-size</code></li><li><code>--gridcore-marker-fg-color</code></li><li><code>--gridcore-marker-bg-color</code></li><li><code>--gridcore-marker-shadow</code></li><li><code>--gridcore-marker-offset-sm</code></li><li><code>--gridcore-marker-offset-md</code></li><li><code>--gridcore-marker-pad-y</code></li><li><code>--gridcore-marker-pad-x</code></li><li><code>--gridcore-marker-fg-bg</code></li><li><code>--gridcore-marker-bg-bg</code></li></ul>
+<h3>4.5 Palette</h3>
+<p>Palette variables model current editor swatch presentation only. They do not redefine palette index semantics.</p>
+<ul><li><code>--gridcore-palette-0</code></li><li><code>--gridcore-palette-1</code></li><li><code>--gridcore-palette-2</code></li><li><code>--gridcore-palette-3</code></li><li><code>--gridcore-palette-4</code></li><li><code>--gridcore-palette-5</code></li><li><code>--gridcore-palette-6</code></li><li><code>--gridcore-palette-7</code></li></ul>
+<h3>4.6 Sidebar</h3>
+<ul><li><code>--gridcore-sidebar-width</code></li><li><code>--gridcore-sidebar-title-size</code></li><li><code>--gridcore-sidebar-font-btn-size</code></li><li><code>--gridcore-sidebar-font-btn-gap</code></li><li><code>--gridcore-sidebar-font-btn-padding-y</code></li><li><code>--gridcore-sidebar-char-columns</code></li><li><code>--gridcore-sidebar-char-gap</code></li><li><code>--gridcore-sidebar-char-radius</code></li><li><code>--gridcore-sidebar-char-font-size</code></li><li><code>--gridcore-sidebar-preview-min-height</code></li><li><code>--gridcore-sidebar-char-input-width</code></li><li><code>--gridcore-sidebar-char-input-size</code></li></ul>
+<h3>4.7 Preset Popover and Misc Chrome</h3>
+<ul><li><code>--gridcore-preset-popover-max-height</code></li><li><code>--gridcore-preset-popover-gap</code></li><li><code>--gridcore-preset-popover-shadow</code></li><li><code>--gridcore-preset-popover-min-width</code></li><li><code>--gridcore-prose-heading-size</code></li></ul>
+<h2>5. Implementation Rules</h2>
+<p>1. New GridCore internals must not add fresh hardcoded px/hex constants when an existing <code>--gridcore-*</code> variable applies. 2. Do not rename existing palette index classes or GridCore renderer hooks in this phase. 3. Preserve behavior; this phase is variableization only. 4. Keep spec and implementation in lockstep: when adding a new <code>--gridcore-*</code> variable, add it to this document.</p>
+<h2>6. Migration Plan</h2>
+<p>Phase 1:</p>
+<ul><li>introduce local <code>--gridcore-*</code> variables in <code>UCodeSurface.vue</code></li><li>replace repeated hardcoded constants in internal editor CSS</li></ul>
+<p>Phase 2:</p>
+<ul><li>extract GridCore variables to a dedicated GridCore stylesheet/module</li><li>add runtime preset switching for GridCore variables</li><li>route remaining uCode editor chrome constants through the dedicated <code>--gridcore-*</code> contract</li><li>route GridCore viewer presentation chrome through the dedicated <code>--gridcore-*</code> contract</li></ul>
+<p>Phase 2 progress:</p>
+<ul><li>extracted variable contract to <code>frontend-vue/src/styles/gridcore.css</code></li><li>wired contract globally in <code>frontend-vue/src/main.ts</code></li><li>scoped to uCode GridCore surface via <code>.gridcore-surface</code> class</li><li>added Phase 2 contract groups for GridCore borders, focus rings, palette swatches, marker geometry, sidebar character grids, and preset popover sizing</li><li>replaced matching hardcoded uCode internals with <code>--gridcore-*</code> variables in <code>frontend-vue/src/surfaces/ucode/UCodeSurface.vue</code></li><li>extended the contract root to standalone GridCore viewer components</li><li>replaced Pico/raw presentation styles in <code>GridCoreUI.vue</code>, <code>MultiColumnViewer.vue</code>, <code>ProseViewer.vue</code>, and <code>SlideViewer.vue</code></li><li>left <code>palette.ts</code>, <code>g0-renderer.ts</code>, and <code>gridui-canvas.ts</code> renderer/data constants out of CSS variableization by design</li></ul>
+<p>Phase 3:</p>
+<ul><li>map approved variable subsets into formal GridCore settings UI and persistence</li></ul>
+<p>Phase 3 progress:</p>
+<ul><li>added persisted Pinia store at <code>frontend-vue/src/stores/gridcoreSettings.ts</code></li><li>added preset override classes in <code>frontend-vue/src/styles/gridcore.css</code></li><li>wired uCode surface root to <code>gridcore-surface--{preset}</code></li><li>connected Developer Settings GridCore preset controls to the persisted store</li></ul>
+<h2>6.1 Preset Classes</h2>
+<p>Preset classes are variable-only overrides. They must not change renderer data, grid algebra, palette indices, or canvas behavior.</p>
+<ul><li><code>gridcore-surface--compact</code></li><li><code>gridcore-surface--normal</code> (base <code>.gridcore-surface</code> contract)</li><li><code>gridcore-surface--spacious</code></li><li><code>gridcore-surface--hd</code></li><li><code>gridcore-surface--retro</code></li></ul>
+<h2>7. Acceptance Criteria</h2>
+<ul><li>GridCore internals in <code>UCodeSurface.vue</code> use <code>--gridcore-*</code> variables for repeated control/popover constants.</li><li>Phase 2 editor chrome constants are defined in <code>frontend-vue/src/styles/gridcore.css</code>, not inline in the surface.</li><li>GridCore viewer component presentation styles use <code>--gridcore-*</code> variables rather than Pico or direct USX styling.</li><li>No rendering behavior changes.</li><li>USX shell framing remains independent and unchanged in responsibility.</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

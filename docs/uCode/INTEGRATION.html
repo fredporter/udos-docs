@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>INTEGRATION.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / INTEGRATION.md</span></header><main class="site-main"><h1>uCode Integration Reference</h1>
+<h2>Overview</h2>
+<p>uCode is the runtime + agent ecosystem for the uDos platform. It integrates with uCore (backend), Hivemind (LLM), MCP servers (tools), OpenRouter (cloud models), and Vault (state/secrets).</p>
+<h2>Architecture</h2>
+<pre><code>┌──────────────────────────────────────────────────────────┐
+│                     uCode Ecosystem                       │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────────┐   │
+│  │ uCore    │  │ Hivemind │  │ OpenRouter            │   │
+│  │ (daemon) │  │ (LLM)    │  │ (cloud models)        │   │
+│  └────┬─────┘  └────┬─────┘  └──────────┬───────────┘   │
+│       │              │                   │               │
+│       └──────┬───────┴───────────────────┘               │
+│              │                                           │
+│       ┌──────▼──────┐  ┌──────────┐  ┌──────────────┐   │
+│       │ MCP Servers │  │ Vault    │  │ Secrets Store │   │
+│       │ (tools)     │  │ (state)  │  │ (keys)        │   │
+│       └─────────────┘  └──────────┘  └──────────────┘   │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</code></pre>
+<h2>Components</h2>
+<h3>1. uCore (Backend Daemon)</h3>
+<ul><li><strong>Location:</strong> <code>~/Code/uCore/</code></li><li><strong>Start:</strong> <code>cd backend && python3 -m app</code></li><li><strong>Port:</strong> 8484</li><li><strong>Endpoints:</strong> <code>/api/health</code>, <code>/api/surfaces/<em></code>, <code>/api/feed/</em></code>, <code>/api/skills/*</code></li></ul>
+<h3>2. Hivemind (LLM Provider)</h3>
+<ul><li><strong>Config:</strong> <code>config/hivemind.env</code> → <code>~/.config/hivemind/.env</code></li><li><strong>Models:</strong> OpenRouter (GLM-5.1, DeepSeek V4 Flash, Qwen 3.6 27B), local Ollama</li><li><strong>Budget:</strong> $20/month hard limit, $5 alert threshold</li><li><strong>Log:</strong> <code>~/.local/share/udos/costs/openrouter-usage.yaml</code></li></ul>
+<h3>3. OpenRouter (Cloud LLM Routing)</h3>
+<ul><li><strong>Config:</strong> <code>config/openrouter.yaml</code></li><li><strong>Endpoint:</strong> <code>https://openrouter.ai/api/v1</code></li><li><strong>Fallback Chain:</strong> Ollama local → DeepSeek V4 Flash → GLM-5.1</li><li><strong>Premium:</strong> Claude Opus 4.5 (opt-in only, $15/1k tokens)</li></ul>
+<h3>4. MCP Servers (Cline Tool Integration)</h3>
+<p>| Server | Command | Purpose | |--------|---------|---------| | uCore | <code>python3 -m app</code> | Skills, surfaces, feed | | GridSmith | <code>node agents/gridsmith/dist/cli.js mcp</code> | World builder tools | | Hivemind | <code>python3 -m app.mcp.hivemind_server</code> | LLM knowledge layer | | Feed | <code>python3 -m app.mcp.feed.feed_server</code> | Activity ingestion |</p>
+<ul><li><strong>Config:</strong> <code>config/mcp_config.json</code> → <code>~/.config/cline/mcp_config.json</code></li><li><strong>Servers:</strong></li></ul>
+<h3>5. Vault (State & Variables)</h3>
+<ul><li><strong>Config:</strong> <code>config/vault.yaml</code></li><li><strong>Base Path:</strong> <code>~/.local/share/udos/Vault/</code></li><li><strong>Variable Scopes:</strong> user, global, snack, system</li><li><strong>Secrets Store:</strong> macOS Keychain / encrypted file</li></ul>
+<h3>6. Secrets & Variables</h3>
+<ul><li><strong>API Keys:</strong> OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, GITHUB_TOKEN</li><li><strong>Store:</strong> macOS Keychain (preferred) or <code>~/.local/share/udos/Vault/variables/</code></li><li><strong>Access Pattern:</strong> <code>ucode var get <scope> <key></code> / <code>ucode var set <scope> <key> <value></code></li></ul>
+<h3>7. PyCharm IDE</h3>
+<ul><li><strong>Run Configs:</strong> <code>.idea/runConfigurations/</code> — Basic Runtime, GridSmith CLI</li><li><strong>Modules:</strong> uCode (root), ucode1 (basic runtime), ucode2 (amos runtime)</li><li><strong>Python Interpreter:</strong> <code>~/Code/uCore/backend/.venv/bin/python</code></li></ul>
+<h2>Quick Start</h2>
+<pre><code># 1. Copy API keys
+cp config/hivemind.env ~/.config/hivemind/.env
+chmod 600 ~/.config/hivemind/.env
+# Edit and fill in your OpenRouter key
+
+# 2. Install MCP config
+cp config/mcp_config.json ~/.config/cline/mcp_config.json
+
+# 3. Start uCore backend
+cd ~/Code/uCore/backend &amp;&amp; python3 -m app
+
+# 4. Open workspace in PyCharm
+open ucode.code-workspace</code></pre>
+<h2>File Map</h2>
+<p>| Path | Purpose | |------|---------| | <code>config/hivemind.env</code> | LLM API key template | | <code>config/mcp_config.json</code> | MCP server registration | | <code>config/vault.yaml</code> | State/secrets storage config | | <code>config/openrouter.yaml</code> | Cloud model routing + budget | | <code>docs/GRIDSMITH_DEV_PLAN.md</code> | GridSmith agent build plan | | <code>docs/UCODE_RUNTIME_SPEC.md</code> | BBCSDL runtime spec | | <code>.tasker/dev-flow.yaml</code> | Sprint task tracking | | <code>.clinerules</code> | Cline agent rules | | <code>devlog.yaml</code> | Dev activity log |</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

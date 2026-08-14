@@ -1,0 +1,233 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>USX-NPM-STRUCTURE.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / USX-NPM-STRUCTURE.md</span></header><main class="site-main"><p>--- title: "USX Design Token System — npm Structure & Migration" status: active last_updated: 2026-07-08 category: architecture tags: [usx, design-tokens, npm, uDos] ---</p>
+<h1>USX Design Token System — npm Structure & Migration Guide</h1>
+<h2>Overview</h2>
+<p><strong>USX v3.0.0</strong> is now the canonical <strong>uDos design token system</strong> published to npm as <strong><code>@udos/usx-tokens</code></strong>.</p>
+<ul><li><strong>Source home:</strong> <code>uCore/packages/usx-tokens/</code> (canonical)</li><li><strong>Published:</strong> npm registry (public, <code>@udos</code> scope)</li><li><strong>Shared by:</strong> uCore, HomeNest, Groovebox, and future uDos surfaces</li><li><strong>Replaces:</strong> Each project's local <code>/src/styles/</code> copies</li></ul>
+<p>---</p>
+<h2>New npm Structure</h2>
+<h3>Package Layout</h3>
+<pre><code>@udos/usx-tokens@3.0.0/
+├── tokens/                 ← Canonical CSS variables
+│   ├── tokens-color.css          (--usx-color-*, --surface-*, --border-*)
+│   ├── tokens-components.css     (--usx-radius, --card-padding, --tab-border)
+│   ├── tokens-spacing.css        (--usx-spacing-xs through 2xl)
+│   ├── tokens-touch.css          (--usx-touch-min for touch targets)
+│   └── tokens-typography.css     (--usx-font-size, --family, --weight)
+│
+├── themes/                 ← Theme overrides (variable swaps only)
+│   ├── dark.css            (default uDos dark theme)
+│   ├── light.css
+│   ├── c64.css            (retro Commodore 64)
+│   ├── teletext.css       (BBC Teletext)
+│   └── high-contrast.css
+│
+├── home-nest/              ← HomeNest 10-foot console specifics
+│   ├── console-grid.css        (12-column TV grid, poster walls)
+│   ├── controller-focus.css    (dpad/gamepad focus rings)
+│   └── media-player.css         (now-playing bar, transport)
+│
+├── usx-standard.css         ← Base layout primitives
+│   (surfaces, cards, buttons, tabs, modals—no hardcoded values)
+│
+└── package.json</code></pre>
+<h3>Entry Points (package.json exports)</h3>
+<pre><code>{
+  &quot;exports&quot;: {
+    &quot;.&quot;: &quot;./usx-standard.css&quot;,
+    &quot;./tokens/color&quot;: &quot;./tokens/tokens-color.css&quot;,
+    &quot;./tokens/components&quot;: &quot;./tokens/tokens-components.css&quot;,
+    &quot;./tokens/spacing&quot;: &quot;./tokens/tokens-spacing.css&quot;,
+    &quot;./tokens/touch&quot;: &quot;./tokens/tokens-touch.css&quot;,
+    &quot;./tokens/typography&quot;: &quot;./tokens/tokens-typography.css&quot;,
+    &quot;./themes/dark&quot;: &quot;./themes/dark.css&quot;,
+    &quot;./themes/light&quot;: &quot;./themes/light.css&quot;,
+    &quot;./themes/c64&quot;: &quot;./themes/c64.css&quot;,
+    &quot;./themes/high-contrast&quot;: &quot;./themes/high-contrast.css&quot;,
+    &quot;./home-nest/console-grid&quot;: &quot;./home-nest/console-grid.css&quot;,
+    &quot;./home-nest/controller-focus&quot;: &quot;./home-nest/controller-focus.css&quot;,
+    &quot;./home-nest/media-player&quot;: &quot;./home-nest/media-player.css&quot;
+  }
+}</code></pre>
+<p><strong>Why exports?</strong> Allows flexible imports without bundling the entire CSS.</p>
+<p>---</p>
+<h2>Migration Path for UI Projects</h2>
+<h3>Old Structure (Per-Project)</h3>
+<pre><code>my-ui-project/
+└── src/styles/
+    ├── colors.css
+    ├── spacing.css
+    ├── components.css
+    └── theme.css</code></pre>
+<h3>New Structure (Shared npm)</h3>
+<pre><code>my-ui-project/
+├── package.json
+│   {
+│     &quot;dependencies&quot;: {
+│       &quot;@udos/usx-tokens&quot;: &quot;^3.0.0&quot;
+│     }
+│   }
+└── src/
+    ├── styles/
+    │   ├── theme-overrides.css   ← Optional, project-specific
+    │   └── app.css               ← Import usx + customize
+    └── components/
+        └── MyComponent.tsx       ← Uses var(--usx-color-primary), etc.</code></pre>
+<p>---</p>
+<h2>Integration Examples</h2>
+<h3>For Vue Projects (HomeNest, uCore)</h3>
+<pre><code>// src/main.ts
+import &#x27;@picocss/pico/css/pico.css&#x27;;
+
+// Import tokens first (in order)
+import &#x27;@udos/usx-tokens/tokens/tokens-color.css&#x27;;
+import &#x27;@udos/usx-tokens/tokens/tokens-components.css&#x27;;
+import &#x27;@udos/usx-tokens/tokens/tokens-spacing.css&#x27;;
+import &#x27;@udos/usx-tokens/tokens/tokens-touch.css&#x27;;
+import &#x27;@udos/usx-tokens/tokens/tokens-typography.css&#x27;;
+
+// Then theme
+import &#x27;@udos/usx-tokens/themes/dark.css&#x27;;
+
+// Then standard layout
+import &#x27;@udos/usx-tokens/usx-standard.css&#x27;;
+
+// Project-specific (optional)
+import &#x27;./styles/app.css&#x27;;
+
+// Then surfaces
+import App from &#x27;./App.vue&#x27;;</code></pre>
+<h3>For React Projects (Groovebox)</h3>
+<pre><code>// src/main.tsx
+import &#x27;bootstrap/dist/css/bootstrap.min.css&#x27;;
+import &#x27;bootstrap-icons/font/bootstrap-icons.css&#x27;;
+
+// Import USX tokens
+import &#x27;@udos/usx-tokens/tokens/tokens-color.css&#x27;;
+import &#x27;@udos/usx-tokens/tokens/tokens-components.css&#x27;;
+import &#x27;@udos/usx-tokens/tokens/tokens-spacing.css&#x27;;
+import &#x27;@udos/usx-tokens/tokens/tokens-touch.css&#x27;;
+import &#x27;@udos/usx-tokens/tokens/tokens-typography.css&#x27;;
+
+// Theme
+import &#x27;@udos/usx-tokens/themes/dark.css&#x27;;
+
+// Standard layout
+import &#x27;@udos/usx-tokens/usx-standard.css&#x27;;
+
+// App styles
+import &#x27;./App.css&#x27;;
+
+import App from &#x27;./App&#x27;;</code></pre>
+<h3>Using Individual Tokens</h3>
+<pre><code>/* MyComponent.css */
+.my-card {
+  background: var(--surface-container);
+  color: var(--usx-color-on-surface);
+  padding: var(--usx-spacing-md);
+  border-radius: var(--usx-radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.my-button {
+  background: var(--usx-color-primary);
+  color: var(--usx-color-on-primary);
+  padding: var(--usx-touch-min);
+  min-height: var(--usx-touch-min);
+  font-size: var(--usx-font-size-body);
+}</code></pre>
+<p>---</p>
+<h2>Installation & Setup</h2>
+<h3>1. Update package.json</h3>
+<pre><code>{
+  &quot;dependencies&quot;: {
+    &quot;@udos/usx-tokens&quot;: &quot;^3.0.0&quot;
+  }
+}</code></pre>
+<h3>2. Install</h3>
+<pre><code>npm install @udos/usx-tokens
+# or
+yarn add @udos/usx-tokens
+# or
+pnpm add @udos/usx-tokens</code></pre>
+<h3>3. Import in Your Entry Point</h3>
+<p>See examples above by framework.</p>
+<h3>4. Remove Old Local Tokens</h3>
+<pre><code>rm -rf src/styles/tokens/ src/styles/theme.css
+# Or just replace references in imports</code></pre>
+<p>---</p>
+<h2>Development & Publishing</h2>
+<h3>For uCore Maintainers</h3>
+<p><strong>Making changes to tokens:</strong></p>
+<pre><code>cd uCore/packages/usx-tokens
+# Edit tokens/tokens-color.css, etc.
+npm version patch  # or minor / major
+npm publish --access public</code></pre>
+<p><strong>Version bump:</strong></p>
+<ul><li><code>patch</code> (3.0.0 → 3.0.1) — bug fixes, minor tweaks</li><li><code>minor</code> (3.0.0 → 3.1.0) — new tokens, new themes, new features</li><li><code>major</code> (3.0.0 → 4.0.0) — breaking changes (rename tokens, restructure)</li></ul>
+<h3>For Project Maintainers (HomeNest, Groovebox, etc.)</h3>
+<p><strong>After npm publish:</strong></p>
+<pre><code>npm update @udos/usx-tokens
+# Test the update
+npm run dev
+# Commit
+git add package.json package-lock.json
+git commit -m &quot;feat: bump @udos/usx-tokens to 3.0.1&quot;</code></pre>
+<p>---</p>
+<h2>Token Reference</h2>
+<h3>Color Tokens (<code>tokens-color.css</code>)</h3>
+<pre><code>--usx-color-primary        /* Primary brand color */
+--usx-color-on-primary     /* Text/icon on primary */
+--usx-color-secondary      /* Secondary accent */
+--surface                  /* Default surface background */
+--surface-container        /* Elevated surface (cards, panels) */
+--surface-container-high   /* Very elevated (modals, popups) */
+--usx-color-on-surface     /* Text on surface */
+--border-subtle            /* Subtle borders */
+--border-strong            /* Emphasis borders */</code></pre>
+<h3>Spacing Tokens (<code>tokens-spacing.css</code>)</h3>
+<pre><code>--usx-spacing-xs      /* 2px (tight) */
+--usx-spacing-sm      /* 4px */
+--usx-spacing-md      /* 8px (default gutters) */
+--usx-spacing-lg      /* 16px (section margins) */
+--usx-spacing-xl      /* 24px */
+--usx-spacing-2xl     /* 32px (major sections) */</code></pre>
+<h3>Touch Targets (<code>tokens-touch.css</code>)</h3>
+<pre><code>--usx-touch-min       /* 48px (minimum touch target per accessibility) */
+--usx-touch-comfortable /* 56px (comfortable for remote/gamepad) */</code></pre>
+<h3>Typography (<code>tokens-typography.css</code>)</h3>
+<pre><code>--usx-font-size-caption    /* 12px */
+--usx-font-size-body       /* 16px (default) */
+--usx-font-size-headline   /* 24px */
+--usx-font-family-sans     /* System sans-serif */
+--usx-font-weight-regular  /* 400 */
+--usx-font-weight-bold     /* 700 */</code></pre>
+<p>---</p>
+<h2>Design Principles</h2>
+<p>1. <strong>Single source of truth</strong> — All projects import from <code>@udos/usx-tokens</code>, never fork. 2. <strong>Variables, not CSS rules</strong> — Tokens define values; projects define layout & behavior. 3. <strong>Themes are value swaps</strong> — A theme only overrides <code>--usx-*</code> values, not CSS rules. 4. <strong>Extensions, not overrides</strong> — New UI surface needs? Add to <code>home-nest/</code> or create <code>groovebox/</code>. 5. <strong>PicoCSS is the base</strong> — USX layers on top; never reimplements basic styles.</p>
+<p>---</p>
+<h2>Common Questions</h2>
+<h3>Q: Can I use USX without PicoCSS?</h3>
+<p><strong>A:</strong> Yes. USX tokens are just CSS custom properties. You can use them with any CSS framework or hand-written CSS. PicoCSS is recommended for uDos projects but not required.</p>
+<h3>Q: How do I override a token in my project?</h3>
+<p><strong>A:</strong> In your own CSS, redefine the variable after importing USX:</p>
+<pre><code>@import &#x27;@udos/usx-tokens/usx-standard.css&#x27;;
+
+:root {
+  --usx-color-primary: #ff6b6b;  /* Override to red */
+}</code></pre>
+<h3>Q: Can I extend USX with my own tokens?</h3>
+<p><strong>A:</strong> Yes. Define your project tokens after importing USX:</p>
+<pre><code>@import &#x27;@udos/usx-tokens/usx-standard.css&#x27;;
+
+:root {
+  --my-project-primary: var(--usx-color-primary);  /* Reference USX */
+  --my-brand-accent: #ffa500;  /* New token */
+}</code></pre>
+<h3>Q: What if I'm still on an older version (pre-npm)?</h3>
+<p><strong>A:</strong> Check your project's <code>package.json</code>:</p>
+<ul><li>If it doesn't list <code>@udos/usx-tokens</code>, migrate using the steps above.</li><li>If you've imported from a local <code>/src/styles/</code>, replace with <code>import '@udos/usx-tokens/...'</code>.</li></ul>
+<h3>Q: How do I report a bug or suggest a new token?</h3>
+<p><strong>A:</strong> File an issue in the <a href="https://github.com/fredporter/uCore/issues">uCore repository</a> with the label <code>usx-tokens</code>.</p>
+<p>---</p>
+<h2>Related Docs</h2>
+<ul><li><a href="../../uCore/docs/architecture.md">uCore Architecture</a></li><li><a href="../../HomeNest/docs/architecture.md">HomeNest Console Design</a></li><li><a href="https://picocss.com/">PicoCSS Reference</a></li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FEATURE_SPEC_OPENROUTER_ASK_PLAN_ACT.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / FEATURE_SPEC_OPENROUTER_ASK_PLAN_ACT.md</span></header><main class="site-main"><h1>Feature Spec — OpenRouter/Free Ask → Plan → Act Pipeline</h1>
+<p><strong>Status:</strong> Complete (Wave 1-3), Partial (Wave 4-5) <strong>Date:</strong> 2026-08-11 <strong>Scope:</strong> Ask/Plan/Act modes in uCore Chat with OpenRouter free tier</p>
+<p>---</p>
+<h2>Overview</h2>
+<p>Added three new interaction modes to uCore Chat (Ask/Plan/Act) alongside the existing Chat and Workflow modes. The new modes leverage OpenRouter's free-tier models for research and planning, with a path to local vault operations in Act mode.</p>
+<h3>Mode Summary</h3>
+<p>| Mode | Icon | Model | Execution | Context | |------|------|-------|-----------|---------| | <strong>Chat</strong> | chat | Ollama (local, free) | Tool-calling loop | Quick Q&A, vault-aware | | <strong>Plan</strong> | psychology | OpenRouter free tier | Direct response, no tools | Vault + Repo + Skill context | | <strong>Act</strong> | play_arrow | Ollama / OpenRouter | Tool-calling + confirm gate | Vault writes, web scrape | | <strong>Workflow</strong> | account_tree | Ollama | Tool-calling | Task-focused |</p>
+<p>---</p>
+<h2>Architecture</h2>
+<pre><code>Frontend (AssistUISurface.vue)
+  └─ 4-mode toggle → useChatStore.sendMessage(mode)
+       └─ POST /api/chat  { message, mode, model, history }
+            ├─ plan → direct response with plan_steps[] and budget info
+            ├─ act  → tool-calling loop with safety tools
+            ├─ chat/workflow → tool-calling loop with full tools
+            └─ budget check via BudgetManager
+       └─ GET /api/chat/modes
+            └─ Available modes + budget status</code></pre>
+<h3>Key Files</h3>
+<p>| File | Purpose | |------|---------| | <code>backend/app/api/chat.py</code> | Mode routing, system prompts, plan parsing, modes endpoint | | <code>backend/app/services/provider_router.py</code> | Free-tier model registration, cost-annotated model list | | <code>backend/app/services/chat_context.py</code> | Vault + Repo + Skill context gathering | | <code>backend/app/api/routes.py</code> | Route registration for <code>/api/chat/modes</code> | | <code>frontend-vue/src/stores/chat.ts</code> | Mode state, plan steps, budget status types | | <code>frontend-vue/src/surfaces/assistui/AssistUISurface.vue</code> | 4-mode toggle, plan cards, budget badge |</p>
+<p>---</p>
+<h2>System Prompts</h2>
+<h3><code>_UCORE_ASK_PLAN_SYSTEM</code> (Plan mode)</h3>
+<ul><li>Role: Research and planning assistant</li><li>Knowledge sources: Vaults (~/Vault/, ~/Shared/, ~/Public/), Repos (~/Code/uCore/, ~/Code/uCode/), Skills</li><li>Output format: Structured plans with ```<code>plan</code> code blocks</li><li>Rules: NEVER execute, always cite sources</li></ul>
+<h3><code>_UCORE_ACT_SYSTEM</code> (Act mode)</h3>
+<ul><li>Role: Action-oriented assistant</li><li>Capabilities: Research, scrape, summarize, save to vault</li><li>Safety: Only write in ~/Vault/, confirm before actions</li></ul>
+<p>---</p>
+<h2>Budget Integration</h2>
+<ul><li><strong>Plan mode</strong>: Checks daily budget at ultra-cheap tier ($0.001/task). Falls back to Ollama (free) on exhaustion.</li><li><strong>Act mode</strong>: Checks session budget ($0.01/task). Blocks if exhausted.</li><li><strong>Budget status</strong>: Exposed via <code>GET /api/chat/modes</code> and tracked in <code>BudgetManager</code>.</li></ul>
+<p>---</p>
+<h2>Plan Step Parsing</h2>
+<p>The <code>_parse_plan_steps()</code> function extracts structured steps from LLM responses:</p>
+<ul><li>Searches for ```<code>plan</code> code blocks</li><li>Falls back to markdown checklists (<code>- [ ]</code> items)</li><li>Extracts tool hints in <code>(tool: tool_name)</code> format</li><li>Returns <code>PlanStep[]</code> with <code>{ description, tool, done }</code></li></ul>
+<p>---</p>
+<h2>Context Enrichment</h2>
+<p><code>gather_chat_context(query, mode)</code> enriches system prompts with:</p>
+<ul><li><strong>Vault documents</strong>: Scans ~/Vault/, ~/Shared/, ~/Public/ for matching .md files</li><li><strong>Repo snippets</strong>: Uses <code>git grep</code> across ~/Code/uCore/ and ~/Code/uCode/</li><li><strong>Skill catalog</strong>: Lists available skills from <code>backend/app/skills/builtin/</code></li><li>Capped at 4000 characters to avoid token overflow</li></ul>
+<p>---</p>
+<h2>Frontend Components</h2>
+<h3>Mode Toggle</h3>
+<p>4-way toggle rendering all <code>ASSISTUI_MODES</code> entries (Chat, Plan, Act, Workflow).</p>
+<h3>Plan Card</h3>
+<p>Renders <code>planSteps[]</code> as an interactive checklist with:</p>
+<ul><li>Step description</li><li>Tool badge (if a tool is referenced)</li><li>Done/undone state</li></ul>
+<h3>Act Confirmation Gate</h3>
+<p>Before executing Act mode tools, shows a confirmation dialog requiring user approval.</p>
+<h3>Mode Badge</h3>
+<p>Colored indicator in the status bar showing the current mode (Research/Action).</p>
+<h3>Model Picker</h3>
+<p>Shows free-tier models with cost badges (free/ultra-cheap/budget/mid-range/premium).</p>
+<p>---</p>
+<h2>Remaining Work (Wave 4-5)</h2>
+<ul><li>[ ] Wire <code>editor_api.py</code> scrape endpoint as a chat tool</li><li>[ ] Wire save-to-vault as a chat tool with vault layer boundaries</li><li>[ ] Full test suite for new functionality</li><li>[ ] End-to-end smoke test (Plan → Approve → Act → Vault result)</li><li>[ ] Update devlog, fieldnotes, wisdom</li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

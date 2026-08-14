@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>UCODE_REPO_BOUNDARY.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / UCODE_REPO_BOUNDARY.md</span></header><main class="site-main"><h1>uCode Repository Boundary</h1>
+<blockquote><strong>uCode is not an app GUI repo. It is the runtime/algebra/code-delivery layer.</strong></blockquote>
+<blockquote>It provides render targets/widgets for inspection, but it should not own the full product UI.</blockquote>
+<h2>Core Identity</h2>
+<p>uCode is a self-contained runtime, grid algebra, and code-delivery repo for uDosGo code surfaces. It is designed to be consumed by host applications such as uCore <strong>without requiring those hosts to own uCode internals</strong>.</p>
+<p>uCode is <strong>not</strong> a full application GUI. It provides:</p>
+<ul><li>Runtime packages</li><li>Grid/code algebra</li><li>Import/export tooling</li><li>CLI/MCP surfaces</li><li>Inspectable render targets (terminal & teletext widgets)</li></ul>
+<h2>Repository Boundary</h2>
+<h3>uCode Owns</h3>
+<p>| Area                         | Role                                                   | | ---------------------------- | ------------------------------------------------------ | | <code>packages/gridcore</code>          | Grid algebra, code addressing, cell/layer model        | | <code>packages/viewport-renderer</code> | Browser render surfaces, Terminal/Teletext widgets     | | <code>agents/gridsmith</code>           | CLI/MCP/import/export/build tooling                    | | <code>runtimes/basic</code>             | BASIC runtime bridge/package                           | | <code>runtimes/amos</code>              | AMOS runtime bridge/package                            | | <code>shared</code>                     | Cross-runtime support (not host-app-specific)          | | <code>config/</code>                    | AI model routing, MCP server definitions, vault config | | <code>docs/</code>                      | Specs, boundary docs, workflows                        | | <code>tests/</code>                     | Integration tests                                      |</p>
+<h3>uCode Does NOT Own</h3>
+<ul><li>Full uCore developer GUI</li><li>Product shell/navigation</li><li>User account/session app frame</li><li>Dashboard orchestration</li><li>Long-running command centre</li><li>Application routing</li></ul>
+<p>These belong to host applications (e.g., uCore).</p>
+<h2>Architecture</h2>
+<pre><code>uCore / host app
+    |
+    | consumes (packages, CLI, MCP, artifacts)
+    v
+uCode
+    |
+    | exposes
+    v
+Runtime + algebra + widgets + CLI/MCP
+    |
+    | renders/inspects through
+    v
+TerminalWidget / TeletextWidget / TerminalUI</code></pre>
+<p>More concretely:</p>
+<pre><code>uCore owns:
+  - app shell
+  - routes
+  - project/workspace management
+  - user-facing developer view
+  - orchestration UI
+  - snackbar daemon
+  - Hivemind MCP server
+  - Ollama lifecycle management
+
+uCode owns:
+  - code/runtime model
+  - grid algebra
+  - runtime package format
+  - BASIC/AMOS bridges
+  - GridSmith agent
+  - CLI
+  - MCP tools
+  - terminal/teletext render surfaces</code></pre>
+<h2>Render Surface Contract</h2>
+<p><code>TerminalWidget</code>, <code>TeletextWidget</code>, and <code>TerminalUI</code> are **inspectors, preview surfaces, debug views, and runtime output views** — not the main application.</p>
+<p>They should:</p>
+<ul><li>Accept a <code>Grid</code> and render it</li><li>Be embeddable in host app views</li><li>Be packageable and importable from host apps</li><li>Never assume they are the full application shell</li></ul>
+<h2>Package Boundaries</h2>
+<h3>Export Paths</h3>
+<pre><code>// Host apps consume uCode packages via:
+import { ... } from &#x27;@udos/gridcore&#x27;
+import { TerminalWidget, TeletextWidget } from &#x27;@udos/viewport-renderer&#x27;
+import { GridSmith } from &#x27;@udos/gridsmith&#x27;</code></pre>
+<h3>Dependency Direction</h3>
+<pre><code>@udos/gridcore          ← no uCode-internal dependencies
+@udos/viewport-renderer → depends on @udos/gridcore
+@udos/gridsmith         → depends on @udos/gridcore, @udos/viewport-renderer</code></pre>
+<p>No package should depend on uCore or any host application.</p>
+<h2>Development Rule</h2>
+<blockquote>**uCode must be installable, buildable, testable, and packageable from this</blockquote>
+<blockquote>repo alone. It must not depend on implementation code from uCore.**</blockquote>
+<h2>AI Integration Surface</h2>
+<p>uCode provides MCP tooling (via GridSmith) that can be consumed by AI agents. For full AI provider routing (Ollama, OpenRouter, Hivemind), uCode delegates to uCore's snackbar daemon:</p>
+<pre><code>GridSmith MCP  →  uCore Snackbar (port 8484)  →  LiteLLM → Ollama/OpenRouter</code></pre>
+<p>Configuration for this lives in:</p>
+<ul><li><code>config/hivemind.env</code> — API keys</li><li><code>config/openrouter.yaml</code> — Model routing tiers</li><li><code>config/mcp_config.json</code> — MCP server definitions</li><li><code>config/vault.yaml</code> — Vault/secret paths</li></ul>
+<h2>Related Documents</h2>
+<ul><li><code>docs/GRID_ALGEBRA_RELEASE_COLLATION.md</code></li><li><code>docs/UCODE_RUNTIME_SPEC.md</code></li><li><code>config/openrouter.yaml</code></li><li><code>config/mcp_config.json</code></li></ul></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

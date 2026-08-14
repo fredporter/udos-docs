@@ -1,0 +1,181 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>handovers/CLINE_REPO_SPLIT_HANDOFF.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / handovers/CLINE_REPO_SPLIT_HANDOFF.md</span></header><main class="site-main"><h1>Cline Handoff — Repo Split and Plugin Boundaries</h1>
+<h2>Goal</h2>
+<p>Advance the repo architecture cleanup in a staged but aggressive way:</p>
+<ul><li>keep uCore as the host/platform core</li><li>create dedicated repos for workflow and knowledge concerns</li><li>use the udos- prefix for plugin-style repos</li><li>leave SonicScrewdriver unchanged for now</li><li>add a plugin and extension surface inside uCore</li><li>prioritize structural progress over backward compatibility</li></ul>
+<h2>Target repo model</h2>
+<ul><li>uCore: host shell, plugin contract, extension registry, default core capabilities</li><li>uFlow: workflow engine and workflow-specific surfaces</li><li>uKnowledge: knowledge integration and knowledge-specific services</li><li>uCode: grid/runtime foundation, GridCore, GridSmith, teletext, terminal widgets, and embeddable runtime artifacts</li><li>udos-\*: plugin-style repos for optional capabilities such as home, budget, identity, media, automation, and similar domain features</li></ul>
+<h2>Immediate work items</h2>
+<p>1. Audit the current backend modules and classify them as:</p>
+<ul><li>core host</li><li>workflow</li><li>knowledge</li><li>plugin candidate</li></ul>
+<p>2. Introduce a lightweight plugin/extension contract in uCore so optional capabilities can be discovered and loaded.</p>
+<p>3. Create or scaffold the repo boundaries for:</p>
+<ul><li>uFlow</li><li>uKnowledge</li><li>at least one starter udos- plugin repo</li></ul>
+<p>4. Move workflow-related logic out of uCore first and remove in-core workflow endpoint implementation.</p>
+<p>5. Move knowledge-related logic out of uCore second and remove in-core knowledge endpoint implementation.</p>
+<p>6. Update the READMEs and architecture docs so the public repo story is consistent.</p>
+<p>7. Keep uCode as the implementation home for GridCore, GridSmith, teletext, and embedded runtime primitives; uCore should consume those capabilities, not own them.</p>
+<h2>Guardrails</h2>
+<ul><li>Do not touch SonicScrewdriver during this phase.</li><li>Do not move the core runtime shell into a plugin repo.</li><li>Prefer direct extraction over long-lived compatibility shims.</li><li>Keep uCore bootable and testable while the split is in progress.</li></ul>
+<h2>Suggested first implementation order</h2>
+<p>1. plugin manifest + registry surface 2. workflow hard cut to uFlow (no fallback path) 3. knowledge hard cut to uKnowledge (no fallback path) 4. README and architecture docs 5. optional starter udos- plugin repo</p>
+<h2>Phase 2 — Hard Cut Execution</h2>
+<p>1. Remove adapter fallbacks once uFlow and uKnowledge are importable in the environment. 2. Delete extracted workflow/knowledge modules from uCore after endpoint parity validation. 3. Keep endpoint URLs stable where practical, but allow breaking internal imports and module locations. 4. Push small, reversible commits by wave: registry, workflow cut, knowledge cut, docs.</p>
+<h2>Phase 3 — uCode Boundary Hard Cut</h2>
+<p>1. Remove any remaining uCore host-shell language for GridCore, GridSmith, teletext, terminal widgets, and runtime primitives. 2. Migrate any overlapping implementation details out of uCore and into uCode boundaries where they belong. 3. Keep uCore focused on shell, adapter, and orchestration surfaces only. 4. Update repo descriptions and docs so uCode is clearly the runtime foundation repo and uCore is clearly the host shell.</p>
+<h2>Cline Execution Brief</h2>
+<p>Run the next round in this order and do not widen scope unless a check fails:</p>
+<p>1. uCode boundary hard cut</p>
+<ul><li>audit uCore for any remaining host-shell language, imports, or runtime primitives that belong in uCode</li><li>remove or rewrite those references so uCore is shell-only</li><li>update the uCode repo metadata and docs if anything still implies host-runtime control</li></ul>
+<p>2. Workflow deletion wave</p>
+<ul><li>remove in-core workflow implementation after parity validation with uFlow</li><li>keep only the adapter/route bridge in uCore</li></ul>
+<p>3. Knowledge document-content wave</p>
+<ul><li>migrate the next knowledge endpoint wave into uKnowledge</li><li>delete the matching in-core implementation after route parity</li></ul>
+<p>4. Evidence bundle</p>
+<ul><li>capture changed files, commands run, route checks, and any failures/fixes</li><li>commit and push each wave separately</li></ul>
+<p>Stop-the-line rules for Cline:</p>
+<ul><li>do not mark a wave complete without runtime proof, command proof, test proof, and evidence proof</li><li>if a command example in docs is stale, rewrite it before continuing</li><li>if a boundary is unclear, stop and document the ambiguity instead of broadening scope</li></ul>
+<h2>Evidence Bundle — 2026-07-31 (uCode Boundary + Route Parity)</h2>
+<h3>Commands executed</h3>
+<p>1. <code>rg -n "ceefax|bbcsdl|terminal_runtime|register_.*routes|uCode runtime bridge|host shell adapter" backend/app docs -S</code> 2. <code>rg -n "def register_.*routes|app\.router\.add_(get|post|put|delete|patch)\(" backend/app/ucode backend/app/api/terminal_runtime.py -S</code> 3. <code>for p in /health /api/ceefax/pages /api/ceefax/feed/latest /api/bbcsdl/teletext /api/terminal/runtime/ws /api/workflows /api/knowledge/workspaces /api/knowledge/search; do ...; done</code> 4. <code>for p in /api/health '/api/knowledge/search?q=test' /api/terminal/runtime/ws; do curl -i ...; done</code></p>
+<h3>Runtime route proof (localhost:8484)</h3>
+<p>| Route                       | Status | Note                                                 | | --------------------------- | ------ | ---------------------------------------------------- | | <code>/api/health</code>               | <code>200</code>  | canonical health route is <code>/api/health</code>              | | <code>/api/ceefax/pages</code>         | <code>200</code>  | Ceefax bridge registered                             | | <code>/api/ceefax/feed/latest</code>   | <code>200</code>  | Ceefax feed endpoint live                            | | <code>/api/bbcsdl/teletext</code>      | <code>200</code>  | BBCSDL bridge endpoint live                          | | <code>/api/terminal/runtime/ws</code>  | <code>400</code>  | expected over plain HTTP; requires WebSocket upgrade | | <code>/api/workflows</code>            | <code>200</code>  | served via external uFlow route registrar            | | <code>/api/knowledge/workspaces</code> | <code>200</code>  | served via external uKnowledge route registrar       | | <code>/api/knowledge/search</code>     | <code>400</code>  | expected without <code>q</code>; with <code>?q=test</code> returns <code>200</code>   |</p>
+<h3>Boundary findings</h3>
+<p>1. Workflow and knowledge in-core API modules were removed from uCore and route ownership is externalized through adapters + extension registry. 2. This snapshot preceded strict runtime extraction; see later evidence bundles for completed external runtime cut.</p>
+<h3>Next wave cut targets</h3>
+<p>1. Move Ceefax/BBCSDL runtime implementation package out of uCore host tree or consume it as an external runtime package. 2. Replace hardcoded runtime bridge path with manifest/env-configured runtime contract. 3. Keep only route adapter/wiring logic in uCore for runtime-owned modules.</p>
+<h2>Evidence Bundle — 2026-07-31 (Runtime Adapter Cut)</h2>
+<h3>Commands executed</h3>
+<p>1. <code>python3 -m compileall -q backend/app/api/routes.py backend/app/extensions/adapters/ucode_runtime_adapter.py backend/app/ucode/bbcsdl.py backend/app/extensions/adapters/__init__.py</code> 2. <code>rg -n "uCode runtime bridge|ucode_runtime_adapter|UCORE_BBCSDL_BRIDGE_PATH" backend/app -S</code> 3. <code>for p in /api/ceefax/pages /api/bbcsdl/teletext /api/workflows /api/knowledge/workspaces; do ...; done</code></p>
+<h3>Runtime route proof (localhost:8484)</h3>
+<p>| Route                       | Status | Note                                                         | | --------------------------- | ------ | ------------------------------------------------------------ | | <code>/api/ceefax/pages</code>         | <code>200</code>  | runtime bridge still functional after adapter routing change | | <code>/api/bbcsdl/teletext</code>      | <code>200</code>  | BBCSDL bridge still functional after adapter routing change  | | <code>/api/workflows</code>            | <code>200</code>  | external uFlow registration unaffected                       | | <code>/api/knowledge/workspaces</code> | <code>200</code>  | external uKnowledge registration unaffected                  |</p>
+<h3>Boundary findings delta</h3>
+<p>1. Ceefax/BBCSDL route registration moved out of direct <code>app.api.routes</code> imports and into a dedicated runtime adapter (<code>app.extensions.adapters.ucode_runtime_adapter</code>). 2. BBCSDL bridge path is now configuration-driven via <code>UCORE_BBCSDL_BRIDGE_PATH</code>. 3. Runtime provider resolution is strict external in the adapter path; missing external providers fail fast.</p>
+<h2>Evidence Bundle — 2026-07-31 (Terminal Runtime Adapter Cut)</h2>
+<h3>Commands executed</h3>
+<p>1. <code>python3 -m compileall -q backend/app/api/routes.py backend/app/extensions/adapters/ucode_runtime_adapter.py backend/app/api/terminal_runtime.py</code> 2. <code>rg -n "UCORE_TERMINAL_RUNTIME_WS_HANDLER|register_terminal_runtime_routes|terminal runtime bridge" backend/app -S</code> 3. <code>for p in /api/ceefax/pages /api/bbcsdl/teletext /api/terminal/runtime/ws /api/workflows /api/knowledge/workspaces; do ...; done</code></p>
+<h3>Runtime route proof (localhost:8484)</h3>
+<p>| Route                       | Status | Note                                                               | | --------------------------- | ------ | ------------------------------------------------------------------ | | <code>/api/ceefax/pages</code>         | <code>200</code>  | unchanged after terminal registration refactor                     | | <code>/api/bbcsdl/teletext</code>      | <code>200</code>  | unchanged after terminal registration refactor                     | | <code>/api/terminal/runtime/ws</code>  | <code>400</code>  | expected for plain HTTP probe (route present; WS upgrade required) | | <code>/api/workflows</code>            | <code>200</code>  | external uFlow registration unaffected                             | | <code>/api/knowledge/workspaces</code> | <code>200</code>  | external uKnowledge registration unaffected                        |</p>
+<h3>Boundary findings delta</h3>
+<p>1. <code>app.api.routes</code> no longer imports terminal runtime registration directly; it now delegates terminal route wiring through <code>app.extensions.adapters.ucode_runtime_adapter.register_terminal_runtime_routes</code>. 2. External terminal runtime handler delegation is supported via <code>UCORE_TERMINAL_RUNTIME_WS_HANDLER</code>. 3. Legacy in-repo terminal handler remains explicit fallback unless strict external mode is enforced.</p>
+<h2>Evidence Bundle — 2026-07-31 (Phase Completion: Strict External Runtime)</h2>
+<h3>Commands executed</h3>
+<p>1. <code>python3 -m compileall -q ucode_runtime</code> (in uCode) 2. <code>UCORE_UCODE_PATH=/Users/fredbook/Code/uCode UCORE_UFLOW_PATH=/Users/fredbook/Code/uFlow UCORE_UKNOWLEDGE_PATH=/Users/fredbook/Code/uKnowledge python3 - <<'PY' ... register_routes(app) ...</code> (in uCore/backend) 3. <code>rg -n "app\.ucode\.(ceefax|bbcsdl)|api\.terminal_runtime|from \.terminal_runtime" backend -S</code></p>
+<h3>Strict route-registration proof</h3>
+<p>| Check                        | Result                                      | | ---------------------------- | ------------------------------------------- | | Strict external mode enabled | adapter defaults enforce external providers | | Missing required routes      | <code>[]</code>                                        | | Registered route count       | <code>220</code>                                       | | Workflow route registration  | external uFlow loaded                       | | Knowledge route registration | external uKnowledge loaded                  | | Runtime route registration   | external uCode runtime loaded               |</p>
+<h3>Completion delta</h3>
+<p>1. External runtime package now exists in uCode as <code>ucode_runtime</code> with Ceefax, BBCSDL, and terminal runtime providers. 2. uCore runtime adapter now defaults to strict external mode and fails fast on missing runtime providers. 3. Legacy in-core runtime implementation files were removed from uCore host repo.</p>
+<h2>Evidence Bundle — 2026-07-31 (Knowledge Document-Content + MCP Hardening)</h2>
+<h3>Commands executed</h3>
+<p>1. <code>python3 -m compileall -q uknowledge</code> (in uKnowledge) 2. <code>python3 -m compileall -q backend/app/extensions/adapters/ucode_runtime_adapter.py</code> (in uCore) 3. <code>UCORE_UCODE_PATH=... UCORE_UFLOW_PATH=... UCORE_UKNOWLEDGE_PATH=... python3 - <<'PY' ... register_routes(app) ...</code> route map validation 4. <code>for p in /api/knowledge/documents/test-doc /api/knowledge/documents/test-doc/content; do ...; done</code> runtime probe</p>
+<h3>Route binding proof</h3>
+<p>| Route                                          | Bound Handler                 | | ---------------------------------------------- | ----------------------------- | | <code>/api/knowledge/documents/{object_id}</code>         | <code>handle_get_document</code>         | | <code>/api/knowledge/documents/{object_id}/content</code> | <code>handle_get_document_content</code> |</p>
+<p>This confirms these routes are no longer bound to <code>_not_implemented</code>.</p>
+<h3>MCP/Ollama/Hivemind hardening delta</h3>
+<p>1. <code>backend/app/api/mcp.py</code> diagnostics now includes backend probes for:</p>
+<p>2. <code>scripts/ai_stack_health_check.sh</code> now validates:</p>
+<p>3. Runtime adapter strict mode cleanup removed dead compatibility branches in <code>backend/app/extensions/adapters/ucode_runtime_adapter.py</code>.</p>
+<ul><li><code>/api/mcp/tools</code></li><li><code>http://127.0.0.1:11434/api/tags</code> (Ollama)</li><li><code>http://127.0.0.1:8490/api/hivemind/llm/health</code> (Hivemind)</li><li><code>/api/mcp/diagnostics</code> integrity status</li><li>Hivemind health endpoint reachability</li></ul>
+<h2>Runtime Verification Addendum — 2026-07-31 (Post-Restart)</h2>
+<h3>Canonical restart path used</h3>
+<p>1. Stop process on <code>:8484</code> (<code>lsof -ti tcp:8484 | xargs kill</code>) 2. Start uCore from repo root with explicit external paths: <code>UCORE_UCODE_PATH=/Users/fredbook/Code/uCode UCORE_UFLOW_PATH=/Users/fredbook/Code/uFlow UCORE_UKNOWLEDGE_PATH=/Users/fredbook/Code/uKnowledge PYTHONPATH=/Users/fredbook/Code/uCore/backend python3 -m app --port 8484</code></p>
+<h3>Endpoint proof after restart</h3>
+<p>| Route                                       | Status | Note                                                               | | ------------------------------------------- | ------ | ------------------------------------------------------------------ | | <code>/api/knowledge/documents/test-doc</code>         | <code>404</code>  | now handled by external uKnowledge route registrar (no longer 501) | | <code>/api/knowledge/documents/test-doc/content</code> | <code>404</code>  | now handled by external uKnowledge route registrar (no longer 501) | | <code>/api/mcp/diagnostics</code>                      | <code>200</code>  | diagnostics endpoint healthy                                       | | <code>/api/ollama/status</code>                        | <code>200</code>  | Ollama integration healthy                                         |</p>
+<h2>Extended Dev Flow — Extension Registry + External Plugin Migration</h2>
+<p>Run the next execution cycle as hard waves with explicit gates:</p>
+<p>1. Wave A - Registry contract lock</p>
+<p>2. Wave B - External plugin matrix</p>
+<p>3. Wave C - CI/CD and packaging cut</p>
+<p>4. Wave D - API economy and broad-strokes automation</p>
+<p>5. Wave E - dead settings and old code purge</p>
+<ul><li>freeze manifest contract + validation behavior</li><li>add schema and dependency-cycle checks to CI</li><li>define <code>udos-*</code> migration matrix (owner repo, route ownership, deps, acceptance)</li><li>migrate at least two additional plugin candidates through manifest-first loading</li><li>publishable package layout for <code>uflow</code>, <code>uknowledge</code>, and <code>ucode_runtime</code></li><li>install/import smoke tests in local + CI modes</li><li>run low-cost route first, then hivemind/mcp broad pass</li><li>collect throughput + cost evidence versus manual baseline</li><li>remove stale strict-toggle references</li><li>confirm no remaining compatibility notes imply in-core fallback ownership</li><li>archive dead code with evidence and commit per wave</li></ul>
+<p>Stop-the-line for every wave remains mandatory: runtime proof, command proof, test proof, and evidence proof.</p>
+<h2>Evidence Bundle — 2026-07-31 (Wave B: External Plugin Discovery)</h2>
+<h3>Commands executed</h3>
+<p>1. <code>python3 -m compileall -q udos_budget</code> (in <code>udos-budget</code>) 2. <code>python3 -m compileall -q udos_identity</code> (in <code>udos-identity</code>) 3. <code>UCORE_EXTENSION_MANIFEST_PATHS=/Users/fredbook/Code/udos-budget:/Users/fredbook/Code/udos-identity UCORE_UFLOW_PATH=/Users/fredbook/Code/uFlow UCORE_UKNOWLEDGE_PATH=/Users/fredbook/Code/uKnowledge UCORE_UCODE_PATH=/Users/fredbook/Code/uCode PYTHONPATH=/Users/fredbook/Code/uCore/backend:/Users/fredbook/Code/udos-budget:/Users/fredbook/Code/udos-identity python3 - <<'PY' ... register_routes(app) ...</code> (in uCore)</p>
+<h3>Discovery + route proof</h3>
+<p>| Check                         | Result                               | | ----------------------------- | ------------------------------------ | | External manifests discovered | <code>2</code> (<code>udos-budget</code>, <code>udos-identity</code>) | | Registry total extensions     | <code>9</code>                                  | | <code>udos-budget</code> loaded          | <code>True</code>                               | | <code>udos-identity</code> loaded        | <code>True</code>                               | | Missing plugin routes         | <code>[]</code>                                 | | Route count                   | <code>224</code>                                |</p>
+<h3>Plugin route ownership now external</h3>
+<p>1. <code>udos-budget</code> provides:</p>
+<p>2. <code>udos-identity</code> provides:</p>
+<ul><li><code>/api/budget/plugin/status</code></li><li><code>/api/budget/plugin/ping</code></li><li><code>/api/identity/plugin/profile</code></li><li><code>/api/identity/plugin/session</code></li></ul>
+<p>These routes are registered through discovered manifests and plugin <code>route_registrar</code> callables, without adding new in-core route ownership paths.</p>
+<h2>Evidence Bundle — 2026-07-31 (Wave C: Split-Repo Import + Route Smoke)</h2>
+<h3>Commands executed</h3>
+<p>1. <code>python3 scripts/smoke_split_repo_imports.py</code> (in uCore) 2. <code>python3 -m compileall -q scripts/smoke_split_repo_imports.py</code> (in uCore)</p>
+<h3>Smoke-check proof</h3>
+<p>| Check                                         | Result                                                                                                                             | | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | | Required repo paths                           | all present (<code>uCore/backend</code>, <code>uFlow</code>, <code>uKnowledge</code>, <code>uCode</code>, <code>udos-budget</code>, <code>udos-identity</code>)                                      | | External imports                              | pass (<code>uflow.routes</code>, <code>uknowledge.routes</code>, <code>ucode_runtime.ceefax</code>, <code>udos_budget.routes</code>, <code>udos_identity.routes</code>)                   | | External manifests discovered at registration | <code>2</code> (<code>udos-budget</code>, <code>udos-identity</code>)                                                                                               | | Expected extension loaded checks              | pass (<code>uflow</code>, <code>uknowledge</code>, <code>udos-budget</code>, <code>udos-identity</code>)                                                                       | | Expected split-repo route checks              | pass (<code>/api/workflows</code>, <code>/api/knowledge/search</code>, <code>/api/ceefax/pages</code>, <code>/api/budget/plugin/status</code>, <code>/api/identity/plugin/profile</code>) | | Route count in smoke app                      | <code>224</code>                                                                                                                              |</p>
+<p>This provides a CI-safe local proof that split-repo imports and extension route registration remain healthy under manifest-driven discovery.</p>
+<h2>Evidence Bundle — 2026-07-31 (Wave C: Packaging + Release Checklist)</h2>
+<h3>Commands executed</h3>
+<p>1. <code>python3 scripts/validate_split_repo_packaging.py</code> (in uCore) 2. <code>python3 scripts/smoke_split_repo_imports.py</code> (in uCore) 3. <code>python3 -m compileall -q scripts/validate_split_repo_packaging.py</code> (in uCore)</p>
+<h3>Packaging layout proof</h3>
+<p>| Package         | Result                                  | | --------------- | --------------------------------------- | | <code>uflow</code>         | <code>OK</code> (pyproject + package layout valid) | | <code>uknowledge</code>    | <code>OK</code> (pyproject + package layout valid) | | <code>ucode-runtime</code> | <code>OK</code> (pyproject + package layout valid) |</p>
+<h3>Release checklist artifact</h3>
+<p>1. Added canonical checklist: <code>docs/PLUGIN_RELEASE_CHECKLIST.md</code> 2. Checklist covers:</p>
+<ul><li>manifest validation gate</li><li>split-repo packaging gate</li><li>split-repo import/route smoke gate</li><li>capability preflight parity gate (<code>/api/extensions/status</code>, <code>/api/capabilities/readiness</code>, <code>/api/capabilities/{capability}/preflight</code>)</li></ul>
+<p>This completes Wave C CI/CD and packaging acceptance gates for the split-repo migration track.</p>
+<h2>uDev Dogfooding Wave</h2>
+<p>Use this extraction as an autonomous uDev IDE test:</p>
+<p>1. Run wave plans via low-cost model routing first. 2. Require per-wave proof: changed files, test command output, and route checks. 3. Capture failures and fixes in handover notes so uDev orchestration can be tuned. 4. Compare autonomous throughput vs manual throughput at the end of the split.</p>
+<h2>Stop-The-Line Gate (Required)</h2>
+<p>Before marking any wave complete, all checks below must pass:</p>
+<p>1. Runtime proof:</p>
+<p>2. Command proof:</p>
+<p>3. Test proof:</p>
+<p>4. Evidence proof:</p>
+<ul><li>service boots without manual patching</li><li>route registration succeeds for the target wave</li><li>every documented CLI command is executed once and output captured</li><li>remove or rewrite any stale command examples immediately</li><li>compile/lint/test commands for touched areas succeed</li><li>failures block wave completion</li><li>include changed files list, command outputs, and route checks in handover</li><li>no "planned/scaffolded" item can be marked complete without this evidence</li></ul>
+<p>If any gate fails: stop, fix the blocker, re-run proof, then continue.</p>
+<h2>Evidence Bundle — 2026-07-31 (Gate 0 Close + Wave E2 Runtime Parity)</h2>
+<h3>Commands executed</h3>
+<p>1. <code>for p in /api/health /api/mcp/diagnostics; do curl -s -o /tmp/gate0_probe.json -w '%{http_code}' http://127.0.0.1:8484$p; done</code> 2. <code>python3 scripts/audit_duplicate_routes.py</code> 3. <code>python3 scripts/validate_extension_manifests.py</code> 4. <code>python3 scripts/validate_legacy_settings_cleanup.py</code> 5. <code>cd /Users/fredbook/Code/uDev/developer-surface && npm run build</code> 6. <code>lsof -nP -iTCP:5176 -sTCP:LISTEN</code> 7. <code>python3 scripts/check_documentation_route_contract.py</code> 8. <code>python3 scripts/probe_documentation_routes.py --base-url http://127.0.0.1:8484</code></p>
+<h3>Runtime and gate proof</h3>
+<p>| Check                                | Result                                                                                            | | ------------------------------------ | ------------------------------------------------------------------------------------------------- | | <code>/api/health</code>                        | <code>200</code>                                                                                             | | <code>/api/mcp/diagnostics</code>               | <code>200</code>                                                                                             | | duplicate route audit                | <code>0</code> duplicates                                                                                    | | extension manifest validator         | pass                                                                                              | | legacy settings cleanup validator    | pass                                                                                              | | uDev Developer Surface build         | pass                                                                                              | | fixed dev port policy                | listener present on <code>127.0.0.1:5176</code>; strict port remains enforced                                | | documentation route contract checker | pass (<code>Expected 7</code>, <code>Actual 7</code>)                                                                   | | documentation runtime probe          | pass (<code>/api/docs</code>, <code>/api/docs/sites</code>, <code>/api/docs/global-knowledge</code>, <code>/api/docs/export</code> all <code>200</code>) |</p>
+<h3>Wave F seed updates</h3>
+<p>1. Added capability requirement entries:</p>
+<p>2. Included both capabilities in System surface readiness snapshot polling.</p>
+<ul><li><code>identity_gateway</code></li><li><code>wordpress_gateway</code></li></ul>
+<h2>Notes for the agent</h2>
+<h2>Evidence Bundle — 2026-07-31 (Wave F: Identity Story + Variables Slice)</h2>
+<h3>Owner-repo changes</h3>
+<p>1. <code>udos-identity</code> now owns persistent profile variables at <code>GET|PUT /api/identity/variables</code>. 2. <code>udos-identity</code> now owns story creation and progression at:</p>
+<p>3. Storage is isolated behind <code>IdentityStoryStore</code> and supports <code>UDOS_IDENTITY_DATA_FILE</code> overrides.</p>
+<ul><li><code>POST /api/identity/stories</code></li><li><code>GET /api/identity/stories/{story_id}</code></li><li><code>PATCH /api/identity/stories/{story_id}</code></li></ul>
+<h3>Proof</h3>
+<p>1. <code>python3 -m unittest discover -s tests -v</code> passed (<code>3</code> tests). 2. <code>python3 -m compileall -q udos_identity tests</code> passed. 3. uCore split-repo smoke now requires variables and story route parity. 4. Owner-repo commit: <code>b0161b3</code>.</p>
+<h3>Privacy/share extension</h3>
+<p>1. Added <code>GET|PUT /api/identity/privacy/{resource_id}</code>. 2. Policies support <code>private</code>, <code>shared</code>, and <code>public</code> visibility with ISO-8601 expiry. 3. Expired shared/public policies resolve to <code>effective_visibility=private</code> and <code>share_active=false</code>. 4. Owner-repo tests passed (<code>5</code> tests); commit: <code>891ea27</code>. 5. uCore split-repo smoke requires privacy route parity.</p>
+<h3>WordPress mapping + final readiness</h3>
+<p>1. Added pure bidirectional mapping adapters for WordPress user fields, <code>udos_</code> metadata, and <code>udos_group</code> taxonomy. 2. Added <code>POST /api/identity/wordpress/map-outbound</code> and <code>POST /api/identity/wordpress/map-inbound</code>. 3. Allowlist tests prove password/role and non-uDos metadata do not cross the mapping boundary. 4. Owner-repo tests passed (<code>7</code> tests); commit: <code>7d5684b</code>. 5. Split-repo smoke passed with <code>236</code> routes and all <code>11</code> identity method/path pairs. 6. Configured runtime preflight returned <code>200</code>, <code>ready=true</code>, and <code>repair_required=false</code> for both <code>identity_gateway</code> and <code>wordpress_gateway</code>. 7. Representative configured-runtime routes <code>/api/identity/variables</code> and <code>/api/identity/plugin/profile</code> returned <code>200</code>.</p>
+<p>The important outcome is architectural clarity and actual separation, not feature expansion. Treat this as both a repo cleanup and a uDev autonomous execution benchmark.</p>
+<h2>Evidence Bundle — 2026-08-02 (Wave G/H/I Integration Close)</h2>
+<h3>Scope completed in this round</h3>
+<p>1. Wave G:</p>
+<p>2. Wave H:</p>
+<p>3. Wave I:</p>
+<ul><li>Implemented OAuth/token ownership contract in <code>udos-google</code>.</li><li>Implemented Gemini/Gems chat thin slice with session-aware turns.</li><li>Implemented Vault-docs-to-Drive thin mirror sync with revision and checksum records.</li><li>Implemented mission intake/task scaffolding and daily briefing baseline routes in <code>udos-dreamscape</code>.</li><li>Implemented Chronos contract readiness checks (required variables + secret).</li><li>Added capability readiness cards in Developer Surface Control panel.</li><li>Added preflight-gated controls (disabled until readiness is green).</li><li>Added MCP bridge tools for single and batch capability readiness queries.</li><li>Removed stale per-panel API base declarations by normalizing to shared <code>api/base</code> imports.</li></ul>
+<h3>Commands executed</h3>
+<p>1. <code>cd /Users/fredbook/Code/udos-google && python3 -m unittest discover</code> 2. <code>cd /Users/fredbook/Code/udos-dreamscape && python3 -m unittest discover</code> 3. <code>cd /Users/fredbook/Code/uDev/mcp-bridge && npm run build</code> 4. <code>cd /Users/fredbook/Code/uDev/developer-surface && npm run build</code> 5. <code>cd /Users/fredbook/Code/uCore && python3 scripts/audit_duplicate_routes.py && python3 scripts/validate_extension_manifests.py && python3 scripts/validate_legacy_settings_cleanup.py && python3 scripts/validate_capability_requirements.py</code></p>
+<h3>Runtime and gate proof</h3>
+<p>| Check                             | Result                              | | --------------------------------- | ----------------------------------- | | udos-google unit tests            | pass (<code>3</code> tests)                    | | udos-dreamscape unit tests        | pass (<code>3</code> tests)                    | | mcp-bridge build                  | pass                                | | developer-surface build           | pass                                | | duplicate route audit             | <code>0</code> duplicates                      | | extension manifest validator      | pass                                | | legacy settings cleanup validator | pass                                | | capability requirements validator | pass (<code>Discovered 7</code>, <code>Declared 9</code>) |</p>
+<h3>Capability preflight delta</h3>
+<p>1. Added <code>google_ai_bridge</code> requirements with secrets:</p>
+<p>2. Added <code>dreamscape_orchestration</code> requirements with:</p>
+<ul><li><code>GOOGLE_CLIENT_ID</code></li><li><code>GOOGLE_CLIENT_SECRET</code></li><li><code>GOOGLE_REFRESH_TOKEN</code></li><li>variables: <code>CHRONOS_ENDPOINT</code>, <code>CHRONOS_TIMEZONE</code></li><li>secret: <code>CHRONOS_API_KEY</code></li></ul>
+<h3>Residual risk and next entry criteria</h3>
+<p>1. <code>udos-google</code> and <code>udos-dreamscape</code> are currently local directories without git history in this workspace snapshot; phase closure should not proceed until repo initialization or remote linkage is confirmed. 2. Wave J (final dev-round) should run full runbook R0 gate set including split-repo packaging and docs non-regression checks before final handoff close.</p>
+<h3>Final closure notes artifact</h3>
+<p>1. Final repairs log, release notes, and rollback notes are published in:</p>
+<ul><li><code>docs/handovers/PHASE10_FINAL_CLOSURE_NOTES_2026-08-03.md</code></li></ul>
+<h2>Restructure Scaffold Checkpoint — 2026-08-03</h2>
+<p>1. Confirmed core split repos exist and are available as execution targets:</p>
+<p>2. Confirmed plugin repo baseline exists for:</p>
+<p>3. Added missing <code>udos-publishing/ucore-extension.json</code> to complete manifest-level plugin shape. 4. This checkpoint intentionally marks structure as ready while allowing feature backlog items to remain open for the next plan.</p>
+<ul><li><code>uCore</code>, <code>uDev</code>, <code>uFlow</code>, <code>uKnowledge</code>, <code>uCode</code></li><li><code>udos-budget</code>, <code>udos-identity</code>, <code>udos-google</code>, <code>udos-dreamscape</code>, <code>udos-publishing</code></li></ul>
+<h2>Evidence Bundle — 2026-08-03 (Wave F2 Scaffold + Autonomous Metrics)</h2>
+<h3>Scaffold closure</h3>
+<p>1. Added <code>publishing_mirror</code> capability contract in <code>uCore/config/capability_requirements.json</code>. 2. Added missing plugin manifest: <code>udos-publishing/ucore-extension.json</code>. 3. Added scaffold checks:</p>
+<ul><li><code>scripts/check_wavef2_publishing_route_contract.py</code></li><li><code>scripts/probe_wavef2_publishing_preflight.py</code></li></ul>
+<h3>Command proof</h3>
+<p>1. <code>python3 scripts/check_wavef2_publishing_route_contract.py</code> 2. <code>python3 scripts/probe_wavef2_publishing_preflight.py</code> 3. <code>bash scripts/ai_stack_health_check.sh</code> 4. <code>POST /api/skills/route_task/run</code> with <code>complexity=low</code>, <code>prefer_provider=ollama</code>, <code>confirm=true</code></p>
+<h3>Runtime proof</h3>
+<p>1. Route contract scaffold check passed (<code>ok: true</code>). 2. Publishing capability preflight probe returned expected contract-valid <code>412</code> (extension registration pending). 3. Low-cost route returned <code>200</code> and selected <code>ollama / qwen2.5-coder:3b</code>. 4. Broad-strokes diagnostics returned <code>Pass: 12</code>, <code>Warn: 3</code>, <code>Fail: 0</code>.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

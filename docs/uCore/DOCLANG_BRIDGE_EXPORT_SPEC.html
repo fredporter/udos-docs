@@ -1,0 +1,142 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DOCLANG_BRIDGE_EXPORT_SPEC.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCore / DOCLANG_BRIDGE_EXPORT_SPEC.md</span></header><main class="site-main"><h1>DocLang Bridge Export Spec</h1>
+<p>Date: 2026-06-21 Status: Active local-first spec Owner: uCore / uDocs migration track</p>
+<h2>Goal</h2>
+<p>Define one normalized export format that can be produced from:</p>
+<ul><li>Vault markdown files (user/shared/public layers)</li><li>Canonical engineering docs</li></ul>
+<p>The format must stay simple enough for local-first generation while being structured enough for efficient AI ingestion, retrieval, and future transform steps.</p>
+<h2>Scope</h2>
+<p>This spec defines the canonical intermediate document shape for:</p>
+<ul><li>document metadata</li><li>front matter normalization</li><li>wiki-link extraction</li><li>location tagging</li><li>spatial filesystem tagging</li><li>body segmentation for later transforms</li></ul>
+<p>This spec does not define transport, embeddings, or cloud indexing.</p>
+<h2>Design Constraints</h2>
+<p>1. Markdown remains the durable authoring format. 2. Export output must be deterministic from the same source state. 3. Stable identifiers matter more than pretty rendering. 4. Front matter is preferred over ad hoc inline conventions when both exist. 5. Spatial and wiki semantics must survive export without custom parsers in the consumer.</p>
+<h2>Canonical Output Shape</h2>
+<p>The bridge export format is JSON with one top-level document envelope per source document.</p>
+<pre><code>{
+  &quot;doclang_version&quot;: &quot;0.1&quot;,
+  &quot;document&quot;: {
+    &quot;id&quot;: &quot;vault:technical/mcp/protocol.md&quot;,
+    &quot;canonical_id&quot;: &quot;vault:technical/mcp/protocol.md&quot;,
+    &quot;title&quot;: &quot;MCP Protocol&quot;,
+    &quot;doc_type&quot;: &quot;spec&quot;,
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;source_system&quot;: &quot;vault&quot;,
+    &quot;source_workspace&quot;: &quot;personal&quot;,
+    &quot;source_path&quot;: &quot;technical/mcp/protocol.md&quot;,
+    &quot;created_at&quot;: &quot;2026-06-21T00:00:00Z&quot;,
+    &quot;updated_at&quot;: &quot;2026-06-21T12:00:00Z&quot;,
+    &quot;tags&quot;: [&quot;mcp&quot;, &quot;protocol&quot;, &quot;technical&quot;],
+    &quot;aliases&quot;: [&quot;Model Context Protocol&quot;],
+    &quot;wiki_links&quot;: {
+      &quot;outbound&quot;: [
+        {&quot;target&quot;: &quot;MCP Server&quot;, &quot;label&quot;: null},
+        {&quot;target&quot;: &quot;OpenRouter&quot;, &quot;label&quot;: &quot;routing&quot;}
+      ]
+    },
+    &quot;location&quot;: {
+      &quot;label&quot;: &quot;Brisbane&quot;,
+      &quot;ucode&quot;: &quot;L340...&quot;,
+      &quot;lat&quot;: -27.4698,
+      &quot;lon&quot;: 153.0251,
+      &quot;layer&quot;: 0,
+      &quot;zoom_level&quot;: 340
+    },
+    &quot;filesystem&quot;: {
+      &quot;binder&quot;: &quot;technical&quot;,
+      &quot;container&quot;: &quot;personal&quot;,
+      &quot;folder_tags&quot;: [&quot;technical&quot;, &quot;mcp&quot;],
+      &quot;spatial_path&quot;: null
+    },
+    &quot;frontmatter&quot;: {},
+    &quot;sections&quot;: [
+      {
+        &quot;id&quot;: &quot;summary&quot;,
+        &quot;heading&quot;: &quot;Summary&quot;,
+        &quot;level&quot;: 2,
+        &quot;content&quot;: &quot;...&quot;
+      }
+    ],
+    &quot;body_markdown&quot;: &quot;# MCP Protocol\n...&quot;
+  }
+}</code></pre>
+<h2>Required Fields</h2>
+<p>Every exported document must include:</p>
+<ul><li><code>doclang_version</code></li><li><code>document.id</code></li><li><code>document.canonical_id</code></li><li><code>document.title</code></li><li><code>document.source_system</code></li><li><code>document.source_path</code></li><li><code>document.tags</code></li><li><code>document.sections</code></li><li><code>document.body_markdown</code></li></ul>
+<h2>Identifier Rules</h2>
+<h3><code>id</code></h3>
+<p><code>id</code> is the concrete exported identity from the current source.</p>
+<p>Examples:</p>
+<ul><li><code>vault:technical/mcp/protocol.md</code></li><li><code>vault:shared/team-runbook/onboarding.md</code></li><li><code>udocs:architecture/overview.md</code></li></ul>
+<h3><code>canonical_id</code></h3>
+<p><code>canonical_id</code> is the stable cross-system identity for merged or mirrored documents.</p>
+<p>Rules:</p>
+<p>1. Prefer the vault-relative path for markdown-canonical documents. 2. Prefer the repo-relative path for canonical engineering docs. 3. If multiple layers mirror the same document, keep one canonical id and record the other ids in metadata.</p>
+<h2>Front Matter Normalization</h2>
+<p>When a source document has YAML front matter, preserve the raw values under <code>document.frontmatter</code>, then normalize the following keys when present:</p>
+<p>| Front matter key | Canonical field | |---|---| | <code>title</code> | <code>document.title</code> | | <code>status</code> | <code>document.status</code> | | <code>type</code> or <code>doc_type</code> | <code>document.doc_type</code> | | <code>tags</code> | <code>document.tags</code> | | <code>aliases</code> | <code>document.aliases</code> | | <code>created</code> or <code>created_at</code> | <code>document.created_at</code> | | <code>updated</code> or <code>updated_at</code> | <code>document.updated_at</code> | | <code>workspace</code> | <code>document.source_workspace</code> | | <code>binder</code> | <code>document.filesystem.binder</code> | | <code>container</code> | <code>document.filesystem.container</code> | | <code>ucode</code> | <code>document.location.ucode</code> | | <code>lat</code> | <code>document.location.lat</code> | | <code>lon</code> | <code>document.location.lon</code> | | <code>layer</code> | <code>document.location.layer</code> | | <code>zoom_level</code> | <code>document.location.zoom_level</code> |</p>
+<p>Normalization rules:</p>
+<p>1. String lists may be authored as a single string or an array; export as an array. 2. Unknown front matter keys stay in <code>document.frontmatter</code>. 3. Export does not discard source front matter even if normalized fields exist.</p>
+<h2>Wiki Link Rules</h2>
+<p>Wiki-style links must be extracted into structured form.</p>
+<p>Supported patterns:</p>
+<ul><li><code>[[Target]]</code></li><li><code>[[Target|Label]]</code></li><li><code>[[folder/target]]</code></li></ul>
+<p>Export shape:</p>
+<pre><code>{
+  &quot;wiki_links&quot;: {
+    &quot;outbound&quot;: [
+      {&quot;target&quot;: &quot;Target&quot;, &quot;label&quot;: null},
+      {&quot;target&quot;: &quot;folder/target&quot;, &quot;label&quot;: &quot;Label&quot;}
+    ]
+  }
+}</code></pre>
+<p>Rules:</p>
+<p>1. Keep the raw target, not just a rendered label. 2. Do not resolve links during export. 3. Link resolution belongs to a later transform/indexing phase.</p>
+<h2>Location Tagging</h2>
+<p>Location tagging is first-class in the bridge format.</p>
+<p>The canonical location object is:</p>
+<pre><code>{
+  &quot;label&quot;: &quot;Brisbane&quot;,
+  &quot;ucode&quot;: &quot;L340...&quot;,
+  &quot;lat&quot;: -27.4698,
+  &quot;lon&quot;: 153.0251,
+  &quot;layer&quot;: 0,
+  &quot;zoom_level&quot;: 340
+}</code></pre>
+<p>Rules:</p>
+<p>1. <code>ucode</code> is the preferred spatial identifier when available. 2. <code>lat</code> and <code>lon</code> are optional but should be exported when derivable. 3. <code>layer</code> and <code>zoom_level</code> should align with the existing GridUI spatial model. 4. Documents may omit <code>location</code> entirely if no spatial meaning exists.</p>
+<h2>Spatial Filesystem Rules</h2>
+<p>Some knowledge layouts use folders as spatial or semantic carriers. Export both semantic and spatial filesystem meaning explicitly.</p>
+<p><code>document.filesystem</code> fields:</p>
+<ul><li><code>binder</code>: top-level semantic collection or vault binder</li><li><code>container</code>: personal, shared, public, or other storage domain</li><li><code>folder_tags</code>: folder-derived tags from the relative path</li><li><code>spatial_path</code>: optional path string when folders encode a spatial hierarchy</li></ul>
+<p>Examples:</p>
+<ul><li><code>technical/mcp/protocol.md</code> -> <code>binder=technical</code>, <code>folder_tags=[technical,mcp]</code></li><li><code>places/australia/brisbane/note.md</code> -> <code>spatial_path=places/australia/brisbane</code></li></ul>
+<p>Rules:</p>
+<p>1. Folder tags are additive, not authoritative. 2. Spatial meaning in paths must be copied into explicit metadata. 3. Consumers should not need to infer spatial semantics from raw paths alone.</p>
+<h2>Section Extraction</h2>
+<p>Body markdown should be segmented into stable sections.</p>
+<p>Each section includes:</p>
+<ul><li><code>id</code>: stable heading slug or synthetic identifier</li><li><code>heading</code>: heading text or <code>null</code></li><li><code>level</code>: heading level or <code>0</code> for synthetic blocks</li><li><code>content</code>: markdown content for that section</li></ul>
+<p>Rules:</p>
+<p>1. Keep section order stable. 2. Preserve original markdown in <code>body_markdown</code>. 3. Section extraction is for AI context windows and later transforms, not for replacing the source body.</p>
+<h2>Source Mapping</h2>
+<h3>Vault markdown</h3>
+<p>Primary inputs:</p>
+<ul><li>front matter</li><li>relative filesystem path</li><li>folder-derived tags</li><li>wiki links in markdown body</li></ul>
+<h3>Vault layers</h3>
+<p>Primary inputs:</p>
+<ul><li>vault layer (user/shared/public)</li><li>relative filesystem path</li><li>title</li><li>document type</li><li>markdown content</li></ul>
+<h3>Canonical docs</h3>
+<p>Primary inputs:</p>
+<ul><li>repo-relative path</li><li>markdown headings</li><li>optional front matter</li><li>explicit engineering metadata where available</li></ul>
+<h2>Minimal Export Contract For UDW-013</h2>
+<p>The first implementation only needs to guarantee:</p>
+<p>1. one document envelope per source file/document 2. normalized core metadata 3. folder-tag extraction 4. front matter preservation 5. wiki-link extraction 6. optional spatial/location object 7. stable section list</p>
+<h2>Follow-on Work</h2>
+<p>This spec is the prerequisite for:</p>
+<ul><li>UDW-014 transform step for AI-efficient structured context</li><li>better cross-system document merge rules</li><li>future doc indexing and retrieval pipelines</li><li>wiki graph and spatial browsing features</li></ul>
+<h2>Initial Transformer</h2>
+<p>The first executable transform step is:</p>
+<ul><li><code>backend/app/services/doclang_bridge.py</code></li><li><code>scripts/export_doclang_context.py</code></li></ul>
+<p>Current output contract:</p>
+<p>1. <code>doclang</code>: normalized document envelope 2. <code>ai_context</code>: compact text block optimized for AI ingestion</p>
+<p>The initial exporter targets vault markdown sources and reuses the existing vault scan/front matter pipeline.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

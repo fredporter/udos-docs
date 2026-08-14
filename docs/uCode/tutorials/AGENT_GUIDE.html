@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>tutorials/AGENT_GUIDE.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / tutorials/AGENT_GUIDE.md</span></header><main class="site-main"><p>--- title: "DevStudio Agent Guide" status: draft last_updated: 2026-06-08T22:32:34+10:00 category: guide tags: [devstudio, guide] description: "> <strong>Purpose:</strong> Quick-start guide for agents working in the uDos ecosystem." ---</p>
+<h1>DevStudio Agent Guide</h1>
+<blockquote><strong>Purpose:</strong> Quick-start guide for agents working in the uDos ecosystem.</blockquote>
+<blockquote><strong>Last Updated:</strong> 2026-06-14</blockquote>
+<blockquote><strong>Version:</strong> 2.0.0 — OkAgentDigital migration complete</blockquote>
+<blockquote><strong>See also:</strong> <a href="../ARCHITECTURE.md">ARCHITECTURE.md</a> for the full system architecture</blockquote>
+<p>---</p>
+<h2>Ecosystem Overview</h2>
+<pre><code>~/Code/
+├── DevStudio/              # Orchestration, skills, docs (this repo)
+├── uConnect/               # GridUI, Snackbar (Python), chat, surfaces
+├── uServer/                # Backend services, secret-server, sse-stream
+├── uPlace/                 # Deployment/placement
+├── uCode1-4/               # Core runtime, services, apps, UI
+├── uScript/                # Scripting
+├── uSystem/                # System configs
+├── uVector/                # Vector/embeddings
+├── Groovebox/              # Music production
+├── SonicScrewdriver/       # Linux configs
+├── UniversalSurfaceXD/     # USXD — Electron IDE (primary dev env)
+├── Vendor/                 # Third-party upstream repos
+├── Projects/               # Centralized project configs
+│   └── @sandbox/           # Working copies of uCode repos
+└── _archived/              # Consolidated archive (moved from repo .archive/)</code></pre>
+<p>---</p>
+<h2>Before Any Feature Work</h2>
+<p>Run these in order to avoid the "spaghetti tree" problem:</p>
+<pre><code># 1. Scan for duplicates, dead paths, stale references
+./skills/dead-path-detector/run.sh
+
+# 2. Verify surface landscape is coherent
+./skills/surface-audit/run.sh
+
+# 3. Check for conflicting docs
+./skills/doc-consolidator/run.sh
+
+# 4. Fix critical issues before proceeding</code></pre>
+<p>---</p>
+<h2>Skills Pipeline</h2>
+<p>Skills live in <code>skills/</code> and follow a folder-based lifecycle:</p>
+<p>| Tier | Path | Git | Registered | |------|------|-----|------------| | 🟡 Draft | <code>skills/draft/<name>/</code> | Ignored | No | | 🟠 Test | <code>skills/test/<name>/</code> | Tracked | <code>tier: test</code> | | 🔵 Staged | <code>skills/staged/<name>/</code> | Tracked | <code>tier: staging</code> | | ✅ Promoted | <code>skills/<name>/</code> | Tracked | <code>tier: core/extended</code> |</p>
+<pre><code># Run a skill (auto-searches all tiers)
+./skill-runner.sh my-skill
+
+# Create a draft
+mkdir -p skills/draft/my-skill &amp;&amp; touch skills/draft/my-skill/run.sh
+
+# Promote through tiers (mv + update tool-catalogue.yaml)</code></pre>
+<p>See <a href="SKILLS_PIPELINE.md">SKILLS_PIPELINE.md</a> for full details.</p>
+<p>---</p>
+<h2>Terminal Constraints (VS Code / USXD)</h2>
+<p>When running commands in the VS Code or USXD terminal:</p>
+<ul><li><strong>No streaming</strong> — use <code>--no-stream</code> flags, avoid <code>tail -f</code>, <code>watch</code></li><li><strong>No pipes/redirects</strong> — use temp files instead of <code>|</code>, <code>></code>, <code><<</code></li><li><strong>No special characters</strong> — avoid <code>;</code>, <code>&&</code>, <code>||</code> in command strings</li><li><strong>No interactive prompts</strong> — use <code>--yes</code> flags, pre-seed answers</li><li><strong>Keep commands short</strong> — break long commands into steps</li><li><strong>🚫 NO background processes</strong> — never use <code>nohup</code>, <code>&</code>, <code>disown</code>, <code>bg</code>. These crash the IDE. Use <code>launchctl</code> for macOS services or the Skills pipeline.</li><li><strong>🚫 NO long-running commands</strong> — avoid <code>sleep</code>, <code>wait</code>, infinite loops. Use <code>--timeout</code> flags, keep commands under 10 seconds.</li><li><strong>🚫 NO process spawning</strong> — avoid <code>nohup</code>, <code>setsid</code>, <code>daemonize</code>. Use <code>launchctl submit</code> for persistent services.</li><li><strong>🚫 NO <code>npx vite</code> or similar dev servers</strong> — starting dev servers from VS Code terminal crashes the IDE. Use <code>surface-repair</code> skill or <code>launchctl</code> instead.</li></ul>
+<p>---</p>
+<h2>Vendor Absorption Pattern</h2>
+<p>To bring in a third-party project:</p>
+<pre><code># 1. Clone to Vendor/
+git clone &lt;url&gt; ~/Code/Vendor/&lt;name&gt;/
+
+# 2. Register in VENDOR_MANIFEST.yaml
+# 3. Create a snack or skill that wraps it
+# 4. If it has a UI, create a USX surface for it</code></pre>
+<p>See <a href="../Vendor/VENDOR_MANIFEST.yaml">VENDOR_MANIFEST.yaml</a> for existing entries.</p>
+<p>---</p>
+<h2>Push Model: Passive (Fire-and-Forget)</h2>
+<p>With the full automation pipeline in place, <strong>pushing is just a trigger</strong>. CI/CD handles everything:</p>
+<pre><code>gp                    # fire-and-forget push to main
+                      # CI runs: dead code finder → docs update → Spark docs → Pages deploy → summary issue
+
+gpl                   # sync to linux-server + push (same passive model)
+gps                   # check push status (rarely needed — pipeline reports via issues)</code></pre>
+<p><strong>No more manual status checks.</strong> The pipeline reports results via GitHub Issues and PR comments automatically.</p>
+<p>---</p>
+<h2>GitHub Actions Script Architecture</h2>
+<p>All CI/CD workflows use <strong>extracted Python scripts</strong> in <code>.github/scripts/</code>:</p>
+<p>| Script | Purpose | |--------|---------| | <code>check_merge.py</code> | Merge conflict detection | | <code>discovery_agent.py</code> | Repo discovery and analysis | | <code>pr_reviewer.py</code> | PR review logic | | <code>repo_mind.py</code> | Repository mind indexer |</p>
+<p><strong>Why extracted scripts?</strong> Inline Python in YAML is fragile (YAML parsing issues with colons, quotes, indentation). Extracted scripts can be tested locally, linted, and reused across workflows.</p>
+<p>---</p>
+<h2>No More Roadmap Prompts</h2>
+<p>All dev tasks are compiled, actioned, and archived. The system is self-documenting:</p>
+<ul><li><strong><code>docs/DEVSTUDIO_LANE.md</code></strong> — Complete feature checklist (all code-complete items ✅)</li><li><strong><code>config/roadmap/</code></strong> — Roadmap data committed and archived</li><li><strong><code>docs/archived/global-knowledge/</code></strong> — Old vault content preserved but inactive</li><li><strong>Pipeline handles itself</strong> — Push triggers automation, no manual "update roadmap" needed</li></ul>
+<p><strong>The workflow is now:</strong></p>
+<pre><code>You code → gp (fire-and-forget) → CI handles everything → you get notified via issues/PRs</code></pre>
+<p>---</p>
+<h2>Quick Command Reference</h2>
+<pre><code># Diagnostics
+./skills/dead-path-detector/run.sh          # Scan for duplicates/dead paths
+./skills/surface-audit/run.sh               # Map surface landscape
+./skills/system-doctor/doctor.sh            # Health checks
+./skills/doc-consolidator/run.sh            # Check doc conflicts
+
+# Push (passive — pipeline handles the rest)
+gp                                          # fire-and-forget push to main
+gpl                                         # sync linux-server + push
+gps                                         # check push status
+
+# Surface Management
+./scripts/snackbar-ctl.sh                   # Snackbar surface control
+./skills/surface-repair/run.sh              # Diagnose &amp; repair surfaces
+uwf status                                  # Workflow engine status
+
+# Project Management
+./scripts/devstudio-project.sh checkout &lt;repo&gt;  # Clone to @sandbox
+./scripts/devstudio-project.sh publish &lt;repo&gt;   # Sync sandbox → origin
+
+# Release
+./scripts/release.sh all v1.0.0             # Tag + push all repos
+./scripts/devstudio-app-release.sh patch    # Bump USXD version</code></pre>
+<p>---</p>
+<h2>Key Principles</h2>
+<p>1. <strong>Skills-first</strong> — always check <code>skills/</code> before writing ad-hoc scripts 2. <strong>Dead Path Detector first</strong> — run before any feature work 3. <strong>Vendor over fork</strong> — clone to Vendor/, don't fork unless necessary 4. <strong>Sandbox isolates changes</strong> — origin repos stay clean until publish 5. <strong>USXD is primary</strong> — VS Code is the workshop for building USXD itself</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

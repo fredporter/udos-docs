@@ -1,0 +1,299 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>basic/UCODE1_USER_GUIDE.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / basic/UCODE1_USER_GUIDE.md</span></header><main class="site-main"><p>--- title: "uCode1 User Guide" status: draft last_updated: 2026-06-06T12:00:42+10:00 category: guide tags: [guide, ucode1] description: "- <a href="#part-a-core-udos-commands">Part A: Core uDos Commands</a>" ---</p>
+<h1>uCode1 User Guide</h1>
+<h2>Table of Contents</h2>
+<ul><li><a href="#part-a-core-udos-commands">Part A: Core uDos Commands</a></li><li><a href="#part-b-bbc-basic-command-set-reference">Part B: BBC BASIC Command Set Reference</a></li><li><a href="#part-c-m6502-emulator--game-skit-variables">Part C: m6502 Emulator & Game-Skit Variables</a></li><li><a href="#part-d-teletext--ceefax-integration">Part D: Teletext & Ceefax Integration</a></li><li><a href="#part-e-adventure-game-creator--story-scripting-engine">Part E: Adventure Game Creator & Story Scripting Engine</a></li><li><a href="#part-f-education-program--curriculum">Part F: Education Program & Curriculum</a></li></ul>
+<p>---</p>
+<h2>Part A: Core uDos Commands</h2>
+<p>uCode1 runs on the uDos operating system. These are the core commands available in the uCode1 terminal.</p>
+<h3>System Commands</h3>
+<p>| Command | Description | |---------|-------------| | <code>HELP</code> | Display this help screen | | <code>CLS</code> | Clear the screen | | <code>DATE</code> | Show current date and time | | <code>TIME</code> | Show current time | | <code>VER</code> | Show uCode1 version | | <code>STATUS</code> | Show system status | | <code>MEM</code> | Show memory usage | | <code>DIR</code> | List files in current directory | | <code>CAT</code> | Display file contents | | <code>TYPE</code> | Display file contents (alias for CAT) | | <code>SAVE</code> | Save current program | | <code>LOAD</code> | Load a program | | <code>RUN</code> | Run the current program | | <code>STOP</code> | Stop the current program | | <code>NEW</code> | Clear the current program | | <code>LIST</code> | List the current program lines | | <code>DELETE</code> | Delete a program line | | <code>RENUMBER</code> | Renumber program lines | | <code>BYE</code> | Exit uCode1 |</p>
+<h3>Mode Commands</h3>
+<p>| Command | Description | |---------|-------------| | <code>MODE 0</code> | Teletext/Ceefax mode (40x24, Teletext50 font) | | <code>MODE 1</code> | Terminal mode (40x24, NES/C64 font) | | <code>MODE 2</code> | Grid mode (80x48, small font) | | <code>MODE 3</code> | Split mode (terminal + teletext) | | <code>MODE 4</code> | Adventure mode (full-screen text) | | <code>MODE 5</code> | Education mode (tutorial overlay) | | <code>MODE 6</code> | BBC BASIC mode (full BASIC editor) | | <code>MODE 7</code> | Teletext mode (hardware-accurate) |</p>
+<h3>Teletext Commands</h3>
+<p>| Command | Description | |---------|-------------| | <code>TELETEXT</code> | Enter teletext mode | | <code>PAGE <n></code> | Go to teletext page number | | <code>INDEX</code> | Show teletext index page | | <code>NEWS</code> | Show news pages | | <code>WEATHER</code> | Show weather pages | | <code>SPORTS</code> | Show sports pages | | <code>GUIDE</code> | Show TV guide pages | | <code>SUBTITLE <on/off></code> | Toggle subtitles | | <code>REVEAL</code> | Reveal hidden answers | | <code>HOLD</code> | Hold current page | | <code>MIX</code> | Mix text and graphics |</p>
+<h3>BBC BASIC Commands</h3>
+<p>| Command | Description | |---------|-------------| | <code>BASIC</code> | Enter BBC BASIC mode | | <code>EDIT</code> | Open the BASIC editor | | <code>AUTO</code> | Auto-number lines | | <code>TRACE</code> | Enable line tracing | | <code>TRACE OFF</code> | Disable line tracing | | <code>RENUMBER</code> | Renumber BASIC lines | | <code>OLD</code> | Recover deleted program | | <code>LOAD "file"</code> | Load BASIC program | | <code>SAVE "file"</code> | Save BASIC program | | <code>CHAIN "file"</code> | Load and run BASIC program |</p>
+<h3>Adventure Game Commands</h3>
+<p>| Command | Description | |---------|-------------| | <code>ADVENT</code> | Enter adventure mode | | <code>QUIT</code> | Quit adventure | | <code>SAVE GAME</code> | Save adventure state | | <code>LOAD GAME</code> | Load adventure state | | <code>SCORE</code> | Show adventure score | | <code>INVENTORY</code> | Show inventory | | <code>LOOK</code> | Look around | | <code>EXAMINE <object></code> | Examine an object | | <code>TAKE <object></code> | Take an object | | <code>DROP <object></code> | Drop an object | | <code>GO <direction></code> | Move in a direction | | <code>USE <object></code> | Use an object | | <code>TALK <character></code> | Talk to a character |</p>
+<h3>Education Commands</h3>
+<p>| Command | Description | |---------|-------------| | <code>EDUCATE</code> | Enter education mode | | <code>LESSON <n></code> | Load lesson number | | <code>TUTORIAL</code> | Start tutorial | | <code>QUIZ</code> | Start quiz | | <code>SCORE</code> | Show quiz score | | <code>HELP</code> | Show education help | | <code>NEXT</code> | Next lesson | | <code>BACK</code> | Previous lesson | | <code>REVIEW</code> | Review current lesson |</p>
+<p>---</p>
+<h2>Part B: BBC BASIC Command Set Reference</h2>
+<p>uCode1 includes a BBC BASIC interpreter compatible with the BBC Micro (BBC Model B, Acorn Electron) BASIC II/III command set.</p>
+<h3>Program Control</h3>
+<p>| Command | Syntax | Description | |---------|--------|-------------| | <code>RUN</code> | <code>RUN</code> | Execute the current program | | <code>STOP</code> | <code>STOP</code> | Halt program execution | | <code>END</code> | <code>END</code> | End program execution | | <code>CONT</code> | <code>CONT</code> | Continue after STOP/END | | <code>GOTO</code> | <code>GOTO <line></code> | Jump to line number | | <code>GOSUB</code> | <code>GOSUB <line></code> | Call subroutine | | <code>RETURN</code> | <code>RETURN</code> | Return from subroutine | | <code>FOR</code> | <code>FOR var = start TO end [STEP n]</code> | Start FOR loop | | <code>NEXT</code> | <code>NEXT [var]</code> | End FOR loop | | <code>REPEAT</code> | <code>REPEAT</code> | Start REPEAT loop | | <code>UNTIL</code> | <code>UNTIL <condition></code> | End REPEAT loop | | <code>WHILE</code> | <code>WHILE <condition></code> | Start WHILE loop | | <code>ENDWHILE</code> | <code>ENDWHILE</code> | End WHILE loop | | <code>IF</code> | <code>IF condition THEN ... [ELSE ...]</code> | Conditional | | <code>CASE</code> | <code>CASE var OF WHEN val: ... ENDCASE</code> | Multi-way branch | | <code>ON</code> | <code>ON expr GOTO/GOSUB line1,line2,...</code> | Computed branch | | <code>PROC</code> | <code>PROCname</code> | Call named procedure | | <code>DEF PROC</code> | <code>DEF PROCname</code> | Define procedure | | <code>ENDPROC</code> | <code>ENDPROC</code> | End procedure | | <code>FN</code> | <code>FNname(args)</code> | Call function | | <code>DEF FN</code> | <code>DEF FNname(args)=expr</code> | Define function | | <code>LOCAL</code> | <code>LOCAL var1,var2,...</code> | Declare local variables |</p>
+<h3>Input/Output</h3>
+<p>| Command | Syntax | Description | |---------|--------|-------------| | <code>PRINT</code> | <code>PRINT expr1,expr2,...</code> | Print to screen | | <code>INPUT</code> | <code>INPUT ["prompt"] var</code> | Input from keyboard | | <code>GET</code> | <code>var = GET</code> | Get single character | | <code>GET$</code> | <code>var$ = GET$</code> | Get single character as string | | <code>INKEY</code> | <code>var = INKEY(timeout)</code> | Check keyboard buffer | | <code>INKEY$</code> | <code>var$ = INKEY$(timeout)</code> | Get key with timeout | | <code>PRINT TAB</code> | <code>PRINT TAB(x,y)</code> | Print at position | | <code>PRINT SPC</code> | <code>PRINT SPC(n)</code> | Print n spaces | | <code>PRINT STRING$</code> | <code>PRINT STRING$(n,char)</code> | Print repeated character | | <code>VDU</code> | <code>VDU n1,n2,...</code> | Send to VDU driver | | <code>SOUND</code> | <code>SOUND channel,pitch,duration</code> | Play sound | | <code>ENVELOPE</code> | <code>ENVELOPE n,...</code> | Define sound envelope |</p>
+<h3>Graphics (Teletext Mode 7)</h3>
+<p>| Command | Syntax | Description | |---------|--------|-------------| | <code>COLOUR</code> | <code>COLOUR n</code> | Set text colour (0-7) | | <code>COLOUR 128+n</code> | <code>COLOUR 128+n</code> | Set background colour | | <code>COLOUR 129</code> | <code>COLOUR 129</code> | Flash on | | <code>COLOUR 130</code> | <code>COLOUR 130</code> | Flash off | | <code>COLOUR 131</code> | <code>COLOUR 131</code> | Double height on | | <code>COLOUR 132</code> | <code>COLOUR 132</code> | Double height off | | <code>COLOUR 133</code> | <code>COLOUR 133</code> | Conceal on | | <code>COLOUR 134</code> | <code>COLOUR 134</code> | Conceal off | | <code>COLOUR 135</code> | <code>COLOUR 135</code> | Boxed text on | | <code>COLOUR 136</code> | <code>COLOUR 136</code> | Boxed text off | | <code>CLS</code> | <code>CLS</code> | Clear screen | | <code>CLG</code> | <code>CLG</code> | Clear graphics | | <code>PLOT</code> | <code>PLOT x,y</code> | Plot point | | <code>DRAW</code> | <code>DRAW x,y</code> | Draw line | | <code>MOVE</code> | <code>MOVE x,y</code> | Move cursor | | <code>CIRCLE</code> | <code>CIRCLE x,y,r</code> | Draw circle | | <code>FILL</code> | <code>FILL x,y</code> | Flood fill | | <code>TAB</code> | <code>TAB(x,y)</code> | Position cursor | | <code>PRINT @%</code> | <code>PRINT @%</code> | Print formatted number |</p>
+<h3>String Operations</h3>
+<p>| Function | Syntax | Description | |----------|--------|-------------| | <code>LEFT$</code> | <code>LEFT$(str$,n)</code> | Left n characters | | <code>RIGHT$</code> | <code>RIGHT$(str$,n)</code> | Right n characters | | <code>MID$</code> | <code>MID$(str$,start[,n])</code> | Middle characters | | <code>LEN</code> | <code>LEN(str$)</code> | String length | | <code>STR$</code> | <code>STR$(expr)</code> | Convert to string | | <code>VAL</code> | <code>VAL(str$)</code> | Convert to number | | <code>ASC</code> | <code>ASC(char$)</code> | ASCII value | | <code>CHR$</code> | <code>CHR$(n)</code> | Character from ASCII | | <code>INSTR</code> | <code>INSTR(str$,search$)</code> | Find substring | | <code>STRING$</code> | <code>STRING$(n,char$)</code> | Repeat string | | <code>UPPER$</code> | <code>UPPER$(str$)</code> | Convert to uppercase | | <code>LOWER$</code> | <code>LOWER$(str$)</code> | Convert to lowercase | | <code>STRIP$</code> | <code>STRIP$(str$)</code> | Remove whitespace |</p>
+<h3>Mathematical Functions</h3>
+<p>| Function | Syntax | Description | |----------|--------|-------------| | <code>ABS</code> | <code>ABS(n)</code> | Absolute value | | <code>SGN</code> | <code>SGN(n)</code> | Sign (-1, 0, 1) | | <code>INT</code> | <code>INT(n)</code> | Integer part | | <code>SQR</code> | <code>SQR(n)</code> | Square root | | <code>RND</code> | <code>RND[(n)]</code> | Random number | | <code>SIN</code> | <code>SIN(angle)</code> | Sine (radians) | | <code>COS</code> | <code>COS(angle)</code> | Cosine (radians) | | <code>TAN</code> | <code>TAN(angle)</code> | Tangent (radians) | | <code>ASN</code> | <code>ASN(n)</code> | Arc sine | | <code>ACS</code> | <code>ACS(n)</code> | Arc cosine | | <code>ATN</code> | <code>ATN(n)</code> | Arc tangent | | <code>RAD</code> | <code>RAD(deg)</code> | Degrees to radians | | <code>DEG</code> | <code>DEG(rad)</code> | Radians to degrees | | <code>PI</code> | <code>PI</code> | Value of pi | | <code>LOG</code> | <code>LOG(n)</code> | Natural logarithm | | <code>LOG10</code> | <code>LOG10(n)</code> | Base-10 logarithm | | <code>EXP</code> | <code>EXP(n)</code> | Exponential | | <code>MOD</code> | <code>a MOD b</code> | Modulo | | <code>DIV</code> | <code>a DIV b</code> | Integer division | | <code>MAX</code> | <code>MAX(a,b)</code> | Maximum | | <code>MIN</code> | <code>MIN(a,b)</code> | Minimum | | <code>CLAMP</code> | <code>CLAMP(n,lo,hi)</code> | Clamp value |</p>
+<h3>File Operations</h3>
+<p>| Command | Syntax | Description | |---------|--------|-------------| | <code>OPENIN</code> | <code>ptr = OPENIN("file")</code> | Open for input | | <code>OPENOUT</code> | <code>ptr = OPENOUT("file")</code> | Open for output | | <code>OPENUP</code> | <code>ptr = OPENUP("file")</code> | Open for update | | <code>CLOSE#</code> | <code>CLOSE#ptr</code> | Close file | | <code>INPUT#</code> | <code>INPUT#ptr,var1,...</code> | Read from file | | <code>PRINT#</code> | <code>PRINT#ptr,expr1,...</code> | Write to file | | <code>EOF#</code> | <code>EOF#ptr</code> | End of file test | | <code>EXT#</code> | <code>EXT#ptr</code> | File extent (size) | | <code>PTR#</code> | <code>PTR#ptr</code> | File pointer position | | <code>BPUT#</code> | <code>BPUT#ptr,byte</code> | Write byte | | <code>BGET#</code> | <code>var = BGET#ptr</code> | Read byte | | <code>OSCLI</code> | <code>OSCLI "command"</code> | Execute OS command |</p>
+<h3>Special uCode1 Extensions</h3>
+<p>| Command | Syntax | Description | |---------|--------|-------------| | <code>GRID</code> | <code>GRID x,y,char$</code> | Write to grid cell | | <code>CELL</code> | <code>CELL x,y</code> | Read grid cell | | <code>TELETEXT</code> | <code>TELETEXT page$</code> | Show teletext page | | <code>PAGE</code> | <code>PAGE n</code> | Set teletext page | | <code>ADVENT</code> | <code>ADVENT "story"</code> | Load adventure story | | <code>SPRITE</code> | <code>SPRITE n,data$</code> | Define sprite | | <code>SCROLL</code> | <code>SCROLL dx,dy</code> | Scroll display | | <code>PALETTE</code> | <code>PALETTE n,colour$</code> | Set palette entry | | <code>FONT</code> | <code>FONT name$</code> | Set font | | <code>MODE</code> | <code>MODE n</code> | Set display mode | | <code>SOUND</code> | <code>SOUND ch,pitch,dur</code> | Play sound | | <code>MUSIC</code> | <code>MUSIC "notes"</code> | Play music string | | <code>JOYSTICK</code> | <code>JOYSTICK</code> | Read joystick | | <code>MOUSE</code> | <code>MOUSE</code> | Read mouse position | | <code>TIMER</code> | <code>TIMER</code> | Read system timer | | <code>DELAY</code> | <code>DELAY ms</code> | Delay milliseconds | | <code>EVENT</code> | <code>EVENT n,PROChandler</code> | Set event handler | | <code>ON ERROR</code> | <code>ON ERROR GOTO line</code> | Error handler | | <code>ON ESCAPE</code> | <code>ON ESCAPE GOTO line</code> | Escape handler | | <code>ON TIME</code> | <code>ON TIME PROChandler</code> | Timer event | | <code>ON KEY</code> | <code>ON KEY PROChandler</code> | Key press event |</p>
+<h3>AMOS Sprite & BOB Extensions</h3>
+<p>uCode1 includes an AMOS-to-BBCSDL compatibility shim (<code>core_py/bbc/amos_shim.bbc</code>) that provides Amiga-style sprite, BOB (Blitter Object), collision, and multimedia commands for retro game development.</p>
+<p><strong>Usage:</strong> <code>INSTALL "core_py/bbc/amos_shim.bbc"</code></p>
+<h4>Sprite Commands</h4>
+<p>| Command | Syntax | Description | |---------|--------|-------------| | <code>SPRITE</code> | <code>SPRITE id, x, y, bank</code> | Create or move a hardware sprite (16px, AMOS-style) | | <code>MOVE</code> | <code>MOVE id, x, y, steps</code> | Animate sprite movement over N steps | | <code>AUTOPATH</code> | <code>AUTOPATH id, x, y</code> | Set automatic pathfinding for sprite |</p>
+<h4>BOB Commands (Blitter Objects)</h4>
+<p>| Command | Syntax | Description | |---------|--------|-------------| | <code>BOB</code> | <code>BOB id, x, y, gif_file$</code> | Create a BOB from an animated GIF | | <code>BOB_OFF</code> | <code>BOB_OFF id</code> | Hide a BOB | | <code>BOB_UPDATE</code> | <code>BOB_UPDATE</code> | Update all BOB animations |</p>
+<h4>Collision Detection</h4>
+<p>| Command | Syntax | Description | |---------|--------|-------------| | <code>=COLL</code> | <code>=COLL(id1, id2)</code> | Returns TRUE if two sprites collide | | <code>=ZONE</code> | <code>=ZONE(id, x1, y1, x2, y2)</code> | Returns TRUE if sprite is within zone |</p>
+<h4>Sound & Screen</h4>
+<p>| Command | Syntax | Description | |---------|--------|-------------| | <code>SOUND</code> | <code>SOUND ch, vol, pitch, dur</code> | Play a sound effect | | <code>MUSIC</code> | <code>MUSIC filename$</code> | Play background music | | <code>MUSIC_OFF</code> | <code>MUSIC_OFF</code> | Stop background music | | <code>SCREEN</code> | <code>SCREEN mode</code> | Set screen mode (0=320×256 8-bit, 1=640×512 2-colour, 2=640×512 4-colour, 3=640×512 16-colour, 13=320×256 32-bit) | | <code>WAIT</code> | <code>WAIT frames</code> | Wait for N frames (50Hz = 20ms per frame) |</p>
+<h4>Example</h4>
+<pre><code>10 INSTALL &quot;core_py/bbc/amos_shim.bbc&quot;
+20 MODE 1
+30 SPRITE 1, 100, 50, 1
+40 MOVE 1, 300, 200, 10
+50 IF =COLL(1, 2) THEN PRINT &quot;Hit!&quot;
+60 SOUND 1, 100, 200, 50</code></pre>
+<p>---</p>
+<h2>Part C: m6502 Emulator & Game-Skit Variables</h2>
+<p>uCode1 includes a Python-based m6502 microprocessor emulator that can run 6502 assembly programs and game-skit scripts.</p>
+<h3>m6502 Emulator</h3>
+<p>The m6502 emulator is based on the python-6502-emulator by hspaans (https://github.com/hspaans/python-6502-emulator).</p>
+<p><strong>Features:</strong></p>
+<p>zero-page, indexed, indirect, relative</p>
+<ul><li>Full 6502 instruction set (56 instructions)</li><li>16-bit address bus (64KB address space)</li><li>8-bit data bus</li><li>All registers: A, X, Y, PC, SP, P (status flags)</li><li>All addressing modes: implied, accumulator, immediate, absolute,</li><li>Interrupt handling (IRQ, NMI, RESET)</li><li>Cycle-accurate timing</li></ul>
+<p><strong>Registers:</strong></p>
+<p>| Register | Size | Description | |----------|------|-------------| | A | 8-bit | Accumulator | | X | 8-bit | X index register | | Y | 8-bit | Y index register | | PC | 16-bit | Program counter | | SP | 8-bit | Stack pointer (page 1) | | P | 8-bit | Status flags |</p>
+<p><strong>Status Flags (P register):</strong></p>
+<p>| Bit | Flag | Description | |-----|------|-------------| | 7 | N | Negative | | 6 | V | Overflow | | 5 | - | Unused (always 1) | | 4 | B | Break | | 3 | D | Decimal mode | | 2 | I | Interrupt disable | | 1 | Z | Zero | | 0 | C | Carry |</p>
+<p><strong>Memory Map:</strong></p>
+<p>| Address Range | Description | |---------------|-------------| | $0000-$00FF | Zero page | | $0100-$01FF | Stack | | $0200-$5FFF | RAM | | $6000-$7FFF | I/O space | | $8000-$FFFF | ROM |</p>
+<h3>Game-Skit Variables</h3>
+<p>Game-skit scripts use a set of predefined variables to control game state, player attributes, and world properties.</p>
+<p><strong>Player Variables:</strong></p>
+<p>| Variable | Type | Description | |----------|------|-------------| | <code>PLAYER_NAME</code> | string | Player character name | | <code>PLAYER_HP</code> | integer | Hit points | | <code>PLAYER_MAX_HP</code> | integer | Maximum hit points | | <code>PLAYER_MP</code> | integer | Magic points | | <code>PLAYER_MAX_MP</code> | integer | Maximum magic points | | <code>PLAYER_LEVEL</code> | integer | Experience level | | <code>PLAYER_EXP</code> | integer | Experience points | | <code>PLAYER_GOLD</code> | integer | Gold coins | | <code>PLAYER_STR</code> | integer | Strength | | <code>PLAYER_DEX</code> | integer | Dexterity | | <code>PLAYER_INT</code> | integer | Intelligence | | <code>PLAYER_WIS</code> | integer | Wisdom | | <code>PLAYER_CON</code> | integer | Constitution | | <code>PLAYER_CHA</code> | integer | Charisma | | <code>PLAYER_X</code> | integer | X position on map | | <code>PLAYER_Y</code> | integer | Y position on map | | <code>PLAYER_Z</code> | integer | Z position (floor/dungeon level) | | <code>PLAYER_DIR</code> | string | Facing direction (N/S/E/W) | | <code>PLAYER_WEAPON</code> | string | Equipped weapon | | <code>PLAYER_ARMOR</code> | string | Equipped armor | | <code>PLAYER_SHIELD</code> | string | Equipped shield | | <code>PLAYER_RING</code> | string | Equipped ring | | <code>PLAYER_AMULET</code> | string | Equipped amulet |</p>
+<p><strong>Inventory Variables:</strong></p>
+<p>| Variable | Type | Description | |----------|------|-------------| | <code>INVENTORY</code> | list | Array of item names | | <code>INVENTORY_COUNT</code> | integer | Number of items | | <code>INVENTORY_MAX</code> | integer | Maximum inventory size | | <code>INVENTORY_WEIGHT</code> | integer | Total inventory weight | | <code>INVENTORY_GOLD</code> | integer | Gold in inventory | | <code>EQUIPPED_WEAPON</code> | string | Currently equipped weapon | | <code>EQUIPPED_ARMOR</code> | string | Currently equipped armor | | <code>EQUIPPED_SHIELD</code> | string | Currently equipped shield | | <code>EQUIPPED_RING</code> | string | Currently equipped ring | | <code>EQUIPPED_AMULET</code> | string | Currently equipped amulet |</p>
+<p><strong>World Variables:</strong></p>
+<p>| Variable | Type | Description | |----------|------|-------------| | <code>WORLD_NAME</code> | string | World/area name | | <code>WORLD_TIME</code> | integer | Game time (ticks) | | <code>WORLD_DAY</code> | integer | Game day number | | <code>WORLD_HOUR</code> | integer | Game hour (0-23) | | <code>WORLD_MINUTE</code> | integer | Game minute (0-59) | | <code>WORLD_WEATHER</code> | string | Current weather | | <code>WORLD_TEMPERATURE</code> | integer | Temperature | | <code>WORLD_VISIBILITY</code> | integer | Visibility range | | <code>WORLD_MUSIC</code> | string | Background music | | <code>WORLD_AMBIENT</code> | string | Ambient sound | | <code>MAP_WIDTH</code> | integer | Map width in tiles | | <code>MAP_HEIGHT</code> | integer | Map height in tiles | | <code>MAP_TILES</code> | 2D array | Tile data | | <code>MAP_OBJECTS</code> | 2D array | Object data | | <code>MAP_MOBS</code> | list | Mobile entities |</p>
+<p><strong>Combat Variables:</strong></p>
+<p>| Variable | Type | Description | |----------|------|-------------| | <code>COMBAT_ACTIVE</code> | boolean | Is combat active | | <code>COMBAT_TURN</code> | integer | Current combat turn | | <code>COMBAT_TARGET</code> | string | Current target name | | <code>COMBAT_TARGET_HP</code> | integer | Target hit points | | <code>COMBAT_TARGET_MAX_HP</code> | integer | Target max HP | | <code>COMBAT_DAMAGE</code> | integer | Damage dealt this turn | | <code>COMBAT_DEFENSE</code> | integer | Defense bonus | | <code>COMBAT_ATTACK_BONUS</code> | integer | Attack bonus | | <code>COMBAT_CRITICAL</code> | float | Critical hit chance | | <code>COMBAT_DODGE</code> | float | Dodge chance |</p>
+<p><strong>Quest Variables:</strong></p>
+<p>| Variable | Type | Description | |----------|------|-------------| | <code>QUEST_ACTIVE</code> | string | Current active quest | | <code>QUEST_COMPLETED</code> | list | Completed quests | | <code>QUEST_STEP</code> | integer | Current quest step | | <code>QUEST_OBJECTIVE</code> | string | Current objective | | <code>QUEST_REWARD</code> | string | Quest reward | | <code>QUEST_TIME_LIMIT</code> | integer | Time limit (ticks) | | <code>QUEST_FAILED</code> | boolean | Has quest failed |</p>
+<p><strong>Dialogue Variables:</strong></p>
+<p>| Variable | Type | Description | |----------|------|-------------| | <code>DIALOGUE_NPC</code> | string | Current NPC name | | <code>DIALOGUE_LINE</code> | integer | Current dialogue line | | <code>DIALOGUE_CHOICES</code> | list | Available choices | | <code>DIALOGUE_CHOSEN</code> | integer | Chosen option | | <code>DIALOGUE_FLAGS</code> | dict | Dialogue state flags | | <code>NPC_RELATIONSHIP</code> | integer | NPC relationship (0-100) | | <code>NPC_KNOWN</code> | boolean | Has NPC been met | | <code>NPC_TALKED</code> | integer | Times talked to NPC |</p>
+<p><strong>Flag Variables:</strong></p>
+<p>| Variable | Type | Description | |----------|------|-------------| | <code>FLAG_<name></code> | boolean | Arbitrary game flag | | <code>FLAGS</code> | dict | All game flags | | <code>GLOBAL_FLAGS</code> | dict | Persistent across saves | | <code>CHAPTER</code> | integer | Story chapter | | <code>SCENE</code> | integer | Current scene | | <code>SCORE</code> | integer | Game score | | <code>TURNS</code> | integer | Total turns taken | | <code>DEATHS</code> | integer | Times died | | <code>SAVES</code> | integer | Times saved |</p>
+<p>---</p>
+<h2>Part D: Teletext & Ceefax Integration</h2>
+<p>uCode1 includes a full teletext rendering system based on the BBC Micro Mode 7 teletext standard, powered by the Ceefax container.</p>
+<h3>Teletext Modes</h3>
+<p>| Mode | Description | Font | Resolution | |------|-------------|------|------------| | Mode 0 | Teletext (standard) | Teletext50 | 40x24 | | Mode 7 | Teletext (hardware-accurate) | Teletext50 | 40x24 |</p>
+<h3>Teletext Colour Palette</h3>
+<p>| Code | Colour | Hex | |------|--------|-----| | 0 | Black | #000000 | | 1 | Red | #ff0000 | | 2 | Green | #00ff00 | | 3 | Yellow | #ffff00 | | 4 | Blue | #0000ff | | 5 | Magenta | #ff00ff | | 6 | Cyan | #00ffff | | 7 | White | #ffffff |</p>
+<h3>Teletext Control Codes</h3>
+<p>| Code | Function | |------|----------| | 128-135 | Foreground colours (0-7) | | 136-143 | Background colours (0-7) | | 144 | Flash on | | 145 | Flash off | | 146 | Steady (flash off) | | 147 | End of box | | 148 | Start of box | | 149 | Normal size | | 150 | Double height | | 151 | Double width | | 152 | Double size | | 153 | Conceal on | | 154 | Conceal off | | 155 | Contiguous graphics | | 156 | Separated graphics | | 157 | ESC (escape) | | 158 | Newline | | 159 | Hold graphics |</p>
+<h3>Ceefax Page Structure</h3>
+<p>Each Ceefax page is 24 rows x 40 columns:</p>
+<pre><code>Row 0:   Status line (page number, time, date)
+Row 1:   Header (service name)
+Row 2:   Sub-header
+Row 3-21: Content area (19 rows)
+Row 22:  Footer (navigation hints)
+Row 23:  Status line (subtitle/caption)</code></pre>
+<h3>Page Numbering Convention</h3>
+<p>| Range | Content | |-------|---------| | 100 | Index | | 101-199 | News | | 200-299 | Weather | | 300-399 | Sports | | 400-499 | TV Guide | | 500-599 | uDos System | | 600-699 | BBC BASIC Tutorial | | 700-799 | m6502 Status | | 800-899 | User pages |</p>
+<h3>Ceefax Container</h3>
+<p>The Ceefax service runs as a Docker container:</p>
+<pre><code># Build
+cd ceefax
+docker build -t ceefax:latest .
+
+# Run
+docker run -p 8080:8080 \
+  -v ~/Code/Vendor/ceetex:/vendor/ceetex \
+  ceefax:latest</code></pre>
+<h3>API Endpoints</h3>
+<p>| Method | Path | Description | |--------|------|-------------| | GET | <code>/</code> | Ceefax index (HTML) | | GET | <code>/page/{n}</code> | Get teletext page | | POST | <code>/page/{n}</code> | Set teletext page | | GET | <code>/search?q=</code> | Search pages | | GET | <code>/health</code> | Health check | | WS | <code>/ws</code> | WebSocket updates |</p>
+<h3>Teletext in BBC BASIC</h3>
+<pre><code>10 REM Teletext Demo
+20 MODE 7
+30 COLOUR 2: REM Green text
+40 PRINT TAB(0,0);&quot;CEEFAX 100&quot;
+50 COLOUR 6: REM Cyan
+60 PRINT TAB(0,2);&quot;Welcome to Ceefax&quot;
+70 COLOUR 3: REM Yellow
+80 PRINT TAB(0,4);&quot;Page 100 - Index&quot;
+90 COLOUR 1: REM Red
+100 PRINT TAB(0,6);&quot;101 News&quot;
+110 PRINT TAB(0,7);&quot;200 Weather&quot;
+120 PRINT TAB(0,8);&quot;300 Sports&quot;
+130 GOTO 130</code></pre>
+<p>---</p>
+<h2>Part E: Adventure Game Creator & Story Scripting Engine</h2>
+<p>uCode1 includes a full adventure game creation system with a story scripting engine for text adventures, RPGs, and interactive fiction.</p>
+<h3>Story Script Format</h3>
+<p>Adventure stories are written in a simple scripting language:</p>
+<pre><code>title: &quot;The Lost Crown&quot;
+author: &quot;uDos&quot;
+version: &quot;1.0&quot;
+
+start:
+  location: entrance
+  message: &quot;You stand at the entrance to a dark cave.&quot;
+
+locations:
+  entrance:
+    description: &quot;A cave entrance with vines hanging down.&quot;
+    exits:
+      north: tunnel
+      east: forest_path
+    objects:
+      - torch
+      - rope
+    mobs:
+      - rat
+
+  tunnel:
+    description: &quot;A narrow tunnel lit by glowing moss.&quot;
+    exits:
+      south: entrance
+      east: chamber
+    objects:
+      - key
+    mobs: []
+
+  chamber:
+    description: &quot;A vast chamber with a stone pedestal.&quot;
+    exits:
+      west: tunnel
+    objects:
+      - crown
+    mobs:
+      - guardian
+    condition:
+      require: key
+      message: &quot;The door is locked. You need a key.&quot;
+
+objects:
+  torch:
+    name: &quot;Torch&quot;
+    description: &quot;A wooden torch, unlit.&quot;
+    takeable: true
+    use:
+      action: light
+      result: &quot;The torch bursts into flame, illuminating the area.&quot;
+
+  rope:
+    name: &quot;Rope&quot;
+    description: &quot;A sturdy rope, 10 meters long.&quot;
+    takeable: true
+    use:
+      action: climb
+      result: &quot;You tie the rope securely.&quot;
+
+  key:
+    name: &quot;Rusty Key&quot;
+    description: &quot;An old iron key, covered in rust.&quot;
+    takeable: true
+    use:
+      action: unlock
+      result: &quot;The key fits perfectly!&quot;
+
+  crown:
+    name: &quot;Golden Crown&quot;
+    description: &quot;A magnificent golden crown studded with jewels.&quot;
+    takeable: true
+    use:
+      action: wear
+      result: &quot;You place the crown on your head.&quot;
+    win_condition: true
+
+mobs:
+  rat:
+    name: &quot;Giant Rat&quot;
+    description: &quot;A rat the size of a dog.&quot;
+    hp: 5
+    attack: 2
+    defense: 1
+    loot:
+      - gold: 3
+
+  guardian:
+    name: &quot;Stone Guardian&quot;
+    description: &quot;A towering statue come to life.&quot;
+    hp: 20
+    attack: 5
+    defense: 3
+    loot:
+      - gold: 50
+      - gem
+
+dialogues:
+  merchant:
+    - &quot;Welcome, traveller!&quot;
+    - &quot;I have wares if you have coin.&quot;
+    choices:
+      - text: &quot;What are you selling?&quot;
+        response: &quot;I have potions and scrolls.&quot;
+        action: open_shop
+      - text: &quot;Goodbye.&quot;
+        response: &quot;Safe travels!&quot;
+        action: end_dialogue
+
+events:
+  on_enter_tunnel:
+    - message: &quot;You hear dripping water ahead.&quot;
+    - check: has_torch
+      if_true: &quot;Your torch reveals ancient carvings on the walls.&quot;
+      if_false: &quot;It&#x27;s too dark to see anything.&quot;
+
+  on_take_crown:
+    - message: &quot;As you take the crown, the ground trembles!&quot;
+    - spawn: guardian
+    - set_flag: crown_taken
+
+  on_defeat_guardian:
+    - message: &quot;The guardian crumbles to dust.&quot;
+    - remove: guardian
+    - set_flag: guardian_defeated
+    - give: gem
+
+win_conditions:
+  - has: crown
+    message: &quot;You have found the Golden Crown! You are the true ruler!&quot;</code></pre>
+<h3>Scripting Engine Commands</h3>
+<p>| Command | Description | |---------|-------------| | <code>message: "text"</code> | Display a message | | <code>check: variable</code> | Check a condition | | <code>if_true: "text"</code> | Execute if true | | <code>if_false: "text"</code> | Execute if false | | <code>set_flag: name</code> | Set a game flag | | <code>clear_flag: name</code> | Clear a game flag | | <code>give: item</code> | Give item to player | | <code>take: item</code> | Remove item from player | | <code>spawn: mob</code> | Spawn a monster | | <code>remove: mob</code> | Remove a monster | | <code>heal: amount</code> | Heal the player | | <code>damage: amount</code> | Damage the player | | <code>teleport: location</code> | Teleport player | | <code>play: sound</code> | Play a sound | | <code>music: track</code> | Play background music | | <code>fade: colour</code> | Fade screen to colour | | <code>shake: intensity</code> | Screen shake effect | | <code>wait: seconds</code> | Wait for duration | | <code>choice: options</code> | Present player choice | | <code>random: options</code> | Random outcome | | <code>score: points</code> | Add to score | | <code>save</code> | Auto-save | | <code>end_game</code> | End the game |</p>
+<h3>Adventure Mode Commands</h3>
+<p>| Command | Description | |---------|-------------| | <code>LOOK</code> | Describe current location | | <code>EXAMINE <object></code> | Examine an object | | <code>TAKE <object></code> | Pick up an object | | <code>DROP <object></code> | Drop an object | | <code>USE <object></code> | Use an object | | <code>GO <direction></code> | Move in a direction | | <code>N/S/E/W</code> | Short direction commands | | <code>INVENTORY</code> | Show inventory | | <code>SCORE</code> | Show current score | | <code>SAVE</code> | Save game | | <code>LOAD</code> | Load game | | <code>QUIT</code> | Quit adventure | | <code>HELP</code> | Show adventure help | | <code>TALK <npc></code> | Talk to an NPC | | <code>ATTACK <mob></code> | Attack a monster | | <code>CAST <spell></code> | Cast a spell | | <code>SEARCH</code> | Search area for hidden items | | <code>WAIT</code> | Wait (pass time) | | <code>STATUS</code> | Show player status |</p>
+<p>---</p>
+<h2>Part F: Education Program & Curriculum</h2>
+<p>uCode1 includes an education mode with structured lessons covering programming concepts, computer science, and retro computing.</p>
+<h3>Education Mode</h3>
+<p>Enter education mode with the <code>EDUCATE</code> command or <code>MODE 5</code>.</p>
+<h3>Lesson Structure</h3>
+<p>Each lesson includes:</p>
+<ul><li><strong>Title</strong> and <strong>topic</strong></li><li><strong>Learning objectives</strong></li><li><strong>Explanation</strong> with examples</li><li><strong>Interactive exercises</strong></li><li><strong>Quiz</strong> to test understanding</li><li><strong>Summary</strong> of key points</li></ul>
+<h3>Curriculum Overview</h3>
+<h4>Level 1: Introduction to Programming (Ages 8-12)</h4>
+<p>| Lesson | Topic | Concepts | |--------|-------|----------| | 1.1 | What is a Computer? | Input, output, processing | | 1.2 | Your First Program | PRINT, RUN, LIST | | 1.3 | Numbers and Math | Variables, arithmetic | | 1.4 | Words and Text | Strings, INPUT, PRINT | | 1.5 | Making Decisions | IF, THEN, ELSE | | 1.6 | Loops | FOR, NEXT, REPEAT | | 1.7 | Simple Games | Random numbers, timing | | 1.8 | Drawing with Text | TAB, PRINT formatting | | 1.9 | Sounds and Music | SOUND, ENVELOPE | | 1.10 | Your First Adventure | Simple story game |</p>
+<h4>Level 2: Building Skills (Ages 10-14)</h4>
+<p>| Lesson | Topic | Concepts | |--------|-------|----------| | 2.1 | Procedures | PROC, DEF PROC, ENDPROC | | 2.2 | Functions | FN, DEF FN | | 2.3 | Arrays | DIM, array indexing | | 2.4 | Strings in Depth | LEFT$, RIGHT$, MID$ | | 2.5 | File Handling | SAVE, LOAD, OPEN | | 2.6 | Graphics | PLOT, DRAW, CIRCLE | | 2.7 | Animation | Sprites, movement | | 2.8 | Collision Detection | Hit boxes, boundaries | | 2.9 | Data Structures | Records, lists | | 2.10 | Text Adventures | Location, objects, NPCs |</p>
+<h4>Level 3: Advanced Concepts (Ages 12-16)</h4>
+<p>| Lesson | Topic | Concepts | |--------|-------|----------| | 3.1 | Recursion | Recursive functions | | 3.2 | Sorting Algorithms | Bubble, selection, quick | | 3.3 | Search Algorithms | Linear, binary | | 3.4 | Linked Lists | Dynamic data structures | | 3.5 | Binary Trees | Tree traversal | | 3.6 | State Machines | Game states, transitions | | 3.7 | Event-Driven Programming | ON KEY, ON TIME | | 3.8 | Interrupts | IRQ, NMI handling | | 3.9 | Assembly Language | 6502 opcodes, addressing modes | | 3.10 | Compiler Basics | Tokenisation, parsing |</p>
+<h4>Level 4: Retro Computing (Ages 14-18)</h4>
+<p>| Lesson | Topic | Concepts | |--------|-------|----------| | 4.1 | BBC Micro Architecture | MOS, VDU, memory map | | 4.2 | Teletext Mode 7 | Control codes, colour palette | | 4.3 | 6502 Assembly Programming | Opcodes, registers, flags | | 4.4 | Memory Management | Zero page, stack, heap | | 4.5 | Interrupt Handling | IRQ, NMI, BRK | | 4.6 | Sound Programming | SOUND, ENVELOPE, noise | | 4.7 | Graphics Programming | Mode 7, sprites, animation | | 4.8 | File Systems | DFS, ADFS, disk access | | 4.9 | Networking | Econet, serial, MODEM | | 4.10 | Emulator Construction | CPU, memory, I/O simulation |</p>
+<h3>Quiz System</h3>
+<p>Each lesson includes a quiz with multiple-choice questions:</p>
+<pre><code>10 REM Lesson 1.5 Quiz
+20 MODE 7
+30 COLOUR 3
+40 PRINT TAB(0,2);&quot;Lesson 1.5 Quiz&quot;
+50 PRINT TAB(0,4);&quot;What does IF do?&quot;
+60 PRINT TAB(0,6);&quot;1. Makes a decision&quot;
+70 PRINT TAB(0,7);&quot;2. Prints text&quot;
+80 PRINT TAB(0,8);&quot;3. Loops forever&quot;
+90 INPUT &quot;Answer (1-3): &quot;;A
+100 IF A=1 THEN PRINT &quot;Correct!&quot; ELSE PRINT &quot;Try again&quot;</code></pre>
+<h3>Progress Tracking</h3>
+<p>Education mode tracks:</p>
+<ul><li>Completed lessons</li><li>Quiz scores</li><li>Time spent per lesson</li><li>Concepts mastered</li><li>Areas needing review</li></ul>
+<p>Use <code>SCORE</code> to view progress, <code>REVIEW</code> to revisit weak areas.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

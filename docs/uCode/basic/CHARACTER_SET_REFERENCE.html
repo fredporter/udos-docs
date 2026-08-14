@@ -1,0 +1,142 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>basic/CHARACTER_SET_REFERENCE.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / basic/CHARACTER_SET_REFERENCE.md</span></header><main class="site-main"><p>--- title: "uCode1 Character Set Reference" status: draft last_updated: 2026-04-25T16:27:54+10:00 category: reference tags: [reference, ucode1] description: "uCode1 implements a sophisticated multi-layered character mapping system that combines modern emoji with retro comput..." ---</p>
+<h1>uCode1 Character Set Reference</h1>
+<h2>Overview</h2>
+<p>uCode1 implements a sophisticated multi-layered character mapping system that combines modern emoji with retro computing character sets, providing a rich visual language for documentation, UI elements, and technical communication.</p>
+<h2>Character System Architecture</h2>
+<pre><code>┌───────────────────────────────────────────────────┐
+│               uCode1 Character System              │
+├───────────────────────────────────────────────────┤
+│  Default Layer: C100 (ANSI base)                  │
+│  Emoji Layers:   C101-C356 (256 characters)       │
+│  Teletext:       C400-C499 (block characters)     │
+│  C64 Characters:  C500-C599 (retro computing)      │
+│  Acorn:          C600-C699 (UK heritage)         │
+│  Reserved:       C700-C799 (future expansion)      │
+│  Custom:         C800-C899 (user-defined)        │
+└───────────────────────────────────────────────────┘</code></pre>
+<p><strong>Key Features</strong>:</p>
+<ul><li><strong>Base Layer</strong>: C100 provides ANSI compatibility (C100#0-C100#255)</li><li><strong>Multi-Layer Collections</strong>: Character sets can span multiple C-layers (C101+)</li><li><strong>Character Format</strong>: C-layer#character (e.g., C100#256)</li><li><strong>Max Layer</strong>: C899 for maximum flexibility</li><li><strong>Default Layer</strong>: C100 ensures backward compatibility</li></ul>
+<p><strong>C-Layer Character Format</strong>:</p>
+<ul><li>Format: <code>CXXX#YYY</code> where XXX = layer, YYY = character position</li><li>Example: <code>C100#256</code> = Default layer, character 256</li><li>Example: <code>C245#1</code> = Emoji layer 245, first character</li><li>Last character in layer: <code>C100#256</code> (C100#256 would be last of default layer)</li></ul>
+<h2>Base Character Sets</h2>
+<h3>1. ANSI Character Set (0-127)</h3>
+<p>Standard ASCII characters for maximum compatibility.</p>
+<p><strong>Range</strong>: 0-127 <strong>Usage</strong>: Default fallback, technical documentation <strong>Examples</strong>: <code>A</code>, <code>1</code>, <code>@</code>, <code>[</code>, <code>{</code></p>
+<h3>2. Extended ASCII (128-255)</h3>
+<p>Additional characters for European languages and symbols.</p>
+<p><strong>Range</strong>: 128-255 <strong>Usage</strong>: International text, special symbols <strong>Examples</strong>: <code>é</code>, <code>ü</code>, <code>£</code>, <code>§</code></p>
+<h2>uCode1 Extended Character Map (#100-#356)</h2>
+<h3>Emoji Reference System</h3>
+<p><strong>Format</strong>: <code>:emoji:</code> (CXXX#YYY) <strong>Range</strong>: C101#1-C356#256 (256-character emoji map) <strong>Usage</strong>: Visual emphasis, status indicators, categorization</p>
+<h4>Common Emoji Mappings</h4>
+<p>| Emoji | Code | Position | Usage | |-------|------|----------|------| | <code>:rocket:</code> | <code>C245#1</code> | C245#1 | Launch, startup, deployment | | <code>:computer:</code> | <code>C187#1</code> | C187#1 | Technical, computing, systems | | <code>:book:</code> | <code>C123#1</code> | C123#1 | Documentation, learning, reference | | <code>:lock:</code> | <code>C312#1</code> | C312#1 | Security, privacy, encryption | | <code>:gear:</code> | <code>C287#1</code> | C287#1 | Settings, configuration, options | | <code>:warning:</code> | <code>C345#1</code> | C345#1 | Alerts, warnings, attention | | <code>:check:</code> | <code>C211#1</code> | C211#1 | Success, completion, verification | | <code>:x:</code> | <code>C212#1</code> | C212#1 | Errors, failure, cancellation | | <code>:lightbulb:</code> | <code>C198#1</code> | C198#1 | Ideas, tips, suggestions | | <code>:mag:</code> | <code>C276#1</code> | C276#1 | Search, discovery, exploration | | <code>:wrench:</code> | <code>C301#1</code> | C301#1 | Tools, utilities, maintenance | | <code>:shield:</code> | <code>C322#1</code> | C322#1 | Protection, safety, defense |</p>
+<h3>Emoji Usage Guidelines</h3>
+<p>1. <strong>Consistency</strong>: Use the same emoji for consistent concepts 2. <strong>Moderation</strong>: 1-2 emoji per section maximum 3. <strong>Clarity</strong>: Prefer widely-recognized emoji 4. <strong>Fallbacks</strong>: Provide text alternatives 5. <strong>Documentation</strong>: Reference character positions</p>
+<h2>Teletext Block Characters (C400#1-C499#256)</h2>
+<h3>Format: <code>[CXXX#YYY]</code></h3>
+<p><strong>Usage</strong>: UI elements, borders, layouts, diagrams</p>
+<h3>Common Block Characters</h3>
+<p>| Character | Code | Description | Example | |-----------|------|-------------|---------| | <code>[C400#1]</code> | C400#1 | Solid block | █ | | <code>[C401#1]</code> | C401#1 | Light shade | ░ | | <code>[C402#1]</code> | C402#1 | Medium shade | ▒ | | <code>[C403#1]</code> | C403#1 | Dark shade | ▓ | | <code>[C404#1]</code> | C404#1 | Horizontal line | ━ | | <code>[C405#1]</code> | C405#1 | Vertical line | ┃ | | <code>[C406#1]</code> | C406#1 | Top-left corner | ┏ | | <code>[C407#1]</code> | C407#1 | Top-right corner | ┓ | | <code>[C408#1]</code> | C408#1 | Bottom-left corner | ┗ | | <code>[C409#1]</code> | C409#1 | Bottom-right corner | ┛ | | <code>[C410#1]</code> | C410#1 | T-junction top | ┳ | | <code>[C411#1]</code> | C411#1 | T-junction bottom | ┻ | | <code>[C412#1]</code> | C412#1 | T-junction left | ┣ | | <code>[C413#1]</code> | C413#1 | T-junction right | ┫ | | <code>[C414#1]</code> | C414#1 | Cross junction | ╋ |</p>
+<h3>Teletext UI Examples</h3>
+<pre><code>┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃          uCode1 System Status         ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃  Database: ✅ Online (#211)            ┃
+┃  Commands: 42 Active (#123)            ┃
+┃  Users:    8 Online (#187)            ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛</code></pre>
+<h2>C64 Character Set (C500#1-C599#256)</h2>
+<h3>Format: <code>{C64:CXXX#YYY}</code></h3>
+<p><strong>Usage</strong>: Retro computing, authentic C64 feel, gaming references</p>
+<h3>Common C64 Characters</h3>
+<p>| Character | Code | C64 Code | Description | |-----------|------|----------|-------------| | <code>{C64:C00#1}</code> | C500#1 | 0 | Space | | <code>{C64:C01#1}</code> | C501#1 | 1 | ! | | <code>{C64:C02#1}</code> | C502#1 | 2 | " | | <code>{C64:C65#1}</code> | C565#1 | 65 | A | | <code>{C64:C66#1}</code> | C566#1 | 66 | B | | <code>{C64:C97#1}</code> | C597#1 | 97 | a | | <code>{C64:C128#1}</code> | C628#1 | 128 | Orange A | | <code>{C64:C129#1}</code> | C629#1 | 129 | Orange B | | <code>{C64:C144#1}</code> | C644#1 | 144 | Graphics A | | <code>{C64:C145#1}</code> | C645#1 | 145 | Graphics B |</p>
+<h3>C64 Usage Examples</h3>
+<pre><code>{C64:65}{C64:66}{C64:67} = ABC (Standard)
+{C64:128}{C64:129}{C64:130} = ABC (Orange)
+{C64:144}{C64:145}{C64:146} = ABC (Graphics)</code></pre>
+<h2>Acorn Teletext Character Set (C600#1-C699#256)</h2>
+<h3>Format: <code>{ACN:CXXX#YYY}</code></h3>
+<p><strong>Usage</strong>: UK computing heritage, Teletext services, retro UI</p>
+<h3>Common Acorn Characters</h3>
+<p>| Character | Code | Acorn Code | Description | |-----------|------|------------|-------------| | <code>{ACN:C00#1}</code> | C600#1 | 0 | Space | | <code>{ACN:C32#1}</code> | C632#1 | 32 | £ (Pound sign) | | <code>{ACN:C64#1}</code> | C664#1 | 64 | @ | | <code>{ACN:C96#1}</code> | C696#1 | 96 | Graphics block | | <code>{ACN:C128#1}</code> | C728#1 | 128 | Contiguous graphics | | <code>{ACN:C160#1}</code> | C760#1 | 160 | Separated graphics |</p>
+<h2>Character System Integration</h2>
+<h3>Markdown Usage Examples</h3>
+<pre><code># System Status :rocket: (#245)
+
+## Database Connection ✅ (#211)
+- Status: Online
+- Response time: 12ms
+
+## Command Processing :gear: (#287)
+- Active commands: 42
+- Queue depth: 3
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  Performance Metrics  ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃  CPU:   12% [#404]    ┃
+┃  Memory: 64% [#402]    ┃
+┃  Disk:   28% [#401]    ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━┛</code></pre>
+<h2>Implementation Guidelines</h2>
+<h3>1. Character Selection</h3>
+<p><strong>Priority Order</strong>: 1. Standard ANSI (for compatibility) 2. Emoji (:emoji: format) 3. Teletext blocks ([#XXX]) 4. C64 characters ({C64:XX}) 5. Acorn characters ({ACN:XX})</p>
+<h3>2. Fallback Strategy</h3>
+<pre><code># Success ✅ :check: (#211)
+# (Fallback: Success [OK])</code></pre>
+<h3>3. Documentation Standards</h3>
+<ul><li><strong>Technical Docs</strong>: Prefer ANSI + limited emoji</li><li><strong>UI Elements</strong>: Use Teletext blocks</li><li><strong>Retro Content</strong>: Use C64/Acorn characters</li><li><strong>Status Indicators</strong>: Use emoji with references</li></ul>
+<h3>4. Character Map Reference</h3>
+<p>Always include character references in documentation:</p>
+<pre><code>**Status Indicators**:
+- ✅ Success :check: (#211)
+- ❌ Error :x: (#212)
+- ⚠️ Warning :warning: (#345)</code></pre>
+<h2>Character System Tools</h2>
+<h3>Character Map Lookup</h3>
+<pre><code># Lookup character position
+ucode1 char lookup :rocket:
+# Result: :rocket: = #245
+
+# Display character
+ucode1 char show #245
+# Result: ✅ :rocket:
+
+# List character range
+ucode1 char list #200-#250</code></pre>
+<h3>Character Testing</h3>
+<pre><code># Test character rendering
+ucode1 char test :rocket: [#256] {C64:65}
+
+# Validate character set
+ucode1 char validate</code></pre>
+<h2>Best Practices</h2>
+<h3>1. Consistency</h3>
+<ul><li>Use same characters for same concepts</li><li>Document character choices</li><li>Maintain character reference guide</li></ul>
+<h3>2. Accessibility</h3>
+<ul><li>Provide text alternatives</li><li>Ensure sufficient contrast</li><li>Test with different terminals</li></ul>
+<h3>3. Performance</h3>
+<ul><li>Limit special character usage</li><li>Cache frequently used characters</li><li>Prefer standard characters for speed</li></ul>
+<h3>4. Internationalization</h3>
+<ul><li>Use Unicode-compatible characters</li><li>Provide locale-specific alternatives</li><li>Test with different character encodings</li></ul>
+<h2>Character System Reference</h2>
+<h3>Quick Reference Table</h3>
+<p>| Category | Format | Range | Usage | |----------|--------|-------|-------| | ANSI | Direct | C100#0-C100#255 | Default fallback | | Extended ASCII | Direct | C100#128-C100#255 | International text | | Emoji | <code>:emoji:</code> | C101#1-C356#256 | Visual emphasis | | Teletext Blocks | <code>[CXXX#YYY]</code> | C400#1-C499#256 | UI elements | | C64 Characters | <code>{C64:CXXX#YYY}</code> | C500#1-C599#256 | Retro computing | | Acorn Characters | <code>{ACN:CXXX#YYY}</code> | C600#1-C699#256 | UK heritage |</p>
+<h3>Character Position Reference</h3>
+<pre><code>C100#0-C100#255: Default Layer (ANSI base)
+C101#1-C356#256: Emoji Layers (256 characters)
+C400#1-C499#256: Teletext Block Characters
+C500#1-C599#256: C64 Character Set
+C600#1-C699#256: Acorn Teletext Set  
+C700#1-C799#256: Reserved for future expansion
+C800#1-C899#256: Custom/user-defined layers</code></pre>
+<p><strong>C-Layer Character Format Examples</strong>:</p>
+<ul><li><code>C100#256</code> = Default layer, last character (C100#256 would be last of default layer)</li><li><code>C245#1</code> = Emoji layer 245, first character (:rocket:)</li><li><code>C404#1</code> = Teletext horizontal line (━)</li><li><code>C565#1</code> = C64 character 'A'</li><li><code>C632#1</code> = Acorn pound sign (£)</li></ul>
+<h2>Future Development</h2>
+<h3>Planned Enhancements</h3>
+<p>1. <strong>Character Map Editor</strong>: Visual character selection tool 2. <strong>Theme Support</strong>: Different character sets per theme 3. <strong>Custom Mappings</strong>: User-defined character associations 4. <strong>Performance Optimization</strong>: Character rendering cache 5. <strong>Accessibility Features</strong>: Screen reader compatibility</p>
+<h3>Roadmap</h3>
+<ul><li><strong>v1.1</strong>: Character map visualization tool</li><li><strong>v1.2</strong>: Theme-based character set switching</li><li><strong>v1.3</strong>: User-customizable character mappings</li><li><strong>v1.4</strong>: Advanced accessibility features</li></ul>
+<p>---</p>
+<p>© 2024 uCode1 Team. All rights reserved.</p>
+<p><strong>Character System Version</strong>: 1.0 <strong>Last Updated</strong>: 2024-04-25 <strong>Reference</strong>: uCode1/CHARACTER_SET_REFERENCE.md</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

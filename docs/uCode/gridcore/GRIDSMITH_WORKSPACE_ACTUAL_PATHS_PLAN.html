@@ -1,0 +1,169 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>gridcore/GRIDSMITH_WORKSPACE_ACTUAL_PATHS_PLAN.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / gridcore/GRIDSMITH_WORKSPACE_ACTUAL_PATHS_PLAN.md</span></header><main class="site-main"><h1>GridSmith Workspace Plan — Actual Paths and Source Alignment</h1>
+<p>Date: 2026-06-23 Status: Recommended pathway normalized to real local repos Purpose: Update the GridSmith workspace and agent specification so it matches the current machine layout, current uCode/uCore package state, and archived source material.</p>
+<h2>Summary</h2>
+<p>The provided GridSmith spec is directionally correct, but some paths and assumptions need to be grounded in the current local environment.</p>
+<p>The real source-of-truth layout on this machine is:</p>
+<ul><li>uCore: /Users/fredbook/Code/uCore</li><li>uCode monorepo: /Users/fredbook/Code/uCode</li><li>archived uCode1 snapshot: /Users/fredbook/Code/ARCHIVED/uCode1-2026-06-21</li><li>archived uCode2 snapshot: /Users/fredbook/Code/ARCHIVED/uCode2-2026-06-21</li></ul>
+<p>The GridCore and viewport packages already exist inside the live uCode monorepo, so GridSmith should be planned as a new agent/workspace layer on top of those packages rather than as a fresh external stack.</p>
+<h2>Actual Local Repo and Package Map</h2>
+<h3>Live Repos</h3>
+<ul><li>uCore root: /Users/fredbook/Code/uCore</li><li>uCode root: /Users/fredbook/Code/uCode</li></ul>
+<h3>Existing uCode package layout</h3>
+<ul><li>GridCore package: /Users/fredbook/Code/uCode/packages/gridcore</li><li>Viewport renderer package: /Users/fredbook/Code/uCode/packages/viewport-renderer</li><li>BASIC runtime: /Users/fredbook/Code/uCode/runtimes/basic</li><li>AMOS runtime: /Users/fredbook/Code/uCode/runtimes/amos</li><li>Existing workspace file: /Users/fredbook/Code/uCode/ucode.code-workspace</li></ul>
+<h3>Archived reference repos</h3>
+<ul><li>uCode1 archive: /Users/fredbook/Code/ARCHIVED/uCode1-2026-06-21</li><li>uCode2 archive: /Users/fredbook/Code/ARCHIVED/uCode2-2026-06-21</li></ul>
+<h2>Source-of-Truth Documents to Carry Forward</h2>
+<h3>Current live docs</h3>
+<ul><li>uCore extraction brief: /Users/fredbook/Code/uCore/docs/GRIDUI_GRIDCORE_EXTRACTION_PLAN.md</li><li>uCode package collation: /Users/fredbook/Code/uCode/docs/GRID_ALGEBRA_RELEASE_COLLATION.md</li></ul>
+<p>These two documents establish the current migration direction:</p>
+<ul><li>GridUI remains a thin wrapper surface in uCore.</li><li>reusable algebra belongs in @udos/gridcore.</li><li>reusable rendering belongs in @udos/viewport-renderer.</li></ul>
+<h3>Archived docs that matter for GridSmith</h3>
+<p>From archived uCode1:</p>
+<ul><li>foundation README: /Users/fredbook/Code/ARCHIVED/uCode1-2026-06-21/README.md</li><li>spatial character integration: /Users/fredbook/Code/ARCHIVED/uCode1-2026-06-21/docs/SPATIAL_CHARACTER_INTEGRATION.md</li><li>sprite/object reference: /Users/fredbook/Code/ARCHIVED/uCode1-2026-06-21/docs/SPRITE_OBJECT_REFERENCE.md</li></ul>
+<p>These archived docs add important domain rules the new plan should inherit:</p>
+<ul><li>uCode1 owned the grid/cell coordinate system and teletext rendering model.</li><li>coordinate format was already formalized as <code>L{level}-{gridXY}-{cellXY}-{layer}</code>.</li><li>sprite and object semantics were already specified and should inform world/entity layer design.</li><li>spatial anchoring and character metadata were already conceived as cell-attached data, not separate UI-only concepts.</li></ul>
+<p>From archived uCode2:</p>
+<ul><li>README: /Users/fredbook/Code/ARCHIVED/uCode2-2026-06-21/README.md</li></ul>
+<p>This confirms uCode2 is not the primary source for GridSmith world-building behavior. GridSmith should inherit runtime/grid semantics mostly from uCode1, and package architecture from current uCode/uCore.</p>
+<h2>Corrected Path Plan</h2>
+<h3>Agent location</h3>
+<p>Recommended live location:</p>
+<ul><li>/Users/fredbook/Code/uCode/agents/gridsmith</li></ul>
+<p>This directory does not currently exist, but it should live inside the existing uCode monorepo rather than under a separate <code>uDosGo</code> folder.</p>
+<h3>Workspace root</h3>
+<p>Recommended live location:</p>
+<ul><li>/Users/fredbook/Code/uCode/workspaces/gridcore</li></ul>
+<p>This directory does not currently exist, but it fits the current monorepo layout and keeps world assets adjacent to runtimes and packages.</p>
+<h3>Dedicated VS Code workspace file</h3>
+<p>Recommended new file:</p>
+<ul><li>/Users/fredbook/Code/uCode/gridsmith.code-workspace</li></ul>
+<p>Reason:</p>
+<ul><li><code>/Users/fredbook/Code/uCode/ucode.code-workspace</code> already exists and is broad.</li><li>GridSmith benefits from a narrower workspace focused on world-building, grid packages, relevant runtimes, and uCore integration.</li></ul>
+<h2>Corrected Workspace Structure</h2>
+<p>Planned structure under the live uCode monorepo:</p>
+<pre><code>/Users/fredbook/Code/uCode/
+  agents/
+    gridsmith/
+      package.json
+      tsconfig.json
+      src/
+      tools/
+      prompts/
+      tests/
+      README.md
+
+  workspaces/
+    gridcore/
+      worlds/
+        earth/
+        dungeons/
+        vaults/
+        libraries/
+      grids/
+        templates/
+        exports/
+        imports/
+      layers/
+        terrain/
+        details/
+        foreground/
+        lighting/
+        collision/
+        entities/
+      fonts/
+        imported/
+        generated/
+        sprites/
+      maps/
+        region/
+        city/
+        dungeon/
+      scripts/
+        basic/
+        amos/
+        generated/</code></pre>
+<h2>Corrected Dependency Story</h2>
+<p>GridSmith should depend on what already exists locally:</p>
+<ul><li>@udos/gridcore from /Users/fredbook/Code/uCode/packages/gridcore</li><li>@udos/viewport-renderer from /Users/fredbook/Code/uCode/packages/viewport-renderer</li><li>BASIC runtime code from /Users/fredbook/Code/uCode/runtimes/basic</li><li>AMOS runtime code from /Users/fredbook/Code/uCode/runtimes/amos</li><li>uCore API from /Users/fredbook/Code/uCore/backend</li></ul>
+<p>It should not be planned as a greenfield stack that installs external <code>@udos/gridcore</code> packages first. The live local workspace packages are the development source.</p>
+<h2>Design Inheritance Rules</h2>
+<h3>Inherit from archived uCode1</h3>
+<p>GridSmith should treat archived uCode1 as the semantic ancestor for:</p>
+<ul><li>cell and grid hierarchy</li><li>uCode coordinate conventions</li><li>teletext and character-grid worldview</li><li>sprite/object entity semantics</li><li>map and grid CLI language</li></ul>
+<p>Specifically, the following concepts should be preserved:</p>
+<ul><li>24x24 cell assumption unless current gridcore has intentionally superseded it</li><li>layered coordinate format with explicit layer suffix</li><li>maps/worlds as compositions of grids and layers</li><li>entity data modeled as cell-attached metadata for sprites and objects</li></ul>
+<h3>Inherit from current uCore/uCode docs</h3>
+<p>GridSmith should treat current live docs as the architectural source for:</p>
+<ul><li>package ownership boundaries</li><li>extraction strategy from GridUI to packages</li><li>renderer separation from algebra</li><li>wrapper-only GridUI direction inside uCore</li></ul>
+<h2>Corrected Architecture Statement</h2>
+<p>GridSmith is not a replacement for GridCore or GridUI.</p>
+<p>GridSmith should be defined as:</p>
+<ul><li>a contained world-building agent inside the live uCode monorepo</li><li>using live <code>@udos/gridcore</code> for algebra and coordinate transforms</li><li>using live <code>@udos/viewport-renderer</code> for DOM/canvas rendering support</li><li>using uCore as the API and MCP exposure layer</li><li>using archived uCode1 docs as semantic inheritance for grid, teletext, sprite, and spatial concepts</li></ul>
+<h2>Recommended Implementation Order</h2>
+<h3>Phase 0: Reality alignment</h3>
+<p>Before coding GridSmith behavior:</p>
+<p>1. create <code>agents/gridsmith</code> inside live uCode 2. create <code>workspaces/gridcore</code> inside live uCode 3. create a dedicated <code>gridsmith.code-workspace</code> 4. document the live-path plan and inherited source docs</p>
+<h3>Phase 1: Thin agent scaffold</h3>
+<p>Inside <code>/Users/fredbook/Code/uCode/agents/gridsmith</code>:</p>
+<ul><li>package.json</li><li>tsconfig.json</li><li>src/index.ts</li><li>src/cli.ts</li><li>src/tools/*.ts</li><li>README.md</li></ul>
+<p>Initial scope:</p>
+<ul><li>no new algebra implementation</li><li>no duplicated renderer implementation</li><li>consume <code>@udos/gridcore</code> and <code>@udos/viewport-renderer</code></li></ul>
+<h3>Phase 2: World and asset workspace</h3>
+<p>Inside <code>/Users/fredbook/Code/uCode/workspaces/gridcore</code>:</p>
+<ul><li>create world/grids/layers/fonts/maps/scripts directories</li><li>define canonical file formats for grid exports, layers, and world manifests</li><li>add sample fixtures for one BASIC-derived world and one generated dungeon</li></ul>
+<h3>Phase 3: Runtime bridge</h3>
+<p>Bridge GridSmith to live runtimes:</p>
+<ul><li>BASIC importer from <code>runtimes/basic</code></li><li>AMOS importer from <code>runtimes/amos</code></li><li>initial mapping layer from program constructs to grid/layer/world artifacts</li></ul>
+<h3>Phase 4: uCore integration</h3>
+<p>Expose GridSmith through uCore via:</p>
+<ul><li>MCP tools</li><li>REST endpoints</li><li>optional Developer or uCode surface integration</li></ul>
+<h3>Phase 5: UI integration</h3>
+<p>Connect outputs into:</p>
+<ul><li>uCore GridUI wrapper surface</li><li>uCode-focused workspace UI</li><li>AssistUI or Developer surface controls where useful</li></ul>
+<h2>Corrected Workspace File Recommendation</h2>
+<p>Instead of the draft path:</p>
+<ul><li><code>~/Code/uDosGo/GridSmith.code-workspace</code></li></ul>
+<p>Use:</p>
+<ul><li><code>/Users/fredbook/Code/uCode/gridsmith.code-workspace</code></li></ul>
+<p>Recommended folder set:</p>
+<pre><code>{
+  &quot;folders&quot;: [
+    { &quot;path&quot;: &quot;/Users/fredbook/Code/uCode&quot;, &quot;name&quot;: &quot;uCode&quot; },
+    { &quot;path&quot;: &quot;/Users/fredbook/Code/uCode/agents/gridsmith&quot;, &quot;name&quot;: &quot;GridSmith&quot; },
+    { &quot;path&quot;: &quot;/Users/fredbook/Code/uCode/workspaces/gridcore&quot;, &quot;name&quot;: &quot;GridCore Workspace&quot; },
+    { &quot;path&quot;: &quot;/Users/fredbook/Code/uCode/packages/gridcore&quot;, &quot;name&quot;: &quot;@udos/gridcore&quot; },
+    { &quot;path&quot;: &quot;/Users/fredbook/Code/uCode/packages/viewport-renderer&quot;, &quot;name&quot;: &quot;@udos/viewport-renderer&quot; },
+    { &quot;path&quot;: &quot;/Users/fredbook/Code/uCode/runtimes/basic&quot;, &quot;name&quot;: &quot;BASIC Runtime&quot; },
+    { &quot;path&quot;: &quot;/Users/fredbook/Code/uCode/runtimes/amos&quot;, &quot;name&quot;: &quot;AMOS Runtime&quot; },
+    { &quot;path&quot;: &quot;/Users/fredbook/Code/uCore&quot;, &quot;name&quot;: &quot;uCore&quot; }
+  ]
+}</code></pre>
+<h2>Important Corrections to the Draft Spec</h2>
+<h3>Replace these draft assumptions</h3>
+<p>Draft assumption:</p>
+<ul><li><code>~/Code/uDosGo/uCode/agents/gridsmith/</code></li></ul>
+<p>Correct local path:</p>
+<ul><li><code>/Users/fredbook/Code/uCode/agents/gridsmith</code></li></ul>
+<p>Draft assumption:</p>
+<ul><li><code>~/Code/uDosGo/uCode/workspaces/gridcore/</code></li></ul>
+<p>Correct local path:</p>
+<ul><li><code>/Users/fredbook/Code/uCode/workspaces/gridcore</code></li></ul>
+<p>Draft assumption:</p>
+<ul><li><code>~/Code/uDosGo/GridSmith.code-workspace</code></li></ul>
+<p>Correct local path:</p>
+<ul><li><code>/Users/fredbook/Code/uCode/gridsmith.code-workspace</code></li></ul>
+<p>Draft assumption:</p>
+<ul><li>fresh dependency install from package registry first</li></ul>
+<p>Correct local development approach:</p>
+<ul><li>consume live monorepo packages in <code>/Users/fredbook/Code/uCode/packages/*</code></li></ul>
+<p>Draft assumption:</p>
+<ul><li>GridSmith behavior can be designed from current package stubs alone</li></ul>
+<p>Correction:</p>
+<ul><li>inherit semantic rules from archived uCode1 docs plus current extraction/collation docs</li></ul>
+<h2>Gaps Still Open</h2>
+<p>These are not blockers for planning, but should be explicit:</p>
+<p>1. Current <code>@udos/gridcore</code> is still a scaffold and not yet full parity with all old GridUI/uCode1 transforms. 2. Current <code>@udos/viewport-renderer</code> is scaffolded but not yet a hardened end-state renderer. 3. No separate archived GridUI repo was found in <code>/Users/fredbook/Code/ARCHIVED</code>; current uCore GridUI plus extraction docs remain the live source. 4. BASIC and AMOS importer mapping rules still need implementation-level decisions beyond the high-level draft.</p>
+<h2>Recommended Next Action</h2>
+<p>The next practical step is not more planning. It is:</p>
+<p>1. scaffold <code>/Users/fredbook/Code/uCode/agents/gridsmith</code> 2. scaffold <code>/Users/fredbook/Code/uCode/workspaces/gridcore</code> 3. create <code>/Users/fredbook/Code/uCode/gridsmith.code-workspace</code> 4. seed the scaffold with a minimal CLI and placeholder tool contracts that consume the live <code>gridcore</code> and <code>viewport-renderer</code> packages</p>
+<p>That keeps the build aligned with the current machine and preserves the archived semantics without pretending the package migration is already complete.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

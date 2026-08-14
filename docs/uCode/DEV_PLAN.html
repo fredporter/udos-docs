@@ -1,0 +1,129 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DEV_PLAN.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / DEV_PLAN.md</span></header><main class="site-main"><h1>uCode Development Plan — JetBrains + Ollama Local-First</h1>
+<blockquote><strong>Goal:</strong> Productive uCode development using PyCharm + JetBrains AI with</blockquote>
+<blockquote>Ollama as the primary (free, local) AI provider and OpenRouter as a paid</blockquote>
+<blockquote>fallback only when needed.</blockquote>
+<p>---</p>
+<h2>1. Daily Dev Flow</h2>
+<h3>Morning Start</h3>
+<pre><code># 1. Start Ollama (if not auto-started by PyCharm)
+ollama serve &amp;
+
+# 2. Pull models if first time
+ollama pull qwen2.5-coder:3b
+ollama pull qwen2.5-coder:7b
+
+# 3. Open PyCharm with uCode project
+open -a &quot;PyCharm&quot; /Users/fredbook/Code/uCode
+
+# 4. Activate Python environment
+source .venv/bin/activate</code></pre>
+<h3>During Development</h3>
+<pre><code>1. Edit code in PyCharm
+2. Use JetBrains AI Chat (Cmd+Shift+I) — routes to Ollama via local endpoint
+3. Run build:    PyCharm Run Config → &quot;uCode: build&quot;
+4. Run tests:    PyCharm Run Config → &quot;uCode: test&quot;
+5. Git commit:  JetBrains AI generates commit messages via Ollama</code></pre>
+<h3>End of Day</h3>
+<pre><code># Self-check before commit
+./scripts/setup-ai-integration.sh config
+
+# Or use PyCharm Run Config → &quot;uCode: self-check&quot;</code></pre>
+<p>---</p>
+<h2>2. Package Development Order</h2>
+<h3>Phase 1: Core Stability (COMPLETE)</h3>
+<pre><code>Priority: gridcore → viewport-renderer → gridsmith</code></pre>
+<p>| Package                   | Task                                           | Check                                                 | | ------------------------- | ---------------------------------------------- | ----------------------------------------------------- | | <code>@udos/gridcore</code>          | Maintain grid algebra purity                   | <code>npm run -ws test</code> from <code>packages/gridcore</code>           | | <code>@udos/viewport-renderer</code> | Export TerminalWidget + TeletextWidget cleanly | <code>npm run -ws build</code> from <code>packages/viewport-renderer</code> | | <code>@udos/gridsmith</code>         | Flesh out CLI/MCP tools (16 tools, 75 tests)   | <code>node agents/gridsmith/dist/cli.js --help</code>            |</p>
+<h3>Phase 2: Runtime Packaging</h3>
+<pre><code>Priority: basic runtime → amos runtime → shared</code></pre>
+<p>| Runtime          | Task                             | Check                                                        | Status (2026-07-08 audit)                                                                     | | ---------------- | -------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | | <code>runtimes/basic</code> | Fix Python 3.14 dataclass compat | <code>pip install -e runtimes/basic && python -c "import ucode1"</code> | Complete in isolated venv (<code>.venv-amos-check</code>) after dataclass cleanup and split-import fixes | | <code>runtimes/amos</code>  | Verify editable install          | <code>pip install -e runtimes/amos && python -c "import ucode2"</code>  | Complete in isolated venv (<code>.venv-amos-check</code>)                                                | | <code>shared/</code>        | Extract common runtime support   | Review existing cross-references                             | Pending                                                                                       |</p>
+<h3>Phase 3: Integration (COMPLETE)</h3>
+<pre><code>uCode packages → GridSmith MCP → uCore consumption</code></pre>
+<ul><li>GridSmith CLI works standalone (16 tools)</li><li>GridSmith MCP tools registered with uCore (JSON-RPC on port 8670)</li><li>uCore can import <code>@udos/viewport-renderer</code> widgets</li><li>LENS program registry wired (Repton + Elite + NetHack + Eamon)</li></ul>
+<h3>Phase 4: Program Adaptation (sprint.2026-07-10)</h3>
+<pre><code>Priority: Repton → Elite → Apple Panic → NetHack → uConstruct → Eamon → Knight Orc</code></pre>
+<p>| Program     | Pipeline | BBC BASIC | Status                                                     | | ----------- | :------: | :-------: | ---------------------------------------------------------- | | Repton      |   Full   | 275 lines | Enemy patrol AI, traps, and Reptol logic implemented       | | Elite       |   Full   | 287 lines | NPC ship movement/combat and galaxy navigation implemented | | Apple Panic |   GDD    | 281 lines | Digging/trapping mechanics                                 | | NetHack     | Research | 52 lines  | Research + skeleton + LENS extractor implemented           | | uConstruct  | Scaffold | 49 lines  | Scaffold complete; tile editor still design-phase          | | Eamon       | Research | 63 lines  | Research + skeleton + LENS extractor implemented           | | Knight Orc  |   GDD    | 64 lines  | Text adventure skeleton                                    |</p>
+<h3>Phase 5: Viewport Demo and Runtime Testing (sprint.2026-07-10)</h3>
+<p>| Task                           | File                                                                                      | Status                                                                                | | ------------------------------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | | TerminalWidget dispatch demo   | <code>packages/viewport-renderer/demo/index.html</code>                                              | Complete                                                                              | | TeletextWidget CEEFAX loader   | <code>packages/viewport-renderer/demo/index.html</code>                                              | Complete                                                                              | | Mock emulator for LENS testing | <code>runtimes/basic/tests/test_lens_capture.py</code>                                               | Complete                                                                              | | End-to-end LENS CAPTURE test   | <code>runtimes/basic/tests/test_lens_capture.py</code> + <code>runtimes/basic/bridge/gridcore_adapter.py</code> | Complete (runtime extractor import wiring and capture paths validated; 18 tests pass) |</p>
+<h3>Phase 6: Learning Resources and Documentation (sprint.2026-07-10)</h3>
+<p>| Task                                 | File                             | Status   | | ------------------------------------ | -------------------------------- | -------- | | Skills Framework tutorial            | <code>docs/learning-pathway/</code>         | Complete | | Program archive / library registry   | <code>programs/README.md</code>             | Complete | | DEV_PLAN.md update (phases 4-6)      | <code>docs/DEV_PLAN.md</code>               | Complete | | 6 Skills Framework skills documented | <code>docs/specs/SKILLS_FRAMEWORK.md</code> | Complete |</p>
+<p>---</p>
+<h2>3. JetBrains AI Assistant Workflow</h2>
+<h3>Configured Providers (in order)</h3>
+<p>| Provider             | Endpoint                    | Model                        | Cost    | When                | | -------------------- | --------------------------- | ---------------------------- | ------- | ------------------- | | <strong>Ollama (Primary)</strong> | <code>http://localhost:11434/v1</code> | <code>qwen2.5-coder:3b</code>           | Free    | All daily work      | | <strong>Ollama (Upgrade)</strong> | <code>http://localhost:11434/v1</code> | <code>qwen2.5-coder:7b</code>           | Free    | Complex reasoning   | | <strong>OpenRouter</strong>       | openrouter.ai               | <code>qwen/qwen3.6-27b</code>           | $0.02/M | When Ollama offline | | <strong>OpenRouter</strong>       | openrouter.ai               | <code>deepseek/deepseek-v4-flash</code> | $0.05/M | Premium fallback    |</p>
+<h3>JetBrains AI Skills Usage</h3>
+<p>| Skill              | How to invoke                      | Model              | | ------------------ | ---------------------------------- | ------------------ | | Code completion    | Auto (typing)                      | <code>qwen2.5-coder:3b</code> | | Chat (Cmd+Shift+I) | Manual                             | <code>qwen2.5-coder:3b</code> | | Code review        | Right-click → AI Actions → Review  | <code>qwen2.5-coder:7b</code> | | Generate tests     | Right-click → Generate → Tests     | <code>qwen2.5-coder:3b</code> | | Generate docs      | Alt+Enter → Generate Documentation | <code>qwen2.5-coder:3b</code> | | Commit message     | VCS Commit → Generate Message      | <code>qwen2.5-coder:3b</code> | | Explain code       | Select code → AI Actions → Explain | <code>qwen2.5-coder:3b</code> | | Find problems      | Code → Analyze → AI Inspection     | <code>qwen2.5-coder:7b</code> |</p>
+<h3>Switching Models in PyCharm</h3>
+<p>1. <strong>AI Chat</strong>: Click model name in chat input → select from dropdown 2. <strong>Default</strong>: Settings → Tools → AI Assistant → Model 3. <strong>Per-skill</strong>: Settings → Tools → AI Assistant → Skills → select skill → set model</p>
+<p>---</p>
+<h2>4. Ollama Local Maximiser Strategy</h2>
+<h3>Model Selection Guide</h3>
+<p>| RAM   | Recommended Model   | Use Case                     | Quality | | ----- | ------------------- | ---------------------------- | ------- | | 8GB+  | <code>qwen2.5-coder:3b</code>  | Daily driver — fast code gen | Good    | | 16GB+ | <code>qwen2.5-coder:7b</code>  | Complex reasoning            | Better  | | 24GB+ | <code>qwen2.5-coder:14b</code> | Architecture, deep analysis  | Best    | | Any   | <code>llama3.2:3b</code>       | Lightweight alternative      | Good    |</p>
+<h3>Keep Costs at $0</h3>
+<pre><code># Set Ollama as default everywhere
+export HIVE_DEFAULT_PROVIDER=&quot;ollama&quot;
+export HIVE_DEFAULT_MODEL=&quot;qwen2.5-coder:3b&quot;
+
+# Never touch cloud unless you explicitly need it
+# Remove OPENROUTER_API_KEY from hivemind.env to force local-only mode</code></pre>
+<h3>Memory Management</h3>
+<pre><code># Check running models
+ollama ps
+
+# Stop a model to free RAM
+ollama stop qwen2.5-coder:7b
+
+# Keep only active model in RAM
+ollama run qwen2.5-coder:3b  # runs and keeps in memory
+
+# Keep Ollama pre-loaded
+ollama serve &amp;
+ollama run qwen2.5-coder:3b --keep-alive 30m</code></pre>
+<h3>Speed Optimisation</h3>
+<pre><code># Use smaller context for faster responses
+# (configured via JetBrains AI Assistant settings)
+
+# Keep model warm with keep-alive
+ollama run qwen2.5-coder:3b --keep-alive -1  # keep forever
+
+# Use flash attention (Ollama 0.5+)
+# Already enabled by default for supported models</code></pre>
+<p>---</p>
+<h2>5. Configuration Reference</h2>
+<h3>Config Files</h3>
+<p>| File                          | What it configures                             | | ----------------------------- | ---------------------------------------------- | | <code>.jetbrains/ai-assistant.xml</code> | JetBrains AI Assistant provider/model settings | | <code>.idea/aiSettings.xml</code>        | Shared PyCharm AI settings (checked into VCS)  | | <code>config/ollama-models.yaml</code>   | Ollama model tiers, routing, costs             | | <code>config/openrouter.yaml</code>      | OpenRouter model tiers, fallback chain         | | <code>config/hivemind.env</code>         | API keys, default provider/model               | | <code>config/mcp_config.json</code>      | MCP server definitions                         |</p>
+<h3>Env Variables</h3>
+<pre><code># Set these in your shell profile (~/.zshrc) for persistence
+export HIVE_DEFAULT_PROVIDER=&quot;ollama&quot;
+export HIVE_DEFAULT_MODEL=&quot;qwen2.5-coder:3b&quot;
+export OLLAMA_BASE_URL=&quot;http://localhost:11434&quot;</code></pre>
+<h3>PyCharm Run Configs</h3>
+<p>| Config                    | Shortcut | Action              | | ------------------------- | -------- | ------------------- | | <code>uCode: install</code>          | —        | <code>npm install</code>       | | <code>uCode: build</code>            | Cmd+F9   | Build all packages  | | <code>uCode: test</code>             | Ctrl+F5  | Run all tests       | | <code>uCode: self-check</code>       | —        | Full health check   | | <code>uCode: inspect widgets</code>  | —        | List widget files   | | <code>uCode: inspect terminal</code> | —        | List terminal files |</p>
+<p>---</p>
+<h2>6. Python Runtime Compatibility</h2>
+<p>| Python | Runtime Compat | Notes                                     | | ------ | -------------- | ----------------------------------------- | | 3.12   | ✅ Full        | Recommended for dev                       | | 3.13   | ✅ Mostly      | Some edge cases                           | | 3.14   | ⚠️ Partial     | Dataclass ordering issue in BASIC runtime |</p>
+<pre><code># Create venv with Python 3.12 for full compatibility
+python3.12 -m venv .venv312
+source .venv312/bin/activate
+pip install -e runtimes/basic -e runtimes/amos</code></pre>
+<p>---</p>
+<h2>7. Quick Reference</h2>
+<pre><code># ── Daily ──────────────────────────────────────────────────────
+ollama serve                          # Start local AI
+source .venv/bin/activate             # Python env
+npm run build                         # Build all packages
+npm test                              # Test all packages
+
+# ── Ollama ─────────────────────────────────────────────────────
+ollama pull qwen2.5-coder:3b          # Pull model
+ollama list                           # Show pulled models
+ollama ps                             # Show running models
+ollama stop qwen2.5-coder:7b          # Free RAM
+ollama rm qwen2.5-coder:14b           # Delete model
+
+# ── Config ─────────────────────────────────────────────────────
+cp config/hivemind.env ~/.ucore/config/
+./scripts/setup-ai-integration.sh     # Full AI setup
+
+# ── Health ──────────────────────────────────────────────────────
+curl http://localhost:11434/api/tags  # Ollama health
+curl http://localhost:8484/api/health # uCore health</code></pre></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>specs/UCODE_ADAPTATION_STRATEGY.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / specs/UCODE_ADAPTATION_STRATEGY.md</span></header><main class="site-main"><h1>uCode Classic Program Adaptation Strategy</h1>
+<p>Status: LOCKED - Canonical Reference Version: 2.0 Date: 2026-07-31</p>
+<h2>Platform Naming Clarification</h2>
+<p>uCode is one platform with profile modes, not separate product stacks.</p>
+<p>1. uCode1 = teletext-first profile (MODE 7 foundation) 2. uCode2 = sprite/BOB-capable profile enabled through AMOS shim compatibility</p>
+<p>In GridCore-era architecture, both run inside the same uCode runtime boundary.</p>
+<h2>Final Program Adaptation Strategy</h2>
+<p>| Program     | Approach                     | Why This Approach                                 | uCode Integration                                                          | | ----------- | ---------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------- | | ACS         | Rewrite (uCode inspired-by)  | Original source unavailable; design is iconic     | Native GridCore UI + LENS + SKIN + MCP with Inspire-Engine                 | | Eamon       | Adapt original source (port) | Applesoft source available and modular            | LENS for stats/state, SKIN themes, MCP save/load tooling                   | | Apple Panic | Rewrite (uCode inspired-by)  | Original source unavailable                       | Native GridCore character objects, LENS level state, MCP control           | | Elite       | Adapt original source        | 6502 source available and documented              | LENS ship/cargo/location, SKIN wireframe themes, MCP control hooks         | | NetHack     | Adapt original source        | Open source code available                        | LENS dungeon/inventory state, teletext/GridCore display bridge             | | Repton      | Adapt original source        | Source available and documented                   | LENS map/level state, SKIN teletext/sprite render options                  | | Knight Orc  | Rewrite (uCode inspired-by)  | Original KAOS engine source not readily available | Text parser with GridCore teletext, LENS time/NPC state, MCP time controls |</p>
+<h2>Inspired-By Rewrite Specs</h2>
+<h3>ACS-Inspired Builder</h3>
+<p>Suggested title: uConstruct (Adventure Forge)</p>
+<p>Core behavior:</p>
+<p>1. Tile/world builder inspired by ACS, implemented natively in uCode. 2. GridCore map editing and traversal rules. 3. LENS exports map/room/item/creature state. 4. SKIN supports teletext_classic plus modern alternates. 5. MCP supports SAVE/LOAD/EXPORT/DEBUG flows.</p>
+<p>Example program manifest:</p>
+<pre><code>program:
+  name: &quot;My uConstruct Adventure&quot;
+  version: &quot;1.0&quot;
+  type: &quot;ucode&quot;
+  entry: &quot;adventure.ucon&quot;
+
+  lens:
+    capture: [map, rooms, inventory, creatures]
+
+  skin:
+    default: &quot;teletext_classic&quot;
+    alternates: [&quot;pixel_art&quot;, &quot;paper_retro&quot;]
+
+  mcp:
+    commands: [&quot;SAVE&quot;, &quot;LOAD&quot;, &quot;EXPORT_TAILWIND&quot;, &quot;DEBUG&quot;]</code></pre>
+<h3>Apple Panic-Inspired Rewrite</h3>
+<p>Suggested title: Block Panic (Ladder Panic)</p>
+<p>Core behavior:</p>
+<p>1. GridCore-driven ladders/platforms/enemies. 2. Character objects for player/enemy blocks. 3. LENS extracts level/score/lives/enemy state. 4. SKIN profiles for teletext and modern high-contrast modes. 5. MCP reset/skip/pause commands.</p>
+<h3>Knight Orc-Inspired Rewrite</h3>
+<p>Suggested title: Orc Quest (Grindleguts Tale)</p>
+<p>Core behavior:</p>
+<p>1. BBC BASIC runtime parser with schedule-driven NPC loops. 2. GridCore teletext presentation for narrative and context cues. 3. LENS extracts location/inventory/NPC/time state. 4. SKIN teletext theme sets. 5. MCP save/load/time-control commands.</p>
+<h2>Skills Framework for Rewrite Paths</h2>
+<p>| Skill          | Purpose                                                            | | -------------- | ------------------------------------------------------------------ | | Inspire-Engine | Generate GDD from known gameplay references when source is missing | | uCode-Weaver   | Generate skeleton code and integration hooks                       | | LENS-Craft     | Define extractable runtime/game state contracts                    | | MCP-Scribe     | Define command/control interfaces                                  | | Skin-Weaver    | Build profile-aligned visual themes                                |</p>
+<h2>Revised Effort Estimates</h2>
+<p>| Program                   | Approach     | Estimated Effort   | Key Risk                | Mitigation                                    | | ------------------------- | ------------ | ------------------ | ----------------------- | --------------------------------------------- | | ACS (uConstruct)          | Rewrite      | Large (8-12 weeks) | Builder complexity      | Start with map editor core, then interactions | | Eamon                     | Adapt source | Medium (2-4 weeks) | Applesoft syntax shifts | Use BBC BASIC parity adapters                 | | Apple Panic (Block Panic) | Rewrite      | Small (1-2 weeks)  | Minimal                 | Generate skeleton via uCode-Weaver            | | Elite                     | Adapt source | Medium (2-4 weeks) | 6502 complexity         | Use existing source/build docs                | | NetHack                   | Adapt source | Medium (2-4 weeks) | Large codebase          | Prioritize display/control bridge             | | Repton                    | Adapt source | Small (1-2 weeks)  | Data format transforms  | Leverage known clone/reference datasets       | | Knight Orc (Orc Quest)    | Rewrite      | Large (8-12 weeks) | NPC/system complexity   | Begin with one-NPC simulation slice           |</p>
+<h2>Locked Delivery Model</h2>
+<p>| Source Availability         | Approach              | Tooling                                              | | --------------------------- | --------------------- | ---------------------------------------------------- | | Original source available   | Adapt original source | Source-Miner, LENS-Craft, MCP-Scribe                 | | Original source unavailable | Inspired-by rewrite   | Inspire-Engine, uCode-Weaver, LENS-Craft, MCP-Scribe | | Source unclear/complex      | Inspired-by rewrite   | Inspire-Engine, uCode-Weaver, LENS-Craft, MCP-Scribe |</p>
+<p>This strategy preserves authenticity where feasible and uses inspired-by rewrites where source constraints require new implementation, while keeping all paths unified under the uCode runtime and GridCore-era integration model.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>

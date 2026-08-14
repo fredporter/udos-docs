@@ -1,0 +1,50 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>learning-pathway/01-framework-and-boundaries.md — uDos Documentation</title><link rel="stylesheet" href="/udos-docs/assets/style.css"></head><body><header class="site-header"><a class="site-home" href="/udos-docs/">uDos Docs</a><span class="site-crumb">uCode / learning-pathway/01-framework-and-boundaries.md</span></header><main class="site-main"><h1>Lesson 01 - Framework And Boundaries</h1>
+<p>Sonic is the universal Sonic Screwdriver framework for the repo family.</p>
+<h2>What Sonic Does</h2>
+<p>Sonic is responsible for:</p>
+<ul><li>planning deployments</li><li>generating manifests</li><li>staging and applying reviewed hardware changes</li><li>exposing CLI, API, MCP, and UI surfaces for those workflows</li></ul>
+<p>It is <strong>not</strong> responsible for owning every runtime it can install.</p>
+<h2>The Family Architecture</h2>
+<p>Sonic operates within a three-part family structure:</p>
+<p>| Repo | Responsibility | Example | |------|---|---| | <strong>uDOS-core / uDOS-shell / uDOS-wizard</strong> | Shared runtime, shell, and assist surfaces | Contracts, interaction patterns, provider-backed workflows | | <strong>sonic-screwdriver</strong> | Deployment planning, hardware bootstrap, provisioning execution | Planning USB deployments, applying to real hardware, rescue workflows | | <strong>uHOME-server</strong> | Canonical uHOME runtime, bundle contracts, install-plan ownership | Runtime environment, package bundles, post-deployment configuration |</p>
+<h2>The Key Educational Habit: Boundary Clarity</h2>
+<p>The core concept is <strong>knowing where Sonic stops</strong>:</p>
+<ul><li><strong>Plan in Python and structured data</strong> — Sonic generates review-ready manifests</li><li><strong>Apply destructive steps through explicit Linux-side scripts</strong> — Nothing magical happens</li><li><strong>Hand off runtime ownership to the correct sibling repo</strong> — Sonic doesn't own the post-deployment lifecycle</li></ul>
+<p>This matters because <strong>unclear boundaries cause operational chaos</strong>. You need to know:</p>
+<ul><li>Who does deployment?</li><li>Who owns the runtime after deployment?</li><li>Where do you escalate if something fails between system boundaries?</li></ul>
+<p>---</p>
+<h2>Real Scenario: Typical Sonic Deployment</h2>
+<p>To make this concrete, here's a typical scenario:</p>
+<h3>The Scenario</h3>
+<p>Your team needs to deploy a reproducible Kodi media center on a USB drive for testing. The device needs:</p>
+<ul><li>Linux base system (Arch)</li><li>Kodi runtime installed</li><li>Specific plugins configured</li><li>USB-based persistent storage</li></ul>
+<h3>Where Each System Plays a Role</h3>
+<p><strong>Planning Phase (uDOS-core + Sonic)</strong>:</p>
+<ul><li><code>uDOS-core</code> provides the deterministic contract and target runtime semantics</li><li>Sonic reads the profile and generates a deployment plan</li><li>Result: A manifest you can review and version control</li></ul>
+<p><strong>USB Preparation</strong> (Sonic):</p>
+<ul><li>Sonic stages the Linux base system to USB</li><li>Sonic prepares boot configuration and partition layout</li><li>Result: A bootable USB device with Kodi ready to run</li></ul>
+<p><strong>Post-Deployment Configuration</strong> (uHOME + Sonic handoff):</p>
+<ul><li>Sonic hands off to <code>uHOME-server</code> for runtime setup</li><li><code>uHOME-server</code> installs Kodi packages and plugins</li><li><code>uHOME-server</code> manages the persistent configuration</li></ul>
+<p><strong>Ongoing Runtime</strong> (uHOME):</p>
+<ul><li><code>uHOME-server</code> owns Kodi updates, plugin management, backups</li><li>If Kodi fails, you contact the <code>uHOME</code> team, not Sonic</li></ul>
+<h3>What Sonic <em>Didn't</em> Do</h3>
+<ul><li>Didn't define the runtime contract or execution semantics (that's <code>uDOS-core</code>)</li><li>Didn't configure Kodi plugins (that's <code>uHOME-server</code>)</li><li>Didn't own the post-deployment runtime (that's <code>uHOME-server</code>)</li></ul>
+<p>This is the boundary clarity in action.</p>
+<p>---</p>
+<h2>Deeper Dive: Architecture Details</h2>
+<p>For more on how the family works together:</p>
+<ul><li><strong>Archived system architecture</strong>: See <a href="../../../docs/v1/specs/sonic-screwdriver.md">docs/v1/specs/sonic-screwdriver.md</a></li><li><strong>Archived integration reference</strong>: See <a href="../../../docs/v1/integration-spec.md">docs/v1/integration-spec.md</a></li><li><strong>uHOME handoff contracts</strong>: See <code>uHOME-server</code> repo documentation</li></ul>
+<p>---</p>
+<h2>Checkpoint: Do You Understand the Boundaries?</h2>
+<p>Before moving to Lesson 02, check your understanding:</p>
+<p><strong>Question 1</strong>: If a user reports "Kodi won't start after USB deployment," which repo team should handle the issue?</p>
+<ul><li>A) uDOS-core / uDOS-wizard</li><li>B) sonic-screwdriver (deployment)</li><li>C) uHOME-server (runtime)</li><li><strong>Answer</strong>: C — The runtime is uHOME-server's responsibility</li></ul>
+<p><strong>Question 2</strong>: You're planning a deployment for a new device. What part of that should Sonic own?</p>
+<ul><li>A) Designing the hardware target</li><li>B) Generating the deployment plan and staging USB</li><li>C) Installing and configuring the runtime after deployment</li><li><strong>Answer</strong>: B — Planning and staging are Sonic's job</li></ul>
+<p><strong>Question 3</strong>: A USB deployment partially fails. Where do you look for logs?</p>
+<ul><li>A) Sonic logs in <code>memory/sonic/logs/</code></li><li>B) uHOME runtime logs (managed by uHOME-server)</li><li>C) Both—Sonic logs for the planning/apply phase, uHOME logs for runtime failures</li><li><strong>Answer</strong>: C — Each system owns its own phase</li></ul>
+<p>---</p>
+<h2>Key Takeaway</h2>
+<p><strong>Sonic is one lane in a multi-lane system.</strong> Its job is:</p>
+<ul><li>Take a profile → Generate a deploy plan → Apply to hardware → Hand off to runtime</li></ul>
+<p>Everything before and after is someone else's job. Knowing that prevents confusion when things go wrong.</p></main><footer class="site-footer">Generated by uCore docs-publish.</footer></body></html>
