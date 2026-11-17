@@ -2,6 +2,20 @@
 
 **Active docs live here.** Historical and superseded docs are in [`docs/archive/`](archive/).
 
+## Vault structure and knowledge specs
+
+- [External development](EXTERNAL_DEVELOPMENT.md)
+
+- [Ecosystem storage architecture](ECOSYSTEM_STORAGE_ARCHITECTURE.md)
+
+- [User Vault layout and migration](plans/USER_VAULT_LAYOUT.md)
+- [Vault, Binder and Workflow integration](VAULT_BINDER_WORKFLOW_INTEGRATION.md)
+- [Vault plates and seed structure](VAULT_PLATES_AND_DESTROY_SPEC.md)
+- [Knowledge system](specs/KNOWLEDGE-SYSTEM.md)
+- [Knowledge layering and contribution](specs/KNOWLEDGE_LAYERING_AND_CONTRIBUTION_SPEC.md)
+- [Sovereign Host reference](specs/SOVEREIGN_HOST_REFERENCE.md)
+- [uDOS technical guides](tech/README.md)
+
 ## Active Runbooks
 
 | Doc                                                                                      | Purpose                           |

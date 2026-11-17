@@ -89,8 +89,8 @@
 | [README.md](tutorials/README.md)                                                 | Lessons index                    |
 | [lesson_01.md](tutorials/lesson_01.md)                                           | Lesson 1: uCode basics           |
 | [lesson_02.md](tutorials/lesson_02.md)                                           | Lesson 2: text and graphics      |
-| [lesson-0.5-from-spark-to-ucode.md](tutorials/lesson-0.5-from-spark-to-ucode.md) | Lesson 0.5: from Spark to uCode  |
-| [lesson-1-markdown-grimoire.md](tutorials/lesson-1-markdown-grimoire.md)         | Lesson 1: markdown grimoire      |
+| [lesson-0.5-from-spark-to-ucode.md](../learning/lesson-0.5-from-spark-to-ucode.md) | Lesson 0.5: from Spark to uCode  |
+| [lesson-1-markdown-grimoire.md](../learning/lesson-1-markdown-grimoire.md)         | Lesson 1: markdown grimoire      |
 | [game.md](tutorials/game.md)                                                     | Game demo surface                |
 | [demo-surface.md](tutorials/demo-surface.md)                                     | Demo surface example             |
 | [ucode-mini-game.md](tutorials/ucode-mini-game.md)                               | uCode mini-game learning pathway |
